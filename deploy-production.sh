@@ -60,7 +60,22 @@ echo -e "\n${GREEN}>> Deploying for Commercial Host:${NC} ${BOLD}https://${DOMAI
 echo -e "${GREEN}>> Administrator Email:${NC}           ${BOLD}${ADMIN_EMAIL}${NC}\n"
 
 # Step 1: Install Docker & Docker Compose if missing
-echo -e "${CYAN}[1/6] Installing Prerequisites (Docker, Git, UFW)...${NC}"
+echo -e "${CYAN}[1/6] Installing Prerequisites & Optimizing Memory...${NC}"
+
+# Auto-configure 4GB Swap if system RAM < 4GB (e.g. AWS EC2 t2.micro Free Tier)
+TOTAL_RAM_MB=$(free -m | awk '/^Mem:/{print $2}')
+if [ "$TOTAL_RAM_MB" -lt 4000 ] && [ "$(swapon --show | wc -l)" -le 1 ]; then
+    echo -e "${YELLOW}>> AWS Free Tier / Low RAM detected (${TOTAL_RAM_MB}MB). Creating 4GB Swap Space...${NC}"
+    fallocate -l 4G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=4096
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    if ! grep -q '/swapfile' /etc/fstab; then
+        echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    fi
+    echo -e "${GREEN}>> 4GB Swap active! Virtual memory successfully expanded.${NC}"
+fi
+
 if ! command -v docker &> /dev/null; then
     echo "Installing Docker Engine..."
     curl -fsSL https://get.docker.com | sh
