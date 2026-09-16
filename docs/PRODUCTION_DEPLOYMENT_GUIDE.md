@@ -13,25 +13,36 @@ This guide walks through deploying the Enterprise IDS/IPS platform as a standalo
 
 ---
 
-## ⚡ Step 1: Provision Cloud Virtual Machine
+## ⚡ Step 1: Provision Free Cloud Virtual Machine
 
-### Option A: AWS EC2
-1. Launch an EC2 Instance with **Ubuntu Server 24.04 LTS (x86_64)**.
-2. Select instance type: `t3.xlarge` (or `t3.large`).
-3. Configure Security Group **Inbound Rules**:
-   - `SSH` (Port 22) -> Your management IP (or `0.0.0.0/0`)
-   - `HTTP` (Port 80) -> `0.0.0.0/0` (for ACME Let's Encrypt validation)
-   - `HTTPS` (Port 443) -> `0.0.0.0/0` (public SOC access)
-   *(All internal ports: PostgreSQL 5432, Redis 6379, Kafka 9092, OpenSearch 9200 remain completely closed and private).*
-4. Attach an **Elastic IP** to your EC2 instance so the IP never changes.
-
-### Option B: DigitalOcean / Hetzner / Linode
-1. Create a Droplet/Cloud Server running **Ubuntu 24.04 LTS**.
-2. Note the Public IPv4 address assigned to the server.
-
----
+### 🌟 Top Recommendation: Oracle Cloud Always Free (24 GB RAM / 4 OCPUs)
+*100% Free Forever — Ideal for Kafka + OpenSearch + PostgreSQL + Redis + Full IDS/IPS Stack*
+1. Sign up at [Oracle Cloud Free Tier](https://www.oracle.com/cloud/free/).
+2. In the OCI Console, navigate to **Compute > Instances > Create Instance**.
+3. **Image**: Ubuntu 22.04 or 24.04.
+4. **Shape**: Select **Ampere (ARM)** -> `VM.Standard.A1.Flex`.
+   - Allocate up to **4 OCPUs** and **24 GB RAM** (this entire capacity is 100% free under the Always Free allowance!).
+5. **Networking / Security List**: Add Inbound Rules for ports:
+   - `22` (SSH)
+   - `80` (HTTP ACME verification)
+   - `443` (HTTPS SOC Console)
+   *(Or if using Cloudflare Tunnel, you don't even need ports 80 or 443 open!)*
+6. Download the SSH private key and note the public IP.
 
 ---
+
+### Alternative: AWS EC2 Free Tier (1 GB RAM + Auto-Swap)
+1. Sign up at [AWS Free Tier](https://aws.amazon.com/free/).
+2. In the AWS Console, launch an EC2 instance:
+   - **Image**: Ubuntu Server 24.04 LTS (x86_64).
+   - **Instance Type**: `t2.micro` or `t3.micro` (free tier eligible for 12 months).
+   - **Storage**: Allocate 30 GB gp3 root volume (free tier maximum).
+   - **Security Group Inbound Rules**:
+     - `SSH` (Port 22)
+     - `HTTP` (Port 80)
+     - `HTTPS` (Port 443)
+3. Connect via SSH: `ssh -i your-key.pem ubuntu@<PUBLIC_IP>`.
+   *(Note: The deployment script automatically detects low RAM and provisions a 4GB swap space to keep memory-intensive services like Kafka and OpenSearch running smoothly).*
 
 ## 🌐 Step 2: Configure Host / Domain
 
