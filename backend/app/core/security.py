@@ -2,29 +2,31 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from .config import get_settings
 from .database import get_sync_connection
-from .redis_client import get_async_redis
 
 settings = get_settings()
-
-# ── Password hashing ──────────────────────────────────────────────────────────
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
+# ── Password hashing ──────────────────────────────────────────────────────────
 def hash_password(plain: str) -> str:
-    return pwd_context.hash(plain)
+    pwd_bytes = plain.encode('utf-8')
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(plain.encode('utf-8'), hashed.encode('utf-8'))
+    except Exception:
+        return False
 
 
 # ── JWT ───────────────────────────────────────────────────────────────────────
@@ -101,14 +103,6 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any]:
 
 # ── Role-based access helpers ─────────────────────────────────────────────────
 def require_role(*roles: str):
-    """
-    FastAPI dependency factory.
-
-    Usage::
-
-        @router.delete("/{id}", dependencies=[Depends(require_role("ADMIN"))])
-    """
-
     def _check(current_user: dict = Depends(get_current_user)):
         if current_user["role"] not in roles:
             raise HTTPException(

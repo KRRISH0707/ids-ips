@@ -3,6 +3,7 @@ uvicorn[standard]
 psycopg[binary]
 pydantic
 pydantic-settings
+email-validator
 kafka-python-ng
 python-jose[cryptography]
 passlib[bcrypt]
