@@ -32,8 +32,12 @@ from .routes import (
     incidents,
     ips_actions,
     metrics,
+    mitre,
+    network_topology,
+    playbooks,
     rules,
     sensors,
+    threat_intel,
     users,
     ws,
 )
@@ -138,4 +142,8 @@ app.include_router(ips_actions.router,  prefix=PREFIX)
 app.include_router(audit_logs.router,   prefix=PREFIX)
 app.include_router(metrics.router,      prefix=PREFIX)
 app.include_router(ai_insights.router,  prefix=PREFIX)
-app.include_router(ws.router,           prefix=PREFIX)
+app.include_router(playbooks.router,         prefix=PREFIX)
+app.include_router(mitre.router,             prefix=PREFIX)
+app.include_router(network_topology.router,  prefix=PREFIX)
+app.include_router(threat_intel.router,      prefix=PREFIX)
+app.include_router(ws.router,                prefix=PREFIX)

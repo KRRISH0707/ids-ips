@@ -111,6 +111,29 @@ export const api = {
   toggleRule: (id) => request(`/rules/${id}/toggle`, { method: 'PATCH' }),
   deleteRule: (id) => request(`/rules/${id}`, { method: 'DELETE' }),
 
+  // ── SOAR Playbooks ────────────────────────────────────────────────────────
+  getPlaybooks: () => request('/soar/playbooks'),
+  createPlaybook: (data) => request('/soar/playbooks', { method: 'POST', body: JSON.stringify(data) }),
+  executePlaybook: (id, data = {}) =>
+    request(`/soar/playbooks/${id}/execute`, { method: 'POST', body: JSON.stringify(data) }),
+  getPlaybookExecutions: (params = {}) => request('/soar/executions?' + new URLSearchParams(params)),
+
+  // ── MITRE ATT&CK ──────────────────────────────────────────────────────────
+  getMitreMatrix: () => request('/mitre/matrix'),
+
+  // ── Network Topology ──────────────────────────────────────────────────────
+  getNetworkTopology: () => request('/network/topology'),
+
+  // ── Threat Intelligence ───────────────────────────────────────────────────
+  getThreatIntel: (params = {}) => request('/threat-intel?' + new URLSearchParams(params)),
+  lookupThreatIndicator: (data) =>
+    request('/threat-intel/lookup', { method: 'POST', body: JSON.stringify(data) }),
+  addThreatIndicator: (data) =>
+    request('/threat-intel/indicators', { method: 'POST', body: JSON.stringify(data) }),
+
+  // ── PCAP & Packet Trace Forensics ─────────────────────────────────────────
+  getPacketTrace: (alertId) => request(`/alerts/${alertId}/packet-trace`),
+
   // ── IPS Actions ───────────────────────────────────────────────────────────
   getBlockedIPs: (params = {}) => request('/ips-actions?' + new URLSearchParams(params)),
   getIPSStats: () => request('/ips-actions/stats/summary'),

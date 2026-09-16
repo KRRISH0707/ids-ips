@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Sidebar from '@/components/Sidebar';
+import PCAPViewerModal from '@/components/PCAPViewerModal';
 import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState } from '@/components/ui';
 import { api } from '@/lib/api';
 
@@ -14,6 +15,7 @@ export default function AlertsPage() {
   const [loading, setLoading] = useState(true);
   const [severity, setSeverity] = useState('');
   const [alertStatus, setAlertStatus] = useState('OPEN');
+  const [selectedAlertForPCAP, setSelectedAlertForPCAP] = useState(null);
   const [skip, setSkip] = useState(0);
   const limit = 25;
 
@@ -108,10 +110,18 @@ export default function AlertsPage() {
                     <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                       {a.timestamp ? new Date(a.timestamp).toLocaleString() : '—'}
                     </td>
-                    <td>
+                    <td style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        style={{ fontSize: '0.72rem', padding: '4px 8px', border: '1px solid var(--border-subtle)' }}
+                        title="Deep Packet Inspection & PCAP Trace"
+                        onClick={() => setSelectedAlertForPCAP(a.id)}
+                      >
+                        📦 DPI
+                      </button>
                       <select
                         className="select"
-                        style={{ width: 140, padding: '4px 8px', fontSize: '0.75rem' }}
+                        style={{ width: 130, padding: '4px 8px', fontSize: '0.75rem' }}
                         value={a.status}
                         onChange={e => handleStatusChange(a.id, e.target.value)}
                       >
@@ -137,6 +147,14 @@ export default function AlertsPage() {
           </button>
         </div>
       </div>
+
+      {/* PCAP / DPI Forensics Modal */}
+      {selectedAlertForPCAP && (
+        <PCAPViewerModal
+          alertId={selectedAlertForPCAP}
+          onClose={() => setSelectedAlertForPCAP(null)}
+        />
+      )}
     </PageLayout>
   );
 }

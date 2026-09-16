@@ -242,3 +242,36 @@ CREATE INDEX IF NOT EXISTS idx_rules_enabled       ON rules(enabled);
 
 -- Users
 CREATE INDEX IF NOT EXISTS idx_users_email         ON users(email);
+
+-- ============================================================
+-- SOAR PLAYBOOKS & EXECUTIONS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS playbooks (
+    id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    name                TEXT        NOT NULL,
+    description         TEXT,
+    trigger_event       TEXT        NOT NULL,
+    severity_threshold  TEXT        DEFAULT 'HIGH',
+    actions             JSONB       NOT NULL DEFAULT '[]'::jsonb,
+    is_active           BOOLEAN     NOT NULL DEFAULT true,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS playbook_executions (
+    id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    playbook_id         UUID        REFERENCES playbooks(id) ON DELETE CASCADE,
+    playbook_name       TEXT        NOT NULL,
+    alert_id            UUID,
+    status              TEXT        NOT NULL DEFAULT 'SUCCESS',
+    target              TEXT,
+    actions_taken       JSONB       NOT NULL DEFAULT '[]'::jsonb,
+    logs                JSONB       NOT NULL DEFAULT '[]'::jsonb,
+    triggered_by        TEXT        NOT NULL DEFAULT 'AI_AUTONOMOUS_ENGINE',
+    executed_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_playbooks_event     ON playbooks(trigger_event);
+CREATE INDEX IF NOT EXISTS idx_pb_exec_playbook    ON playbook_executions(playbook_id);
+CREATE INDEX IF NOT EXISTS idx_pb_exec_time        ON playbook_executions(executed_at DESC);
+

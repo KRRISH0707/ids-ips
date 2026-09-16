@@ -1,0 +1,108 @@
+"""
+SOAR Playbooks & Remediation API Routes
+"""
+
+from typing import Any, Dict, List, Optional
+from uuid import UUID
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+
+from ..core.database import get_sync_connection
+from ..core.security import get_current_user, require_role
+from ..services.soar_engine import soar_engine
+
+router = APIRouter(prefix="/soar", tags=["soar"])
+
+class PlaybookCreate(BaseModel):
+    name: str
+    description: str
+    trigger_event: str
+    severity_threshold: str = "HIGH"
+    actions: List[str]
+    is_active: bool = True
+
+class PlaybookExecuteRequest(BaseModel):
+    target: Optional[str] = None
+    alert_id: Optional[str] = None
+    parameters: Dict[str, Any] = {}
+
+@router.get("/playbooks")
+def list_playbooks(current_user: dict = Depends(get_current_user)):
+    """List all available automated security response playbooks."""
+    with get_sync_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT p.id, p.name, p.description, p.trigger_event, p.severity_threshold,
+                       p.actions, p.is_active, p.created_at,
+                       COUNT(e.id) as total_executions,
+                       MAX(e.executed_at) as last_executed
+                FROM playbooks p
+                LEFT JOIN playbook_executions e ON p.id = e.playbook_id
+                GROUP BY p.id
+                ORDER BY p.name ASC
+                """
+            )
+            items = cur.fetchall()
+            return {"items": items, "total": len(items)}
+
+@router.post("/playbooks")
+def create_playbook(
+    body: PlaybookCreate,
+    current_user: dict = Depends(require_role("ADMIN", "ANALYST"))
+):
+    """Create a new automated SOAR response playbook."""
+    from psycopg.types.json import Jsonb
+    with get_sync_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO playbooks (name, description, trigger_event, severity_threshold, actions, is_active)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id, name, description, trigger_event, severity_threshold, actions, is_active, created_at
+                """,
+                (body.name, body.description, body.trigger_event, body.severity_threshold, Jsonb(body.actions), body.is_active)
+            )
+            created = cur.fetchone()
+            conn.commit()
+            return created
+
+@router.post("/playbooks/{playbook_id}/execute")
+def execute_playbook(
+    playbook_id: UUID,
+    body: PlaybookExecuteRequest,
+    current_user: dict = Depends(require_role("ADMIN", "ANALYST"))
+):
+    """Trigger manual or automated execution of a response playbook."""
+    try:
+        res = soar_engine.execute_playbook(
+            playbook_id=playbook_id,
+            target=body.target,
+            operator=current_user.get("email", "ANALYST")
+        )
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Execution failure: {str(e)}")
+
+@router.get("/executions")
+def list_executions(
+    limit: int = Query(25, ge=1, le=100),
+    current_user: dict = Depends(get_current_user)
+):
+    """Retrieve audit history of executed SOAR playbooks."""
+    with get_sync_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, playbook_id, playbook_name, alert_id, status, target,
+                       actions_taken, logs, triggered_by, executed_at
+                FROM playbook_executions
+                ORDER BY executed_at DESC
+                LIMIT %s
+                """,
+                (limit,)
+            )
+            items = cur.fetchall()
+            return {"items": items, "total": len(items)}
