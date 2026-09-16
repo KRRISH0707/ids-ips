@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
 from ..core.database import get_sync_connection
-from ..core.security import get_current_user, write_audit_log
+from ..core.security import get_current_user, require_role, write_audit_log
 from ..core.metrics import incidents_created_total
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
@@ -99,7 +99,7 @@ def incident_alerts(incident_id: UUID, current_user: dict = Depends(get_current_
 def create_incident(
     body: IncidentCreate,
     request: Request,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
 ):
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
@@ -132,7 +132,7 @@ def update_incident_status(
     incident_id: UUID,
     body: IncidentStatusUpdate,
     request: Request,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
 ):
     extra_set = ""
     extra_vals = []

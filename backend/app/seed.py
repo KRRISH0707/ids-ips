@@ -20,27 +20,47 @@ def seed():
             admin_pw = settings.admin_password
             hashed_pw = hash_password(admin_pw)
 
-            # 1. Create or Update Default Admin User
-            cur.execute("SELECT id FROM users WHERE email = %s", (admin_email,))
-            existing = cur.fetchone()
-            
-            if not existing:
-                cur.execute(
-                    """
-                    INSERT INTO users (email, hashed_password, full_name, role, is_active)
-                    VALUES (%s, %s, 'Default Administrator', 'ADMIN', TRUE)
-                    """,
-                    (admin_email, hashed_pw)
-                )
-                logger.info(f"Created admin user: {admin_email}")
-            else:
-                cur.execute(
-                    """
-                    UPDATE users SET hashed_password = %s WHERE email = %s
-                    """,
-                    (hashed_pw, admin_email)
-                )
-                logger.info(f"Updated password for admin user: {admin_email}")
+            # 1. Create or Update Default Users (Admin, Analyst, Viewer)
+            default_users = [
+                {
+                    "email": admin_email,
+                    "password": admin_pw,
+                    "full_name": "Default Administrator",
+                    "role": "ADMIN",
+                },
+                {
+                    "email": "analyst@ids-soc.com",
+                    "password": "Analyst123!",
+                    "full_name": "Tier-2 SOC Analyst",
+                    "role": "ANALYST",
+                },
+                {
+                    "email": "viewer@ids-soc.com",
+                    "password": "Viewer123!",
+                    "full_name": "Compliance & Security Viewer",
+                    "role": "VIEWER",
+                },
+            ]
+
+            for u in default_users:
+                cur.execute("SELECT id FROM users WHERE email = %s", (u["email"],))
+                existing = cur.fetchone()
+                pw_hash = hash_password(u["password"])
+                if not existing:
+                    cur.execute(
+                        """
+                        INSERT INTO users (email, hashed_password, full_name, role, is_active)
+                        VALUES (%s, %s, %s, %s, TRUE)
+                        """,
+                        (u["email"], pw_hash, u["full_name"], u["role"]),
+                    )
+                    logger.info(f"Created default user: {u['email']} ({u['role']})")
+                else:
+                    cur.execute(
+                        "UPDATE users SET hashed_password = %s, role = %s WHERE email = %s",
+                        (pw_hash, u["role"], u["email"]),
+                    )
+                    logger.info(f"Synchronized user credentials: {u['email']} ({u['role']})")
 
             # 2. Create Default Sensor
             sensor_name = "Primary Edge Probe"

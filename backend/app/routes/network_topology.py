@@ -17,7 +17,7 @@ def get_network_topology(current_user: dict = Depends(get_current_user)):
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             # Query active sensors
-            cur.execute("SELECT id, name, hostname, ip_address, status, location FROM sensors")
+            cur.execute("SELECT id, name, hostname, ip_address::text, status, location FROM sensors")
             sensors = cur.fetchall()
 
             # Query recent critical alerts to build attack vector links
@@ -83,7 +83,7 @@ def get_network_topology(current_user: dict = Depends(get_current_user)):
 
     for asset in internal_assets:
         # Check if sensor or alert indicates isolation
-        is_isolated = any(s["status"] == "ISOLATED" and (s["ip_address"] or "").startswith(asset["ip"]) for s in sensors)
+        is_isolated = any(s["status"] == "ISOLATED" and str(s["ip_address"] or "").startswith(asset["ip"]) for s in sensors)
         nodes.append({
             **asset,
             "status": "ISOLATED" if is_isolated else "ONLINE"

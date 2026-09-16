@@ -49,7 +49,7 @@ def list_blocked_ips(
     is_active: Optional[bool] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
 ):
     conditions, params = [], []
     if is_active is not None:
@@ -79,7 +79,10 @@ def list_blocked_ips(
 
 
 @router.get("/{block_id}")
-def get_blocked_ip(block_id: UUID, current_user: dict = Depends(get_current_user)):
+def get_blocked_ip(
+    block_id: UUID,
+    current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
+):
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(

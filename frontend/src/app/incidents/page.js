@@ -3,9 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, getUser } from '@/lib/api';
 
 export default function IncidentsPage() {
+  const currentUser = getUser();
+  const isViewer = currentUser?.role === 'VIEWER';
+
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,6 +32,7 @@ export default function IncidentsPage() {
   }, [fetchIncidents]);
 
   const handleUpdateStatus = async (id, status) => {
+    if (isViewer) return;
     try {
       await api.updateIncidentStatus(id, { status });
       fetchIncidents();
@@ -89,18 +93,24 @@ export default function IncidentsPage() {
                       {new Date(inc.created_at).toLocaleString()}
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
-                      <select
-                        className="select"
-                        value={inc.status}
-                        onChange={(e) => handleUpdateStatus(inc.id, e.target.value)}
-                        style={{ width: 140, padding: '4px 8px', fontSize: '0.75rem' }}
-                      >
-                        <option value="NEW">New</option>
-                        <option value="INVESTIGATING">Investigating</option>
-                        <option value="CONTAINED">Contained</option>
-                        <option value="RESOLVED">Resolved</option>
-                        <option value="FALSE_POSITIVE">False Positive</option>
-                      </select>
+                      {isViewer ? (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: 4 }}>
+                          👁️ Read-Only
+                        </span>
+                      ) : (
+                        <select
+                          className="select"
+                          value={inc.status}
+                          onChange={(e) => handleUpdateStatus(inc.id, e.target.value)}
+                          style={{ width: 140, padding: '4px 8px', fontSize: '0.75rem' }}
+                        >
+                          <option value="NEW">New</option>
+                          <option value="INVESTIGATING">Investigating</option>
+                          <option value="CONTAINED">Contained</option>
+                          <option value="RESOLVED">Resolved</option>
+                          <option value="FALSE_POSITIVE">False Positive</option>
+                        </select>
+                      )}
                     </td>
                   </tr>
                 ))}
