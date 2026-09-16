@@ -56,8 +56,16 @@ read -rsp "Enter platform admin password [Default: 183@Krrish]: " ADMIN_PASSWORD
 echo ""
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-183@Krrish}
 
+read -rp "Enter Cloudflare Tunnel Token (optional, press Enter if using direct IP/Domain): " CLOUDFLARE_TUNNEL_TOKEN
+CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+
 echo -e "\n${GREEN}>> Deploying for Commercial Host:${NC} ${BOLD}https://${DOMAIN}${NC}"
-echo -e "${GREEN}>> Administrator Email:${NC}           ${BOLD}${ADMIN_EMAIL}${NC}\n"
+echo -e "${GREEN}>> Administrator Email:${NC}           ${BOLD}${ADMIN_EMAIL}${NC}"
+if [ -n "$CLOUDFLARE_TUNNEL_TOKEN" ]; then
+    echo -e "${GREEN}>> Cloudflare Zero-Trust Tunnel:${NC}  ${BOLD}ACTIVE (Zero open inbound ports)${NC}\n"
+else
+    echo -e "${YELLOW}>> Cloudflare Tunnel:${NC}             ${BOLD}NONE (Direct ingress via ports 80/443)${NC}\n"
+fi
 
 # Step 1: Install Docker & Docker Compose if missing
 echo -e "${CYAN}[1/6] Installing Prerequisites & Optimizing Memory...${NC}"
@@ -119,6 +127,7 @@ REDIS_PASSWORD=${REDIS_PASSWORD}
 GRAFANA_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
 IPS_SIMULATION_MODE=false
 CORS_ORIGINS=https://${DOMAIN}
+CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
 EOF
 
 chmod 600 .env.production

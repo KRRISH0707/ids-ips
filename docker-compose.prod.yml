@@ -31,6 +31,34 @@ services:
     networks:
       - idsips-net
 
+  # ── Cloudflare Zero-Trust Tunnel (Air-Tight Inbound Security) ───────────────
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: idsips-cloudflared
+    restart: always
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+    entrypoint: >
+      /bin/sh -c '
+      if [ -n "$$TUNNEL_TOKEN" ]; then
+        echo "==================================================================";
+        echo "[CLOUDFLARE ZERO TRUST] Starting Production Tunnel...";
+        echo "[CLOUDFLARE ACCESS] Protected by Cloudflare Access Email Whitelist!";
+        echo "==================================================================";
+        exec cloudflared --no-autoupdate tunnel run --token "$$TUNNEL_TOKEN";
+      else
+        echo "==================================================================";
+        echo "[CLOUDFLARE ZERO TRUST] CLOUDFLARE_TUNNEL_TOKEN not provided in .env";
+        echo "Set CLOUDFLARE_TUNNEL_TOKEN in your .env.production to activate.";
+        echo "==================================================================";
+        sleep infinity;
+      fi
+      '
+    depends_on:
+      - nginx
+    networks:
+      - idsips-net
+
   # ── Frontend Next.js SOC Dashboard ──────────────────────────────────────────
   frontend:
     build:
