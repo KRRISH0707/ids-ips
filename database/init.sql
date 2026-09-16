@@ -67,7 +67,10 @@ CREATE TABLE IF NOT EXISTS rules (
     id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     name        TEXT        NOT NULL,
     description TEXT,
-    condition   JSONB       NOT NULL,
+    rule_type   TEXT        NOT NULL DEFAULT 'SIGNATURE'
+                            CHECK (rule_type IN ('SIGNATURE','ANOMALY','THRESHOLD','COMPOSITE')),
+    conditions  JSONB       NOT NULL DEFAULT '{}'::jsonb,
+    condition   JSONB,
     action      TEXT        NOT NULL DEFAULT 'ALERT'
                             CHECK (action IN ('ALERT','BLOCK','LOG','IGNORE')),
     severity    TEXT        NOT NULL DEFAULT 'MEDIUM'
@@ -159,6 +162,9 @@ CREATE TABLE IF NOT EXISTS blocked_ips (
     id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     ip_address  INET        NOT NULL UNIQUE,
     reason      TEXT,
+    blocked_by  TEXT,
+    is_active   BOOLEAN     NOT NULL DEFAULT TRUE,
+    alert_id    UUID,
     action_id   UUID        REFERENCES ips_actions(id),
     blocked_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at  TIMESTAMPTZ
