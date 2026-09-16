@@ -33,22 +33,47 @@ export default function Sidebar() {
     <aside className="sidebar">
       {/* Logo */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
-            width: 34, height: 34,
-            background: 'linear-gradient(135deg, #00d4ff22, #7c3aed22)',
+            width: 38, height: 38,
+            background: 'linear-gradient(135deg, rgba(0,212,255,0.25), rgba(124,58,237,0.25))',
             border: '1px solid var(--border-bright)',
-            borderRadius: 8,
+            borderRadius: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 16px rgba(0, 212, 255, 0.25)',
           }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" strokeWidth="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" strokeWidth="2.2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>IDS / IPS</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>ENTERPRISE PLATFORM</div>
+            <div style={{ fontSize: '1.05rem', fontWeight: 900, letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="glow-gradient">AEGIS-X</span>
+            </div>
+            <div style={{ fontSize: '0.62rem', color: 'var(--accent-cyan)', letterSpacing: '0.08em', fontWeight: 700 }}>
+              NEURAL THREAT INTERCEPTOR
+            </div>
           </div>
+        </div>
+
+        {/* Live Active Sensor Mesh Pill */}
+        <div style={{
+          marginTop: 12,
+          padding: '4px 10px',
+          borderRadius: 6,
+          background: 'rgba(16, 185, 129, 0.08)',
+          border: '1px solid rgba(16, 185, 129, 0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className="live-dot" style={{ width: 6, height: 6 }} />
+            MESH ONLINE
+          </span>
+          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
+            v2.4-PROD
+          </span>
         </div>
       </div>
 
@@ -89,7 +114,10 @@ export default function Sidebar() {
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{user?.role}</div>
           </div>
         </div>
-        <Link href="/landing" className="btn btn-ghost btn-sm" style={{ width: '100%', marginBottom: 6, justifyContent: 'flex-start', color: 'var(--accent-cyan)', textDecoration: 'none' }}>
+        <Link href="/demo" className="btn btn-ghost btn-sm" style={{ width: '100%', marginBottom: 6, justifyContent: 'flex-start', background: 'rgba(0, 212, 255, 0.08)', border: '1px solid rgba(0, 212, 255, 0.25)', color: 'var(--accent-cyan)', textDecoration: 'none' }}>
+          <IconPlay /> Interactive Sandbox
+        </Link>
+        <Link href="/landing" className="btn btn-ghost btn-sm" style={{ width: '100%', marginBottom: 6, justifyContent: 'flex-start', color: 'var(--text-secondary)', textDecoration: 'none' }}>
           <IconGlobe /> Commercial Portal
         </Link>
         <button className="btn btn-ghost btn-sm" style={{ width: '100%' }} onClick={handleLogout}>
@@ -98,6 +126,10 @@ export default function Sidebar() {
       </div>
     </aside>
   );
+}
+
+function IconPlay() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>;
 }
 
 function IconGlobe() {

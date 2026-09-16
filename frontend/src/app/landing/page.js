@@ -29,11 +29,11 @@ export default function LandingPage() {
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '0.04em', background: 'linear-gradient(90deg, #fff 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              AEGIS CYBER DEFENSE
+            <div style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="glow-gradient">AEGIS-X</span>
             </div>
-            <div style={{ fontSize: '0.65rem', color: '#00d4ff', letterSpacing: '0.1em', fontWeight: 700 }}>
-              ENTERPRISE IDS/IPS PLATFORM
+            <div style={{ fontSize: '0.62rem', color: '#00d4ff', letterSpacing: '0.1em', fontWeight: 700 }}>
+              NEURAL THREAT INTERCEPTOR
             </div>
           </div>
         </div>
@@ -46,39 +46,45 @@ export default function LandingPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <Link
+            href="/demo"
+            style={{ padding: '8px 16px', borderRadius: 8, background: 'rgba(0, 212, 255, 0.12)', border: '1px solid rgba(0, 212, 255, 0.35)', color: 'var(--accent-cyan)', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <span>🎮</span> Live Demo
+          </Link>
           <button
             onClick={() => setShowDemoModal(true)}
             style={{ padding: '8px 18px', borderRadius: 8, background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.2)', color: '#fff', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
           >
-            Request Demo
+            Request Custom POC
           </button>
           <Link
             href="/login"
             style={{ padding: '8px 20px', borderRadius: 8, background: 'linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%)', color: '#fff', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 20px rgba(0, 212, 255, 0.35)', transition: 'transform 0.2s' }}
           >
-            Launch SOC Console →
+            SOC Login →
           </Link>
         </div>
       </nav>
 
       {/* Hero Section */}
       <section style={{ maxWidth: 1200, margin: '0 auto', padding: '90px 24px 60px', textAlign: 'center', position: 'relative' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 20, background: 'rgba(0, 212, 255, 0.1)', border: '1px solid rgba(0, 212, 255, 0.3)', marginBottom: 24 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff', display: 'inline-block' }} />
-          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#38bdf8', letterSpacing: '0.06em' }}>
-            ENTERPRISE COMMERCIAL RELEASE v2.4 • MULTI-VECTOR NEURAL IDS/IPS
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 20, background: 'rgba(0, 212, 255, 0.08)', border: '1px solid rgba(0, 212, 255, 0.3)', marginBottom: 24, boxShadow: '0 0 20px rgba(0, 212, 255, 0.15)' }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 10px #00d4ff', display: 'inline-block' }} />
+          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.08em', fontFamily: 'JetBrains Mono, monospace' }}>
+            AEGIS-X v2.4 // AUTONOMOUS NEURAL THREAT INTERCEPTOR
           </span>
         </div>
 
-        <h1 style={{ fontSize: '3.6rem', fontWeight: 900, lineHeight: 1.15, letterSpacing: '-0.03em', margin: '0 0 24px', background: 'linear-gradient(180deg, #ffffff 0%, #94a3b8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Autonomous Cyber Defense &<br />
-          <span style={{ background: 'linear-gradient(90deg, #00d4ff 0%, #a855f7 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Predictive Intrusion Prevention
+        <h1 style={{ fontSize: '3.8rem', fontWeight: 900, lineHeight: 1.15, letterSpacing: '-0.03em', margin: '0 0 24px', background: 'linear-gradient(180deg, #ffffff 0%, #94a3b8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          Autonomous Threat Interception &<br />
+          <span style={{ background: 'linear-gradient(90deg, #00d4ff 0%, #a855f7 50%, #ec4899 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Predictive Neural Cyber Defense
           </span>
         </h1>
 
-        <p style={{ fontSize: '1.2rem', color: '#94a3b8', maxWidth: 780, margin: '0 auto 36px', lineHeight: 1.6 }}>
-          Detect, forecast, and neutralize sophisticated cyber attacks before breach execution. Integrates real-time packet telemetry, automated SOAR playbooks, MITRE ATT&CK® mapping, and 1-click endpoint quarantine.
+        <p style={{ fontSize: '1.2rem', color: '#94a3b8', maxWidth: 820, margin: '0 auto 36px', lineHeight: 1.6 }}>
+          AEGIS-X intercepts, classifies, and neutralizes multi-vector cyber adversaries in sub-seconds. Powered by real-time packet telemetry, AI anomaly inference, MITRE ATT&CK® correlation, and automated IPS isolation.
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 50 }}>
@@ -371,17 +377,33 @@ export default function LandingPage() {
 
             {demoSubmitted ? (
               <div style={{ textAlign: 'center', padding: '24px 10px' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🛡️</div>
-                <h4 style={{ margin: '0 0 8px', fontSize: '1.1rem', color: '#38bdf8' }}>Demo Access Granted!</h4>
-                <p style={{ color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: 20 }}>
-                  You can immediately explore the live production SOC console using the credentials:
-                  <br /><b style={{ color: '#fff' }}>krrish183224@gmail.com</b> / <b style={{ color: '#fff' }}>183@Krrish</b>
+                <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🚀</div>
+                <h4 style={{ margin: '0 0 8px', fontSize: '1.2rem', color: '#38bdf8', fontWeight: 800 }}>
+                  Interactive Sandbox Provisioned!
+                </h4>
+                <p style={{ color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: 20 }}>
+                  A dedicated high-fidelity demonstration environment has been created for <b style={{ color: 'var(--accent-cyan)' }}>{demoForm.company || 'your organization'}</b> ({demoForm.endpoints || '50 - 250 Endpoints'}).
+                  <br />
+                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    Zero production credentials required. Fully isolated demonstration telemetry & attack scenario simulators active.
+                  </span>
                 </p>
                 <Link
-                  href="/login"
-                  style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 8, background: 'linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%)', color: '#fff', fontWeight: 700, textDecoration: 'none' }}
+                  href={`/demo?company=${encodeURIComponent(demoForm.company || 'Cyber Corp Global')}&name=${encodeURIComponent(demoForm.name || 'Alex Mercer')}&endpoints=${encodeURIComponent(demoForm.endpoints || '50-250')}`}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '12px 28px',
+                    borderRadius: 8,
+                    background: 'linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    boxShadow: '0 0 20px rgba(0, 212, 255, 0.4)',
+                  }}
                 >
-                  Enter SOC Console
+                  Launch Interactive Demo Sandbox ➔
                 </Link>
               </div>
             ) : (

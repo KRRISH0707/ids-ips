@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import AIPredictorCard from '@/components/AIPredictorCard';
+import ThreatPostureGauge from '@/components/ThreatPostureGauge';
+import CyberKillChain from '@/components/CyberKillChain';
+import GeoThreatRadar from '@/components/GeoThreatRadar';
 import { PageLayout, StatCard, SeverityBadge, StatusBadge, Spinner, EmptyState } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useLiveFeed } from '@/lib/useLiveFeed';
@@ -50,6 +53,18 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Compute dynamic threat score (0-100)
+  const threatScore = Math.min(
+    100,
+    Math.max(
+      32,
+      (alertStats?.critical_total || 0) * 12 +
+        (incidentStats?.critical_count || 0) * 18 +
+        (alertStats?.high_total || 0) * 4 +
+        (alertStats?.open_total || 0) * 2
+    )
+  );
+
   // Build pie data from alert stats
   const piData = alertStats ? [
     { name: 'Critical', value: alertStats.critical_total || 0, color: '#ef4444' },
@@ -63,14 +78,27 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title glow-text">Security Dashboard</h1>
-          <p className="page-subtitle">Real-time threat visibility & operations overview</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 900 }} className="glow-gradient">AEGIS-X</span>
+            <span style={{ fontSize: '0.68rem', color: 'var(--accent-cyan)', background: 'rgba(0, 212, 255, 0.1)', padding: '2px 8px', borderRadius: 4, border: '1px solid rgba(0, 212, 255, 0.3)', fontFamily: 'JetBrains Mono', fontWeight: 700 }}>
+              PRODUCTION SOC
+            </span>
+          </div>
+          <h1 className="page-title glow-text" style={{ fontSize: '1.5rem', fontWeight: 800 }}>Autonomous Threat Command Center</h1>
+          <p className="page-subtitle">Real-time threat posture, multi-vector kill chain & autonomous neural IPS mitigation</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div className={isConnected ? 'live-dot' : ''} style={!isConnected ? { width: 8, height: 8, borderRadius: '50%', background: 'var(--text-muted)' } : {}}/>
-          <span style={{ fontSize: '0.78rem', color: isConnected ? 'var(--accent-green)' : 'var(--text-muted)' }}>
-            {isConnected ? 'LIVE' : 'OFFLINE'}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '4px 12px', borderRadius: 20,
+            background: isConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+            border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(100, 116, 139, 0.3)'}`,
+          }}>
+            <div className={isConnected ? 'live-dot' : ''} style={!isConnected ? { width: 8, height: 8, borderRadius: '50%', background: 'var(--text-muted)' } : {}}/>
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: isConnected ? 'var(--accent-green)' : 'var(--text-muted)' }}>
+              {isConnected ? 'LIVE TELEMETRY STREAM' : 'OFFLINE'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -80,7 +108,7 @@ export default function DashboardPage() {
             {/* KPI row */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
               <StatCard
-                label="Open Alerts"
+                label="Open Threats"
                 value={alertStats?.open_total ?? 0}
                 color="var(--sev-critical)"
                 delta={`${alertStats?.last_24h ?? 0} in last 24h`}
@@ -92,17 +120,37 @@ export default function DashboardPage() {
                 delta={`${incidentStats?.critical_count ?? 0} critical`}
               />
               <StatCard
-                label="Critical Alerts"
+                label="Critical Detections"
                 value={alertStats?.critical_total ?? 0}
                 color="#ef4444"
                 delta={`${alertStats?.last_hour ?? 0} in last hour`}
               />
               <StatCard
-                label="Blocked IPs"
+                label="Quarantined Attackers"
                 value={ipsStats?.active_blocks ?? 0}
                 color="var(--accent-purple)"
                 delta={`${ipsStats?.last_24h ?? 0} blocked today`}
               />
+            </div>
+
+            {/* Graphical Widget 1: Threat Posture Radial Gauge */}
+            <div style={{ marginBottom: 24 }}>
+              <ThreatPostureGauge
+                score={threatScore}
+                threatLevel={threatScore > 80 ? 'CRITICAL POSTURE' : threatScore > 60 ? 'ELEVATED RISK' : 'GUARDED DEFENSE'}
+                mttc="1.2s"
+                blockedCount={ipsStats?.active_blocks ?? 14}
+              />
+            </div>
+
+            {/* Graphical Widget 2: MITRE Cyber Kill Chain Pipeline */}
+            <div style={{ marginBottom: 24 }}>
+              <CyberKillChain />
+            </div>
+
+            {/* Graphical Widget 3: Geo Threat Origin & Asset Targeting Radar */}
+            <div style={{ marginBottom: 24 }}>
+              <GeoThreatRadar />
             </div>
 
             {/* AI/ML Predictive Defense Engine Card */}

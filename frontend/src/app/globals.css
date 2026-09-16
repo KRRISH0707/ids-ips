@@ -77,24 +77,78 @@ input, select, textarea { font-family: inherit; }
   background-size: 40px 40px;
 }
 
-/* ── Glass card ───────────────────────────────────────────────────────────── */
+/* ── Glass card & Cyber HUD ─────────────────────────────────────────────── */
 .glass-card {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  transition: border-color var(--ease-ui), box-shadow var(--ease-ui);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all var(--ease-ui);
+  position: relative;
 }
 .glass-card:hover {
   border-color: var(--border-normal);
-  box-shadow: 0 0 24px rgba(0, 212, 255, 0.06);
+  box-shadow: 0 0 28px rgba(0, 212, 255, 0.12), inset 0 1px 0 rgba(0, 212, 255, 0.1);
+  transform: translateY(-1px);
 }
 
-/* ── Glow text ────────────────────────────────────────────────────────────── */
+/* ── HUD Corner Accents ─────────────────────────────────────────────────── */
+.hud-card {
+  position: relative;
+  background: rgba(6, 13, 24, 0.75);
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  padding: 20px;
+}
+.hud-card::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: -1px;
+  width: 12px; height: 12px;
+  border-top: 2px solid var(--accent-cyan);
+  border-left: 2px solid var(--accent-cyan);
+  border-top-left-radius: 4px;
+}
+.hud-card::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; right: -1px;
+  width: 12px; height: 12px;
+  border-bottom: 2px solid var(--accent-cyan);
+  border-right: 2px solid var(--accent-cyan);
+  border-bottom-right-radius: 4px;
+}
+
+/* ── Glow text & Gradients ──────────────────────────────────────────────── */
 .glow-text {
   color: var(--accent-cyan);
   text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+.glow-gradient {
+  background: linear-gradient(135deg, #00d4ff 0%, #a855f7 50%, #f43f5e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.glow-border {
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+}
+
+/* ── Cyber Badge & Status ───────────────────────────────────────────────── */
+.cyber-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* ── Badge / pill ─────────────────────────────────────────────────────────── */

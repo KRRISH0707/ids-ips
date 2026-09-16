@@ -45,26 +45,31 @@ export default function LoginPage() {
         pointerEvents: 'none',
       }}/>
 
-      <div className="glass-card fade-in" style={{ width: '100%', maxWidth: 420, padding: '40px 36px' }}>
+      <div className="hud-card fade-in" style={{ width: '100%', maxWidth: 440, padding: '44px 38px', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 212, 255, 0.12)' }}>
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{
-            width: 56, height: 56,
-            background: 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(124,58,237,0.15))',
+            width: 60, height: 60,
+            background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(124,58,237,0.25))',
             border: '1px solid var(--border-bright)',
             borderRadius: 16,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 16px',
+            boxShadow: '0 0 25px rgba(0, 212, 255, 0.3)',
           }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" strokeWidth="1.8">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
           </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-            IDS / IPS Platform
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 20, background: 'rgba(0, 212, 255, 0.08)', border: '1px solid rgba(0, 212, 255, 0.25)', marginBottom: 8 }}>
+            <span className="live-dot" style={{ width: 6, height: 6 }} />
+            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-cyan)', letterSpacing: '0.06em' }}>AUTONOMOUS IDS/IPS</span>
+          </div>
+          <h1 style={{ fontSize: '1.7rem', fontWeight: 900, letterSpacing: '0.02em', margin: 0 }}>
+            <span className="glow-gradient">AEGIS-X</span>
           </h1>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>
-            Enterprise Security Operations Centre
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4, letterSpacing: '0.04em' }}>
+            NEURAL THREAT INTERCEPTOR & SOC CONSOLE
           </p>
         </div>
 
@@ -130,24 +135,42 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <Link
-            href="/landing"
+            href="/demo"
             style={{
-              fontSize: '0.8rem',
+              padding: '8px 14px',
+              borderRadius: 8,
+              background: 'rgba(0, 212, 255, 0.08)',
+              border: '1px solid rgba(0, 212, 255, 0.25)',
+              fontSize: '0.82rem',
               color: 'var(--accent-cyan)',
               textDecoration: 'none',
-              fontWeight: 600,
+              fontWeight: 700,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6
             }}
           >
-            ← View Commercial Product Portal & Pricing
+            <span>🎮</span> Testing or Evaluating? Launch Demo Sandbox ➔
           </Link>
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            Authorised access only · All activity is monitored and logged
+          <Link
+            href="/landing"
+            style={{
+              fontSize: '0.78rem',
+              color: 'var(--text-secondary)',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4
+            }}
+          >
+            ← Product Overview & Architecture
+          </Link>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: 4 }}>
+            Authorised access only · All telemetry recorded and cryptographically signed
           </p>
         </div>
       </div>
