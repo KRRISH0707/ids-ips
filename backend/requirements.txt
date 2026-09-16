@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+psycopg[binary]
+pydantic
+pydantic-settings
+kafka-python-ng
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+redis[hiredis]
+prometheus-client
+websockets
+httpx

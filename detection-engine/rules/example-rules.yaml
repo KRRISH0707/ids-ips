@@ -1,0 +1,18 @@
+rules:
+  - id: DET-PORTSCAN-001
+    name: High-rate port scanning
+    enabled: true
+    severity: HIGH
+    threshold:
+      unique_destination_ports: 20
+      window_seconds: 60
+    action: ALERT
+
+  - id: DET-BRUTEFORCE-001
+    name: Authentication failure burst
+    enabled: true
+    severity: HIGH
+    threshold:
+      failures: 20
+      window_seconds: 60
+    action: ALERT

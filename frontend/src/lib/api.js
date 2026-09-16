@@ -1,0 +1,118 @@
+/**
+ * Thin API client that wraps fetch with auth headers.
+ * Reads the JWT from sessionStorage (set on login).
+ */
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+function getToken() {
+  if (typeof window === 'undefined') return null;
+  return sessionStorage.getItem('ids_token');
+}
+
+export function setToken(token) {
+  sessionStorage.setItem('ids_token', token);
+}
+
+export function clearToken() {
+  sessionStorage.removeItem('ids_token');
+  sessionStorage.removeItem('ids_user');
+}
+
+export function getUser() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return JSON.parse(sessionStorage.getItem('ids_user') || 'null');
+  } catch {
+    return null;
+  }
+}
+
+export function setUser(user) {
+  sessionStorage.setItem('ids_user', JSON.stringify(user));
+}
+
+async function request(path, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  const res = await fetch(`${API_BASE}/api${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (res.status === 401) {
+    clearToken();
+    if (typeof window !== 'undefined') window.location.href = '/login';
+    throw new Error('Unauthorized');
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || 'API error');
+  }
+
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+export const api = {
+  async login(email, password) {
+    const body = new URLSearchParams({ username: email, password });
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Login failed');
+    }
+    return res.json();
+  },
+
+  // ── Alerts ────────────────────────────────────────────────────────────────
+  getAlerts: (params = {}) => request('/alerts?' + new URLSearchParams(params)),
+  getAlertsSummary: () => request('/alerts/stats/summary'),
+  updateAlertStatus: (id, status_) =>
+    request(`/alerts/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: status_ }) }),
+
+  // ── Incidents ─────────────────────────────────────────────────────────────
+  getIncidents: (params = {}) => request('/incidents?' + new URLSearchParams(params)),
+  getIncidentsSummary: () => request('/incidents/stats/summary'),
+  createIncident: (data) => request('/incidents', { method: 'POST', body: JSON.stringify(data) }),
+  updateIncidentStatus: (id, data) =>
+    request(`/incidents/${id}/status`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  // ── Sensors ───────────────────────────────────────────────────────────────
+  getSensors: () => request('/sensors'),
+  registerSensor: (data) => request('/sensors', { method: 'POST', body: JSON.stringify(data) }),
+
+  // ── Rules ─────────────────────────────────────────────────────────────────
+  getRules: (params = {}) => request('/rules?' + new URLSearchParams(params)),
+  createRule: (data) => request('/rules', { method: 'POST', body: JSON.stringify(data) }),
+  toggleRule: (id) => request(`/rules/${id}/toggle`, { method: 'PATCH' }),
+  deleteRule: (id) => request(`/rules/${id}`, { method: 'DELETE' }),
+
+  // ── IPS Actions ───────────────────────────────────────────────────────────
+  getBlockedIPs: (params = {}) => request('/ips-actions?' + new URLSearchParams(params)),
+  getIPSStats: () => request('/ips-actions/stats/summary'),
+  blockIP: (data) => request('/ips-actions', { method: 'POST', body: JSON.stringify(data) }),
+  unblockIP: (id, reason) =>
+    request(`/ips-actions/${id}`, { method: 'DELETE', body: JSON.stringify({ reason }) }),
+
+  // ── Audit Logs ────────────────────────────────────────────────────────────
+  getAuditLogs: (params = {}) => request('/audit-logs?' + new URLSearchParams(params)),
+
+  // ── Users ─────────────────────────────────────────────────────────────────
+  getUsers: () => request('/users'),
+  createUser: (data) => request('/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateUser: (id, data) =>
+    request(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteUser: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+};

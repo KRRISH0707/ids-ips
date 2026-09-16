@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: idsips
+    env: production
+
+scrape_configs:
+  - job_name: idsips-api
+    metrics_path: /api/metrics
+    static_configs:
+      - targets: ["backend:8000"]
+    scrape_interval: 15s
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
