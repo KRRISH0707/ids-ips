@@ -396,3 +396,50 @@ input, select, textarea { font-family: inherit; }
 
 @keyframes slide-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
 .slide-in { animation: slide-in 0.25s ease forwards; }
+
+/* ── Tactical Cyber Spectacle Tokens ───────────────────────────────────────── */
+@keyframes cyber-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.cyber-shimmer {
+  background: linear-gradient(90deg, rgba(0,212,255,0.08), rgba(124,58,237,0.18), rgba(0,212,255,0.08));
+  background-size: 200% 200%;
+  animation: cyber-shimmer 4s ease infinite;
+}
+
+.radar-sweep-container {
+  position: relative;
+  overflow: hidden;
+}
+.radar-sweep-container::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 212, 255, 0.04) 50%, transparent 100%);
+  pointer-events: none;
+  animation: radar-sweep 6s linear infinite;
+}
+@keyframes radar-sweep {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.btn-tactical {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+.btn-tactical:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.35);
+}

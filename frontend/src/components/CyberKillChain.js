@@ -1,6 +1,6 @@
 'use client';
 
-export default function CyberKillChain({ stages = null }) {
+export default function CyberKillChain({ stages = null, activeStageIndex = null }) {
   // Default enterprise stages if not passed
   const defaultStages = [
     { name: '1. Reconnaissance', count: 128, severity: 'LOW', color: '#10b981', status: 'Monitored', desc: 'Port scans & service probes' },
@@ -30,19 +30,24 @@ export default function CyberKillChain({ stages = null }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, position: 'relative' }}>
-        {data.map((stage, i) => (
-          <div
-            key={i}
-            style={{
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: `1px solid ${stage.color}33`,
-              borderRadius: 12,
-              padding: '14px 14px 12px',
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'all 0.2s ease',
-            }}
-          >
+        {data.map((stage, i) => {
+          const isCurrentActive = activeStageIndex === i;
+
+          return (
+            <div
+              key={i}
+              style={{
+                background: isCurrentActive ? `${stage.color}15` : 'rgba(255, 255, 255, 0.02)',
+                border: isCurrentActive ? `2px solid ${stage.color}` : `1px solid ${stage.color}33`,
+                boxShadow: isCurrentActive ? `0 0 20px ${stage.color}44` : 'none',
+                borderRadius: 12,
+                padding: '14px 14px 12px',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.25s ease',
+                transform: isCurrentActive ? 'scale(1.02)' : 'none',
+              }}
+            >
             {/* Top Accent Line */}
             <div style={{
               position: 'absolute',
@@ -80,7 +85,8 @@ export default function CyberKillChain({ stages = null }) {
               {stage.desc}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

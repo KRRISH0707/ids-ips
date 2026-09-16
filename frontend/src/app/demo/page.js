@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import ThreatPostureGauge from '@/components/ThreatPostureGauge';
 import CyberKillChain from '@/components/CyberKillChain';
 import GeoThreatRadar from '@/components/GeoThreatRadar';
+import AttackLabPanel from '@/components/AttackLabPanel';
 import { StatCard, SeverityBadge, StatusBadge } from '@/components/ui';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -24,6 +25,7 @@ function DemoDashboardContent() {
   const [threatLevel, setThreatLevel] = useState('GUARDED / ELEVATED');
   const [mttc, setMttc] = useState('1.2s');
   const [blockedCount, setBlockedCount] = useState(3842);
+  const [activeKillChainStage, setActiveKillChainStage] = useState(null);
 
   // Simulated live events list
   const [events, setEvents] = useState([
@@ -92,68 +94,36 @@ function DemoDashboardContent() {
     { time: '16:00', packets: 9100, anomalies: 9 },
   ]);
 
-  // Trigger interactive attack simulation
-  const triggerSimulation = (type) => {
-    setActiveScenario(type);
-    if (type === 'RANSOMWARE') {
-      setThreatScore(96);
-      setThreatLevel('CRITICAL RANSOMWARE STRIKE');
-      setMttc('0.8s (Autonomous Isolation)');
-      setBlockedCount((prev) => prev + 14);
-      setEvents((prev) => [
-        {
-          id: `EVT-${Math.floor(Math.random() * 9000 + 1000)}`,
-          time: 'Active Strike',
-          signature: 'RANSOMWARE LockBit 3.0 vssadmin Shadow Copy Delete',
-          src_ip: '10.240.15.89 (Compromised Workstation)',
-          dst_ip: '10.240.10.4 (corp-ad-dc01.internal)',
-          severity: 'CRITICAL',
-          status: 'HOST_ISOLATED',
-          action: 'Host Isolated & Zero-Trust Block',
-        },
-        ...prev,
-      ]);
-    } else if (type === 'COBALT_STRIKE') {
-      setThreatScore(84);
-      setThreatLevel('APT C2 BEACONING DETECTED');
-      setMttc('1.1s');
-      setBlockedCount((prev) => prev + 5);
-      setEvents((prev) => [
-        {
-          id: `EVT-${Math.floor(Math.random() * 9000 + 1000)}`,
-          time: 'Active Strike',
-          signature: 'APT29 Cobalt Strike Malleable DNS Tunnel Exfil',
-          src_ip: '194.26.29.112 (Rogue External C2)',
-          dst_ip: '10.240.20.88 (db-cust-vault.prod)',
-          severity: 'CRITICAL',
-          status: 'AUTO_BLOCKED',
-          action: 'Egress Severed by Firewall',
-        },
-        ...prev,
-      ]);
-    } else if (type === 'LOG4J') {
-      setThreatScore(78);
-      setThreatLevel('EXPLOIT PROBE WAVE');
-      setMttc('1.4s');
-      setBlockedCount((prev) => prev + 8);
-      setEvents((prev) => [
-        {
-          id: `EVT-${Math.floor(Math.random() * 9000 + 1000)}`,
-          time: 'Active Strike',
-          signature: 'Log4j JNDI LDAP Callback Probe (${jndi:ldap://...})',
-          src_ip: '185.220.101.5',
-          dst_ip: '10.240.10.12 (k8s-ingress-proxy.dmz)',
-          severity: 'HIGH',
-          status: 'AUTO_BLOCKED',
-          action: 'Payload Dropped at Perimeter',
-        },
-        ...prev,
-      ]);
-    } else {
-      setThreatScore(64);
-      setThreatLevel('GUARDED / ELEVATED');
-      setMttc('1.2s');
-    }
+  // Handle Attack Scenario Triggered from AttackLabPanel
+  const handleAttackTriggered = (attack) => {
+    setActiveScenario(attack.key);
+    setThreatScore(attack.threatScore);
+    setThreatLevel(`${attack.badge} // ${attack.name}`);
+    setMttc(attack.mttc);
+    setBlockedCount((prev) => prev + 1);
+    setActiveKillChainStage(attack.killChainStage);
+
+    setEvents((prev) => [
+      {
+        id: `EVT-${Math.floor(Math.random() * 9000 + 1000)}`,
+        time: 'Just now',
+        signature: `${attack.name} (${attack.cve.split(' ')[0]})`,
+        src_ip: `${attack.attackerIp} (${attack.attackerAsn.split(' ')[0]})`,
+        dst_ip: attack.targetAsset,
+        severity: attack.badge,
+        status: 'AUTO_CONTAINED',
+        action: attack.resolutionSteps[attack.resolutionSteps.length - 1].text,
+      },
+      ...prev,
+    ]);
+  };
+
+  const handleResetBaseline = () => {
+    setActiveScenario('NORMAL');
+    setThreatScore(64);
+    setThreatLevel('GUARDED / ELEVATED');
+    setMttc('1.2s');
+    setActiveKillChainStage(null);
   };
 
   return (
@@ -240,73 +210,14 @@ function DemoDashboardContent() {
             </div>
           </div>
 
-          {/* Interactive Simulation Controls */}
-          <div className="glass-card" style={{ padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 10, border: '1px solid rgba(0, 212, 255, 0.3)' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>🎮</span> Test Threat Scenarios:
-            </span>
-            <button
-              onClick={() => triggerSimulation('RANSOMWARE')}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 6,
-                background: activeScenario === 'RANSOMWARE' ? '#ef4444' : 'rgba(239, 68, 68, 0.15)',
-                border: '1px solid rgba(239, 68, 68, 0.4)',
-                color: '#fff',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              ☣️ LockBit Ransomware
-            </button>
-            <button
-              onClick={() => triggerSimulation('COBALT_STRIKE')}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 6,
-                background: activeScenario === 'COBALT_STRIKE' ? '#a855f7' : 'rgba(168, 85, 247, 0.15)',
-                border: '1px solid rgba(168, 85, 247, 0.4)',
-                color: '#fff',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              ⚡ Cobalt Strike C2
-            </button>
-            <button
-              onClick={() => triggerSimulation('LOG4J')}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 6,
-                background: activeScenario === 'LOG4J' ? '#f59e0b' : 'rgba(245, 158, 11, 0.15)',
-                border: '1px solid rgba(245, 158, 11, 0.4)',
-                color: '#fff',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              💥 Log4j 0-Day RCE
-            </button>
-            {activeScenario !== 'NORMAL' && (
-              <button
-                onClick={() => triggerSimulation('NORMAL')}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: 6,
-                  background: 'transparent',
-                  border: '1px solid var(--border-normal)',
-                  color: 'var(--text-muted)',
-                  fontSize: '0.75rem',
-                  cursor: 'pointer',
-                }}
-              >
-                Reset
-              </button>
-            )}
-          </div>
+        </div>
+
+        {/* Tactical Attack Simulation Laboratory & Autonomous Resolution Pipeline */}
+        <div style={{ marginBottom: 24 }}>
+          <AttackLabPanel
+            onAttackTriggered={handleAttackTriggered}
+            onResetBaseline={handleResetBaseline}
+          />
         </div>
 
         {/* Row 1: KPI Stat Cards */}
@@ -349,7 +260,7 @@ function DemoDashboardContent() {
 
         {/* Row 3: Cyber Kill Chain Trajectory Pipeline */}
         <div style={{ marginBottom: 20 }}>
-          <CyberKillChain />
+          <CyberKillChain activeStageIndex={activeKillChainStage} />
         </div>
 
         {/* Row 4: Geo Radar & Traffic Velocity Chart */}

@@ -6,6 +6,7 @@ import AIPredictorCard from '@/components/AIPredictorCard';
 import ThreatPostureGauge from '@/components/ThreatPostureGauge';
 import CyberKillChain from '@/components/CyberKillChain';
 import GeoThreatRadar from '@/components/GeoThreatRadar';
+import AttackLabPanel from '@/components/AttackLabPanel';
 import { PageLayout, StatCard, SeverityBadge, StatusBadge, Spinner, EmptyState } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useLiveFeed } from '@/lib/useLiveFeed';
@@ -28,6 +29,18 @@ export default function DashboardPage() {
   const [recentAlerts, setRecentAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { messages: liveMessages, isConnected } = useLiveFeed(20);
+  const [activeKillChainStage, setActiveKillChainStage] = useState(null);
+  const [simulatedThreatScore, setSimulatedThreatScore] = useState(null);
+
+  const handleAttackTriggered = (attack) => {
+    setActiveKillChainStage(attack.killChainStage);
+    setSimulatedThreatScore(attack.threatScore);
+  };
+
+  const handleResetBaseline = () => {
+    setActiveKillChainStage(null);
+    setSimulatedThreatScore(null);
+  };
 
   useEffect(() => {
     async function load() {
@@ -133,11 +146,19 @@ export default function DashboardPage() {
               />
             </div>
 
+            {/* Tactical Attack Simulation Laboratory & Autonomous Resolution Pipeline */}
+            <div style={{ marginBottom: 24 }}>
+              <AttackLabPanel
+                onAttackTriggered={handleAttackTriggered}
+                onResetBaseline={handleResetBaseline}
+              />
+            </div>
+
             {/* Graphical Widget 1: Threat Posture Radial Gauge */}
             <div style={{ marginBottom: 24 }}>
               <ThreatPostureGauge
-                score={threatScore}
-                threatLevel={threatScore > 80 ? 'CRITICAL POSTURE' : threatScore > 60 ? 'ELEVATED RISK' : 'GUARDED DEFENSE'}
+                score={simulatedThreatScore ?? threatScore}
+                threatLevel={(simulatedThreatScore ?? threatScore) > 80 ? 'CRITICAL POSTURE' : (simulatedThreatScore ?? threatScore) > 60 ? 'ELEVATED RISK' : 'GUARDED DEFENSE'}
                 mttc="1.2s"
                 blockedCount={ipsStats?.active_blocks ?? 14}
               />
@@ -145,7 +166,7 @@ export default function DashboardPage() {
 
             {/* Graphical Widget 2: MITRE Cyber Kill Chain Pipeline */}
             <div style={{ marginBottom: 24 }}>
-              <CyberKillChain />
+              <CyberKillChain activeStageIndex={activeKillChainStage} />
             </div>
 
             {/* Graphical Widget 3: Geo Threat Origin & Asset Targeting Radar */}
