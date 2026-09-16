@@ -1,25 +1,30 @@
 """
 Seed database with initial Admin user, default sensors, detection rules, and alerts using psycopg.
+Reads admin credentials from settings (ADMIN_EMAIL and ADMIN_PASSWORD env vars).
 """
 import sys
 import logging
+from app.core.config import get_settings
 from app.core.database import get_sync_connection
 from app.core.security import hash_password
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("seed")
+settings = get_settings()
 
 def seed():
     try:
         conn = get_sync_connection()
         with conn.cursor() as cur:
-            # 1. Create Default Admin User
-            admin_email = "admin@ids.local"
+            admin_email = settings.admin_email
+            admin_pw = settings.admin_password
+            hashed_pw = hash_password(admin_pw)
+
+            # 1. Create or Update Default Admin User
             cur.execute("SELECT id FROM users WHERE email = %s", (admin_email,))
             existing = cur.fetchone()
             
             if not existing:
-                hashed_pw = hash_password("AdminPassword1!")
                 cur.execute(
                     """
                     INSERT INTO users (email, hashed_password, full_name, role, is_active)
@@ -27,9 +32,15 @@ def seed():
                     """,
                     (admin_email, hashed_pw)
                 )
-                logger.info(f"Created default admin user: {admin_email}")
+                logger.info(f"Created admin user: {admin_email}")
             else:
-                logger.info(f"Admin user {admin_email} already exists.")
+                cur.execute(
+                    """
+                    UPDATE users SET hashed_password = %s WHERE email = %s
+                    """,
+                    (hashed_pw, admin_email)
+                )
+                logger.info(f"Updated password for admin user: {admin_email}")
 
             # 2. Create Default Sensor
             sensor_name = "Primary Edge Probe"
