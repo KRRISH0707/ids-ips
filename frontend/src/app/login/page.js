@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, setToken, setUser } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@ids.local');
+  const [email, setEmail] = useState('krrish183224@gmail.com');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -129,9 +130,26 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 24 }}>
-          Authorised access only · All activity is monitored and logged
-        </p>
+        <div style={{ textAlign: 'center', marginTop: 24, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <Link
+            href="/landing"
+            style={{
+              fontSize: '0.8rem',
+              color: 'var(--accent-cyan)',
+              textDecoration: 'none',
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6
+            }}
+          >
+            ← View Commercial Product Portal & Pricing
+          </Link>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+            Authorised access only · All activity is monitored and logged
+          </p>
+        </div>
       </div>
     </div>
   );

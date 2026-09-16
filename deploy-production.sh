@@ -38,8 +38,13 @@ echo -e "${CYAN}Detected Public Server IP:${NC} ${BOLD}${PUBLIC_IP}${NC}"
 DOMAIN="${1:-}"
 ADMIN_EMAIL="${2:-}"
 
+# Zero-Domain Fallback: If user has no company portal/domain yet, map public IP to sslip.io for free Let's Encrypt SSL
+DEFAULT_DOMAIN="${PUBLIC_IP}.sslip.io"
+
 if [ -z "$DOMAIN" ]; then
-    read -rp "Enter your company domain (e.g., soc.yourcompany.com or server IP): " DOMAIN
+    echo -e "${YELLOW}>> No domain? Press Enter to auto-generate a free SSL domain (${DEFAULT_DOMAIN}):${NC}"
+    read -rp "Enter your company domain [${DEFAULT_DOMAIN}]: " INPUT_DOMAIN
+    DOMAIN=${INPUT_DOMAIN:-$DEFAULT_DOMAIN}
 fi
 
 if [ -z "$ADMIN_EMAIL" ]; then
@@ -51,8 +56,8 @@ read -rsp "Enter platform admin password [Default: 183@Krrish]: " ADMIN_PASSWORD
 echo ""
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-183@Krrish}
 
-echo -e "\n${GREEN}>> Deploying for Domain:${NC} ${BOLD}${DOMAIN}${NC}"
-echo -e "${GREEN}>> Administrator Email:${NC} ${BOLD}${ADMIN_EMAIL}${NC}\n"
+echo -e "\n${GREEN}>> Deploying for Commercial Host:${NC} ${BOLD}https://${DOMAIN}${NC}"
+echo -e "${GREEN}>> Administrator Email:${NC}           ${BOLD}${ADMIN_EMAIL}${NC}\n"
 
 # Step 1: Install Docker & Docker Compose if missing
 echo -e "${CYAN}[1/6] Installing Prerequisites (Docker, Git, UFW)...${NC}"
@@ -157,14 +162,15 @@ echo -e "\n${GREEN}${BOLD}======================================================
 echo -e "${GREEN}${BOLD}  ENTERPRISE IDS/IPS PRODUCTION DEPLOYMENT SUCCESSFUL!           ${NC}"
 echo -e "${GREEN}${BOLD}=================================================================${NC}"
 echo -e "Access your commercial platform:"
-echo -e "  🌐 ${BOLD}SOC Portal (HTTPS):${NC}    https://${DOMAIN}"
-echo -e "  📡 ${BOLD}REST API Docs:${NC}          https://${DOMAIN}/api/docs"
-echo -e "  📊 ${BOLD}Grafana Telemetry:${NC}      https://${DOMAIN}/grafana"
+echo -e "  🌐 ${BOLD}Company Portal & Showcase:${NC} https://${DOMAIN}/landing"
+echo -e "  🛡️ ${BOLD}SOC Security Console:${NC}     https://${DOMAIN}/login"
+echo -e "  📡 ${BOLD}REST API Swagger Docs:${NC}    https://${DOMAIN}/api/docs"
+echo -e "  📊 ${BOLD}Grafana SOC Telemetry:${NC}    https://${DOMAIN}/grafana"
 echo -e ""
 echo -e "Authentication Credentials:"
-echo -e "  👤 ${BOLD}Admin Email:${NC}           ${ADMIN_EMAIL}"
-echo -e "  🔑 ${BOLD}Admin Password:${NC}        ${ADMIN_PASSWORD}"
-echo -e "  📈 ${BOLD}Grafana Password:${NC}      ${GRAFANA_PASSWORD}"
+echo -e "  👤 ${BOLD}Admin Email:${NC}               ${ADMIN_EMAIL}"
+echo -e "  🔑 ${BOLD}Admin Password:${NC}            ${ADMIN_PASSWORD}"
+echo -e "  📈 ${BOLD}Grafana Password:${NC}          ${GRAFANA_PASSWORD}"
 echo -e ""
 echo -e "System Management Commands:"
 echo -e "  • Check Stack Status:   docker compose --env-file .env.production -f docker-compose.prod.yml ps"

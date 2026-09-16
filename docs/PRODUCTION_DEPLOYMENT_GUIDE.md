@@ -31,8 +31,19 @@ This guide walks through deploying the Enterprise IDS/IPS platform as a standalo
 
 ---
 
-## 🌐 Step 2: Configure Company DNS
+---
 
+## 🌐 Step 2: Configure Host / Domain
+
+### Option A: You DO NOT Have a Company Domain Yet (Instant Zero-Domain Launch)
+You do **not** need to buy a domain or build a separate company website.
+1. The platform includes a **Commercial Product Landing Page & Customer Showcase** built directly in at `/landing`.
+2. When running the deployer, simply press `Enter` to use **`sslip.io`** (e.g. `54.210.12.34.sslip.io`).
+   - `sslip.io` is a free DNS mapping service that resolves directly to your cloud server's public IP.
+   - Let's Encrypt recognizes `*.sslip.io` as a valid FQDN and automatically issues a **free, 100% browser-trusted SSL certificate** with a green lock!
+   - Zero cost, zero waiting for DNS propagation.
+
+### Option B: You Have a Custom Company Domain (e.g., `soc.yourcompany.com`)
 1. Go to your domain registrar or DNS management console (Cloudflare, AWS Route53, GoDaddy, Namecheap).
 2. Add an **A Record**:
    - **Host / Name**: `soc` (or `@` for root domain)
@@ -78,13 +89,15 @@ This guide walks through deploying the Enterprise IDS/IPS platform as a standalo
 ## 🔒 Step 4: Access Your Commercial Product
 
 Once the script finishes:
-- **SOC Executive Dashboard**: `https://soc.yourcompany.com`
-- **Interactive Network Topology**: `https://soc.yourcompany.com/topology`
-- **SOAR Incident Playbooks**: `https://soc.yourcompany.com/playbooks`
-- **MITRE ATT&CK Matrix**: `https://soc.yourcompany.com/mitre`
-- **Threat Intelligence Hub**: `https://soc.yourcompany.com/threat-intel`
-- **REST API Swagger Documentation**: `https://soc.yourcompany.com/api/docs`
-- **Grafana Deep Telemetry**: `https://soc.yourcompany.com/grafana`
+- **Commercial Product Showcase & Portal**: `https://<YOUR-HOST>/landing` (Customer-facing showcase, pricing, lead generation, agent downloads)
+- **SOC Executive Dashboard**: `https://<YOUR-HOST>`
+- **SOC Security Console Login**: `https://<YOUR-HOST>/login`
+- **Interactive Network Topology**: `https://<YOUR-HOST>/topology`
+- **SOAR Incident Playbooks**: `https://<YOUR-HOST>/playbooks`
+- **MITRE ATT&CK Matrix**: `https://<YOUR-HOST>/mitre`
+- **Threat Intelligence Hub**: `https://<YOUR-HOST>/threat-intel`
+- **REST API Swagger Documentation**: `https://<YOUR-HOST>/api/docs`
+- **Grafana Deep Telemetry**: `https://<YOUR-HOST>/grafana`
 
 Default Admin Credentials:
 - **Email**: `krrish183224@gmail.com`
