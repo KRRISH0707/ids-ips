@@ -1,0 +1,225 @@
+services:
+  # ── Hardened Production Reverse Proxy & SSL Termination ──────────────────────
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: idsips-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/www/certbot
+    depends_on:
+      - frontend
+      - backend
+      - grafana
+    networks:
+      - idsips-net
+
+  # ── Automated SSL Renewal via Certbot ────────────────────────────────────────
+  certbot:
+    image: certbot/certbot:latest
+    container_name: idsips-certbot
+    restart: always
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - idsips-net
+
+  # ── Frontend Next.js SOC Dashboard ──────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: idsips-frontend
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    depends_on:
+      - backend
+    networks:
+      - idsips-net
+
+  # ── FastAPI Enterprise Core API ──────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: idsips-backend
+    restart: always
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-idsips}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-idsips}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redissecurepass}@redis:6379/0
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - OPENSEARCH_URL=http://opensearch:9200
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://*}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-krrish183224@gmail.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-183@Krrish}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - idsips-net
+
+  # ── Real-Time Detection & Anomaly Engine ─────────────────────────────────────
+  detection-engine:
+    build:
+      context: ./detection-engine
+      dockerfile: Dockerfile
+    container_name: idsips-detection-engine
+    restart: always
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-idsips}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-idsips}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redissecurepass}@redis:6379/0
+      - OPENSEARCH_URL=http://opensearch:9200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - idsips-net
+
+  # ── IPS Controller (Firewall & Host Quarantine) ──────────────────────────────
+  ips-controller:
+    build:
+      context: ./ips-controller
+      dockerfile: Dockerfile
+    container_name: idsips-ips-controller
+    restart: always
+    environment:
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redissecurepass}@redis:6379/0
+      - IPS_SIMULATION_MODE=${IPS_SIMULATION_MODE:-false}
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - idsips-net
+
+  # ── Primary Relational Database (PostgreSQL 16) ──────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: idsips-postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-idsips}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-idsips}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-idsips} -d ${POSTGRES_DB:-idsips}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - idsips-net
+
+  # ── High-Speed Cache & Event Bus (Redis 7) ───────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: idsips-redis
+    restart: always
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-redissecurepass}"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redissecurepass}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - idsips-net
+
+  # ── Streaming Event Broker (Kafka) ──────────────────────────────────────────
+  kafka:
+    image: apache/kafka:3.8.1
+    container_name: idsips-kafka
+    restart: always
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+    networks:
+      - idsips-net
+
+  # ── Unstructured Threat Analytics (OpenSearch) ──────────────────────────────
+  opensearch:
+    image: opensearchproject/opensearch:2.17.1
+    container_name: idsips-opensearch
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks:
+      - idsips-net
+
+  # ── Observability & Telemetry (Prometheus) ───────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: idsips-prometheus
+    restart: always
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    networks:
+      - idsips-net
+
+  # ── Security Telemetry Visualizer (Grafana) ──────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: idsips-grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-AdminSecure2026!}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana/
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - idsips-net
+
+networks:
+  idsips-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  opensearch-data:
+  prometheus-data:
+  grafana-data:
+  certbot-etc:
+  certbot-var:

@@ -1,0 +1,47 @@
+name: Production Deployment CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate Docker Compose Configurations
+        run: |
+          docker compose -f docker-compose.yml config > /dev/null
+          docker compose -f docker-compose.prod.yml config > /dev/null
+          echo "Docker Compose configurations verified successfully."
+
+  deploy-to-cloud:
+    needs: test-and-verify
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to Cloud VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        if: env.SERVER_HOST != ''
+        env:
+          SERVER_HOST: ${{ secrets.PRODUCTION_SERVER_HOST }}
+        with:
+          host: ${{ secrets.PRODUCTION_SERVER_HOST }}
+          username: ${{ secrets.PRODUCTION_SERVER_USER || 'ubuntu' }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
+          script: |
+            set -e
+            echo ">> Deploying latest release to $(hostname)..."
+            cd /opt/ids-ips || cd ~/ids-ips || cd /var/www/ids-ips
+            git pull origin main
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+            echo ">> Deployment completed successfully!"
