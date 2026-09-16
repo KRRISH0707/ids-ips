@@ -185,3 +185,96 @@ def delete_sensor(
         resource="sensors",
         resource_id=str(sensor_id),
     )
+
+
+def _publish_isolation_event(action: str, sensor: dict):
+    import json
+    from ..core.redis_client import get_sync_redis
+    try:
+        r = get_sync_redis()
+        msg = {
+            "action": action,
+            "sensor_id": str(sensor["id"]),
+            "hostname": sensor.get("hostname"),
+            "ip_address": sensor.get("ip_address"),
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        r.publish("ips:host_isolation", json.dumps(msg))
+    except Exception:
+        pass
+
+
+@router.post("/{sensor_id}/isolate")
+def isolate_sensor(
+    sensor_id: UUID,
+    request: Request,
+    current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
+):
+    """Isolate and quarantine a compromised machine from the network."""
+    with get_sync_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE sensors
+                SET status = 'ISOLATED'
+                WHERE id = %s
+                RETURNING {_SELECT_COLS}
+                """,
+                (str(sensor_id),),
+            )
+            updated = cur.fetchone()
+            conn.commit()
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Sensor not found")
+
+    _publish_isolation_event("ISOLATE", updated)
+
+    write_audit_log(
+        actor_id=current_user["id"],
+        actor=current_user["email"],
+        action="MACHINE_ISOLATED",
+        resource="sensors",
+        resource_id=str(sensor_id),
+        details={"hostname": updated["hostname"], "ip": updated["ip_address"]},
+        source_ip=request.client.host if request.client else None,
+    )
+    return {"status": "success", "message": f"Host {updated['hostname']} quarantined & isolated from network", "sensor": updated}
+
+
+@router.post("/{sensor_id}/unisolate")
+def unisolate_sensor(
+    sensor_id: UUID,
+    request: Request,
+    current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
+):
+    """Restore normal network connectivity to a quarantined machine."""
+    with get_sync_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE sensors
+                SET status = 'ONLINE'
+                WHERE id = %s
+                RETURNING {_SELECT_COLS}
+                """,
+                (str(sensor_id),),
+            )
+            updated = cur.fetchone()
+            conn.commit()
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Sensor not found")
+
+    _publish_isolation_event("UNISOLATE", updated)
+
+    write_audit_log(
+        actor_id=current_user["id"],
+        actor=current_user["email"],
+        action="MACHINE_RESTORED",
+        resource="sensors",
+        resource_id=str(sensor_id),
+        details={"hostname": updated["hostname"], "ip": updated["ip_address"]},
+        source_ip=request.client.host if request.client else None,
+    )
+    return {"status": "success", "message": f"Host {updated['hostname']} restored to online state", "sensor": updated}

@@ -41,16 +41,83 @@ export default function SensorsPage() {
     }
   };
 
+  const [actionLoadingId, setActionLoadingId] = useState(null);
+
+  const handleIsolate = async (sensor) => {
+    if (!confirm(`Are you sure you want to QUARANTINE and ISOLATE host "${sensor.hostname}" (${sensor.ip_address}) from the network?`)) {
+      return;
+    }
+    try {
+      setActionLoadingId(sensor.id);
+      await api.isolateSensor(sensor.id);
+      await fetchSensors();
+    } catch (err) {
+      alert(`Isolation failed: ${err.message}`);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleUnisolate = async (sensor) => {
+    try {
+      setActionLoadingId(sensor.id);
+      await api.unisolateSensor(sensor.id);
+      await fetchSensors();
+    } catch (err) {
+      alert(`Restoration failed: ${err.message}`);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const isolatedCount = sensors.filter(s => s.status === 'ISOLATED').length;
+  const onlineCount = sensors.filter(s => s.status === 'ONLINE').length;
+
   return (
     <PageLayout sidebar={<Sidebar />}>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Network Sensors</h1>
-          <p className="page-subtitle">Monitored probes, inline agents, and packet capture nodes</p>
+          <h1 className="page-title">Network Sensors & Endpoints</h1>
+          <p className="page-subtitle">Monitored probes, inline agents, and automated machine quarantine</p>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
-          + Register Sensor
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {isolatedCount > 0 && (
+            <span style={{
+              background: 'rgba(239, 68, 68, 0.2)',
+              border: '1px solid var(--sev-critical)',
+              color: '#f87171',
+              padding: '6px 12px',
+              borderRadius: 6,
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block', animation: 'pulse 1.5s infinite' }}></span>
+              {isolatedCount} MACHINE{isolatedCount > 1 ? 'S' : ''} QUARANTINED
+            </span>
+          )}
+          <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
+            + Register Sensor
+          </button>
+        </div>
+      </div>
+
+      {/* Metric summary banner */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 20 }}>
+        <div className="glass-card" style={{ padding: '14px 20px', borderLeft: '4px solid var(--accent-primary)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Monitored</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: 4 }}>{sensors.length}</div>
+        </div>
+        <div className="glass-card" style={{ padding: '14px 20px', borderLeft: '4px solid #10b981' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Online</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#34d399', marginTop: 4 }}>{onlineCount}</div>
+        </div>
+        <div className="glass-card" style={{ padding: '14px 20px', borderLeft: '4px solid var(--sev-critical)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quarantined / Isolated</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: isolatedCount > 0 ? '#f87171' : 'var(--text-secondary)', marginTop: 4 }}>{isolatedCount}</div>
+        </div>
       </div>
 
       <div className="page-body">
@@ -72,24 +139,84 @@ export default function SensorsPage() {
                   <th>IP Address</th>
                   <th>Location</th>
                   <th>Status</th>
-                  <th>Created At</th>
+                  <th>Host Containment</th>
+                  <th>Registered</th>
                 </tr>
               </thead>
               <tbody>
-                {sensors.map((sensor) => (
-                  <tr key={sensor.id}>
-                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{sensor.name}</td>
-                    <td style={{ fontSize: '0.85rem' }}>{sensor.hostname}</td>
-                    <td style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>{sensor.ip_address}</td>
-                    <td style={{ fontSize: '0.85rem' }}>{sensor.location || 'N/A'}</td>
-                    <td>
-                      <StatusBadge status={sensor.status} />
-                    </td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      {sensor.created_at ? new Date(sensor.created_at).toLocaleString() : 'Never'}
-                    </td>
-                  </tr>
-                ))}
+                {sensors.map((sensor) => {
+                  const isIsolated = sensor.status === 'ISOLATED';
+                  const isBusy = actionLoadingId === sensor.id;
+                  return (
+                    <tr key={sensor.id} style={{ background: isIsolated ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {sensor.name}
+                      </td>
+                      <td style={{ fontSize: '0.85rem' }}>{sensor.hostname}</td>
+                      <td style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>{sensor.ip_address}</td>
+                      <td style={{ fontSize: '0.85rem' }}>{sensor.location || 'N/A'}</td>
+                      <td>
+                        {isIsolated ? (
+                          <span style={{
+                            background: 'rgba(239, 68, 68, 0.25)',
+                            border: '1px solid #ef4444',
+                            color: '#fca5a5',
+                            padding: '3px 8px',
+                            borderRadius: 4,
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.05em',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4
+                          }}>
+                            ISOLATED
+                          </span>
+                        ) : (
+                          <StatusBadge status={sensor.status} />
+                        )}
+                      </td>
+                      <td>
+                        {isIsolated ? (
+                          <button
+                            className="btn btn-sm"
+                            disabled={isBusy}
+                            onClick={() => handleUnisolate(sensor)}
+                            style={{
+                              background: 'rgba(16, 185, 129, 0.15)',
+                              border: '1px solid #10b981',
+                              color: '#34d399',
+                              fontSize: '0.75rem',
+                              padding: '4px 10px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {isBusy ? 'Restoring...' : 'Restore Access'}
+                          </button>
+                        ) : (
+                          <button
+                            className="btn btn-sm"
+                            disabled={isBusy}
+                            onClick={() => handleIsolate(sensor)}
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.15)',
+                              border: '1px solid #ef4444',
+                              color: '#f87171',
+                              fontSize: '0.75rem',
+                              padding: '4px 10px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {isBusy ? 'Quarantining...' : 'Isolate Machine'}
+                          </button>
+                        )}
+                      </td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        {sensor.created_at ? new Date(sensor.created_at).toLocaleString() : 'Never'}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

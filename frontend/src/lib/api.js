@@ -98,6 +98,12 @@ export const api = {
   // ── Sensors ───────────────────────────────────────────────────────────────
   getSensors: () => request('/sensors'),
   registerSensor: (data) => request('/sensors', { method: 'POST', body: JSON.stringify(data) }),
+  isolateSensor: (id) => request(`/sensors/${id}/isolate`, { method: 'POST' }),
+  unisolateSensor: (id) => request(`/sensors/${id}/unisolate`, { method: 'POST' }),
+
+  // ── AI Threat Intelligence ────────────────────────────────────────────────
+  getAIForecast: () => request('/ai/forecast'),
+  predictThreat: (data) => request('/ai/predict', { method: 'POST', body: JSON.stringify(data) }),
 
   // ── Rules ─────────────────────────────────────────────────────────────────
   getRules: (params = {}) => request('/rules?' + new URLSearchParams(params)),

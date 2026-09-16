@@ -24,6 +24,7 @@ from .core.config import get_settings
 from .core.database import get_sync_connection
 from .core.redis_client import get_sync_redis
 from .routes import (
+    ai_insights,
     alerts,
     audit_logs,
     auth,
@@ -136,4 +137,5 @@ app.include_router(rules.router,        prefix=PREFIX)
 app.include_router(ips_actions.router,  prefix=PREFIX)
 app.include_router(audit_logs.router,   prefix=PREFIX)
 app.include_router(metrics.router,      prefix=PREFIX)
+app.include_router(ai_insights.router,  prefix=PREFIX)
 app.include_router(ws.router,           prefix=PREFIX)

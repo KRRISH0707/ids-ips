@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
+import AIPredictorCard from '@/components/AIPredictorCard';
 import { PageLayout, StatCard, SeverityBadge, StatusBadge, Spinner, EmptyState } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useLiveFeed } from '@/lib/useLiveFeed';
@@ -102,6 +103,11 @@ export default function DashboardPage() {
                 color="var(--accent-purple)"
                 delta={`${ipsStats?.last_24h ?? 0} blocked today`}
               />
+            </div>
+
+            {/* AI/ML Predictive Defense Engine Card */}
+            <div style={{ marginBottom: 24 }}>
+              <AIPredictorCard />
             </div>
 
             {/* Charts row */}

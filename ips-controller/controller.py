@@ -90,6 +90,35 @@ def unblock_ip(ip: str, reason: str = "") -> bool:
     return True
 
 
+# ── Host Isolation & Quarantine Helpers ──────────────────────────────────────
+
+def isolate_host(hostname: str, ip: str, reason: str = "") -> bool:
+    """Quarantine a compromised endpoint from the network."""
+    if SIMULATION_MODE:
+        logger.warning("[SIM] 🛡️  HOST ISOLATED / QUARANTINED: %s (%s)  reason=%r", hostname, ip, reason)
+        return True
+
+    # Cut off inbound and outbound network traffic on Linux
+    _run(["iptables", "-I", "INPUT", "-s", ip, "-j", "DROP"])
+    _run(["iptables", "-I", "FORWARD", "-s", ip, "-j", "DROP"])
+    _run(["iptables", "-I", "FORWARD", "-d", ip, "-j", "DROP"])
+    logger.warning("🛡️  HOST ISOLATED / QUARANTINED: %s (%s) via iptables", hostname, ip)
+    return True
+
+
+def unisolate_host(hostname: str, ip: str, reason: str = "") -> bool:
+    """Lift quarantine and restore network access."""
+    if SIMULATION_MODE:
+        logger.info("[SIM] ✅  HOST RESTORED / UNISOLATED: %s (%s)  reason=%r", hostname, ip, reason)
+        return True
+
+    _run(["iptables", "-D", "INPUT", "-s", ip, "-j", "DROP"])
+    _run(["iptables", "-D", "FORWARD", "-s", ip, "-j", "DROP"])
+    _run(["iptables", "-D", "FORWARD", "-d", ip, "-j", "DROP"])
+    logger.info("✅  HOST RESTORED / UNISOLATED: %s (%s)", hostname, ip)
+    return True
+
+
 # ── Redis subscriber loop ─────────────────────────────────────────────────────
 
 def connect_redis() -> redis.Redis:
@@ -105,11 +134,11 @@ def connect_redis() -> redis.Redis:
             time.sleep(5)
 
 
-def handle_message(data: str) -> None:
+def handle_ips_message(data: str) -> None:
     try:
         payload = json.loads(data)
     except json.JSONDecodeError:
-        logger.warning("Received non-JSON message: %r", data)
+        logger.warning("Received non-JSON message on ips.actions: %r", data)
         return
 
     action = payload.get("action", "").upper()
@@ -127,16 +156,40 @@ def handle_message(data: str) -> None:
         logger.warning("Unknown IPS action: %r", action)
 
 
+def handle_isolation_message(data: str) -> None:
+    try:
+        payload = json.loads(data)
+    except json.JSONDecodeError:
+        logger.warning("Received non-JSON message on host_isolation: %r", data)
+        return
+
+    action = payload.get("action", "").upper()
+    hostname = payload.get("hostname", "unknown")
+    ip = payload.get("ip_address", "")
+
+    if action == "ISOLATE":
+        isolate_host(hostname, ip, reason="AI/Admin Triggered Machine Quarantine")
+    elif action == "UNISOLATE":
+        unisolate_host(hostname, ip, reason="Admin Approved Machine Restoration")
+    else:
+        logger.warning("Unknown isolation action: %r", action)
+
+
 def run() -> None:
     client = connect_redis()
     pubsub = client.pubsub()
-    pubsub.subscribe(CHANNEL)
-    logger.info("Subscribed to Redis channel: %s", CHANNEL)
+    channels = [CHANNEL, "ips:host_isolation"]
+    pubsub.subscribe(*channels)
+    logger.info("Subscribed to Redis channels: %s", channels)
 
     for message in pubsub.listen():
         if message["type"] != "message":
             continue
-        handle_message(message["data"])
+        channel = message["channel"]
+        if channel == CHANNEL:
+            handle_ips_message(message["data"])
+        elif channel == "ips:host_isolation":
+            handle_isolation_message(message["data"])
 
 
 if __name__ == "__main__":

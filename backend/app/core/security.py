@@ -6,6 +6,7 @@ import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from psycopg.types.json import Jsonb
 
 from .config import get_settings
 from .database import get_sync_connection
@@ -139,7 +140,7 @@ def write_audit_log(
                     action,
                     resource,
                     resource_id,
-                    details,
+                    Jsonb(details) if details is not None else None,
                     source_ip,
                 ),
             )
