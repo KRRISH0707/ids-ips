@@ -9,21 +9,21 @@ export default function AIPredictorCard() {
   const [evaluating, setEvaluating] = useState(false);
   const [testResult, setTestResult] = useState(null);
 
-  const fetchForecast = useCallback(async () => {
+  const fetchForecast = useCallback(async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
       const data = await api.getAIForecast();
       setForecast(data);
     } catch (err) {
       console.error('Failed to load AI threat forecast:', err);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchForecast();
-    const interval = setInterval(fetchForecast, 8000);
+    fetchForecast(true);
+    const interval = setInterval(() => fetchForecast(false), 30000);
     return () => clearInterval(interval);
   }, [fetchForecast]);
 

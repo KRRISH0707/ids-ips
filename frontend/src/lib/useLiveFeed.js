@@ -14,6 +14,7 @@ export function useLiveFeed(maxMessages = 50) {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
   const wsRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
 
   const connect = useCallback(() => {
     const token = getToken();
@@ -47,8 +48,8 @@ export function useLiveFeed(maxMessages = 50) {
     ws.onclose = (e) => {
       setIsConnected(false);
       if (e.code !== 1000) {
-        // Reconnect after 3s on unintentional close
-        setTimeout(connect, 3000);
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = setTimeout(connect, 5000);
       }
     };
   }, [maxMessages]);
@@ -56,6 +57,7 @@ export function useLiveFeed(maxMessages = 50) {
   useEffect(() => {
     connect();
     return () => {
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       wsRef.current?.close(1000, 'component unmounted');
     };
   }, [connect]);

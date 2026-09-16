@@ -16,9 +16,9 @@ export default function LandingPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#030712', color: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif' }}>
-      {/* Background ambient neon glow spheres */}
-      <div style={{ position: 'fixed', top: '-10%', left: '20%', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0, 212, 255, 0.08) 0%, transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none' }} />
-      <div style={{ position: 'fixed', bottom: '10%', right: '10%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, transparent 70%)', filter: 'blur(90px)', pointerEvents: 'none' }} />
+      {/* Background ambient neon glow spheres (optimized zero-overhead radial gradients) */}
+      <div style={{ position: 'fixed', top: '-10%', left: '20%', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0, 212, 255, 0.05) 0%, rgba(0, 212, 255, 0.01) 45%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', bottom: '10%', right: '10%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(124, 58, 237, 0.06) 0%, rgba(124, 58, 237, 0.01) 45%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
       {/* Navigation Bar */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 48px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100, background: 'rgba(3, 7, 18, 0.8)' }}>

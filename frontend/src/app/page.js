@@ -161,20 +161,22 @@ export default function DashboardPage() {
             {/* Charts row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16, marginBottom: 24 }}>
               {/* Severity pie */}
-              <div className="glass-card" style={{ padding: 24 }}>
+              <div className="glass-card" style={{ padding: 24, minWidth: 0, overflow: 'hidden' }}>
                 <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 20, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Alert Severity Distribution
                 </h3>
                 {piData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={220}>
-                    <PieChart>
-                      <Pie data={piData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value">
-                        {piData.map((entry, i) => <Cell key={i} fill={entry.color} stroke="transparent" />)}
-                      </Pie>
-                      <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)', fontSize: '0.82rem' }} />
-                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div style={{ width: '100%', height: 220, minWidth: 0 }}>
+                    <ResponsiveContainer width="100%" height={220} debounce={50}>
+                      <PieChart>
+                        <Pie data={piData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value">
+                          {piData.map((entry, i) => <Cell key={i} fill={entry.color} stroke="transparent" />)}
+                        </Pie>
+                        <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 8, color: 'var(--text-primary)', fontSize: '0.82rem' }} />
+                        <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
                 ) : (
                   <EmptyState message="No alert data" />
                 )}

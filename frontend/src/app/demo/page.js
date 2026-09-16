@@ -353,12 +353,14 @@ function DemoDashboardContent() {
         </div>
 
         {/* Row 4: Geo Radar & Traffic Velocity Chart */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 20, marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 20, marginBottom: 20 }}>
           {/* Left: Geo Threat Origin Radar */}
-          <GeoThreatRadar />
+          <div style={{ minWidth: 0 }}>
+            <GeoThreatRadar />
+          </div>
 
           {/* Right: Ingestion Velocity vs Anomaly Area Chart */}
-          <div className="glass-card" style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
+          <div className="glass-card" style={{ padding: 24, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -373,8 +375,8 @@ function DemoDashboardContent() {
               </span>
             </div>
 
-            <div style={{ flex: 1, minHeight: 220 }}>
-              <ResponsiveContainer width="100%" height={220}>
+            <div style={{ width: '100%', height: 220, minWidth: 0 }}>
+              <ResponsiveContainer width="100%" height={220} debounce={50}>
                 <AreaChart data={trafficData}>
                   <defs>
                     <linearGradient id="packetsGrad" x1="0" y1="0" x2="0" y2="1">
