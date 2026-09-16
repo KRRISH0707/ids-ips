@@ -3,7 +3,13 @@
  * Reads the JWT from sessionStorage (set on login).
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export function getApiBase() {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    return process.env.NEXT_PUBLIC_API_URL || `http://${host}:8000`;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+}
 
 export function getToken() {
   if (typeof window === 'undefined') return null;
@@ -40,7 +46,7 @@ async function request(path, options = {}) {
     ...options.headers,
   };
 
-  const res = await fetch(`${API_BASE}/api${path}`, {
+  const res = await fetch(`${getApiBase()}/api${path}`, {
     ...options,
     headers,
   });
@@ -64,7 +70,7 @@ async function request(path, options = {}) {
 export const api = {
   async login(email, password) {
     const body = new URLSearchParams({ username: email, password });
-    const res = await fetch(`${API_BASE}/api/auth/login`, {
+    const res = await fetch(`${getApiBase()}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,

@@ -19,7 +19,9 @@ export function useLiveFeed(maxMessages = 50) {
     const token = getToken();
     if (!token) return;
 
-    const url = `${WS_BASE}/api/ws/live?token=${encodeURIComponent(token)}`;
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const wsBase = process.env.NEXT_PUBLIC_WS_URL || `ws://${host}:8000`;
+    const url = `${wsBase}/api/ws/live?token=${encodeURIComponent(token)}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
 
