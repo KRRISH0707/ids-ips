@@ -15,7 +15,7 @@ export default function IncidentsPage() {
     try {
       setLoading(true);
       const res = await api.getIncidents();
-      setIncidents(res.data || []);
+      setIncidents(res?.items || res?.data || (Array.isArray(res) ? res : []));
       setError(null);
     } catch (err) {
       setError(err.message || 'Failed to fetch incidents');
@@ -30,7 +30,7 @@ export default function IncidentsPage() {
 
   const handleUpdateStatus = async (id, status) => {
     try {
-      await api.updateIncident(id, { status });
+      await api.updateIncidentStatus(id, { status });
       fetchIncidents();
       if (selectedIncident && selectedIncident.id === id) {
         setSelectedIncident(prev => ({ ...prev, status }));
@@ -41,50 +41,42 @@ export default function IncidentsPage() {
   };
 
   return (
-    <Sidebar>
-      <PageLayout
-        title="Security Incidents"
-        subtitle="Aggregated threat cases requiring investigation and response"
-        actions={
-          <button className="btn btn-primary btn-sm" onClick={fetchIncidents}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21.5 2v6h-6M2.13 15.57a10 10 0 1 0 0-7.14" />
-            </svg>
-            Refresh
-          </button>
-        }
-      >
+    <PageLayout sidebar={<Sidebar />}>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Security Incidents</h1>
+          <p className="page-subtitle">Aggregated threat cases requiring investigation and response</p>
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={fetchIncidents}>
+          Refresh
+        </button>
+      </div>
+
+      <div className="page-body">
         {loading ? (
           <Spinner />
         ) : error ? (
-          <div className="card" style={{ borderColor: 'var(--color-danger-border)', color: 'var(--color-danger)' }}>
+          <div className="glass-card" style={{ color: 'var(--sev-critical)', padding: 20 }}>
             {error}
           </div>
         ) : incidents.length === 0 ? (
-          <EmptyState
-            title="No Incidents Reported"
-            description="There are currently no open or active security incident cases."
-          />
+          <EmptyState message="No security incidents reported" />
         ) : (
-          <div className="table-container">
-            <table>
+          <div className="glass-card">
+            <table className="data-table">
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Title</th>
                   <th>Severity</th>
                   <th>Status</th>
-                  <th>Assigned To</th>
+                  <th>Risk</th>
                   <th>Created At</th>
-                  <th>Actions</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {incidents.map((inc) => (
                   <tr key={inc.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedIncident(inc)}>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      #{inc.id}
-                    </td>
                     <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{inc.title}</td>
                     <td>
                       <SeverityBadge severity={inc.severity} />
@@ -92,22 +84,22 @@ export default function IncidentsPage() {
                     <td>
                       <StatusBadge status={inc.status} />
                     </td>
-                    <td style={{ fontSize: '0.85rem' }}>{inc.assigned_to || 'Unassigned'}</td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    <td style={{ fontSize: '0.85rem' }}>{inc.risk_score}</td>
+                    <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                       {new Date(inc.created_at).toLocaleString()}
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <select
-                        className="form-select form-select-sm"
+                        className="select"
                         value={inc.status}
                         onChange={(e) => handleUpdateStatus(inc.id, e.target.value)}
-                        style={{ width: 'auto', padding: '2px 8px', fontSize: '0.8rem' }}
+                        style={{ width: 140, padding: '4px 8px', fontSize: '0.75rem' }}
                       >
-                        <option value="open">Open</option>
-                        <option value="investigating">Investigating</option>
-                        <option value="mitigated">Mitigated</option>
-                        <option value="closed">Closed</option>
-                        <option value="false_positive">False Positive</option>
+                        <option value="NEW">New</option>
+                        <option value="INVESTIGATING">Investigating</option>
+                        <option value="CONTAINED">Contained</option>
+                        <option value="RESOLVED">Resolved</option>
+                        <option value="FALSE_POSITIVE">False Positive</option>
                       </select>
                     </td>
                   </tr>
@@ -116,64 +108,50 @@ export default function IncidentsPage() {
             </table>
           </div>
         )}
+      </div>
 
-        {/* Modal Drawer for Incident Details */}
-        {selectedIncident && (
-          <div className="modal-backdrop" onClick={() => setSelectedIncident(null)}>
-            <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>{selectedIncident.title}</h3>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    Incident ID: #{selectedIncident.id}
-                  </span>
-                </div>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setSelectedIncident(null)}
-                  style={{ padding: '2px 8px' }}
-                >
-                  ✕
-                </button>
+      {/* Modal Drawer for Incident Details */}
+      {selectedIncident && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }} onClick={() => setSelectedIncident(null)}>
+          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 540, padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>{selectedIncident.title}</h3>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  ID: #{selectedIncident.id}
+                </span>
               </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setSelectedIncident(null)}>✕</button>
+            </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                <div>
-                  <label className="form-label">Severity</label>
-                  <div><SeverityBadge severity={selectedIncident.severity} /></div>
-                </div>
-                <div>
-                  <label className="form-label">Status</label>
-                  <div><StatusBadge status={selectedIncident.status} /></div>
-                </div>
-                <div>
-                  <label className="form-label">Assigned To</label>
-                  <div style={{ fontSize: '0.9rem' }}>{selectedIncident.assigned_to || 'Unassigned'}</div>
-                </div>
-                <div>
-                  <label className="form-label">Created At</label>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
-                    {new Date(selectedIncident.created_at).toLocaleString()}
-                  </div>
-                </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Severity</label>
+                <SeverityBadge severity={selectedIncident.severity} />
               </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <label className="form-label">Description</label>
-                <p style={{ fontSize: '0.9rem', background: 'var(--surface-hover)', padding: 12, borderRadius: 6 }}>
-                  {selectedIncident.description || 'No detailed description provided.'}
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                <button className="btn btn-ghost" onClick={() => setSelectedIncident(null)}>
-                  Close
-                </button>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Status</label>
+                <StatusBadge status={selectedIncident.status} />
               </div>
             </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Description</label>
+              <p style={{ fontSize: '0.85rem', background: 'var(--bg-card)', padding: 12, borderRadius: 6 }}>
+                {selectedIncident.description || 'No detailed description provided.'}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setSelectedIncident(null)}>Close</button>
+            </div>
           </div>
-        )}
-      </PageLayout>
-    </Sidebar>
+        </div>
+      )}
+    </PageLayout>
   );
 }

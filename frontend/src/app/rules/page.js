@@ -12,17 +12,18 @@ export default function RulesPage() {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    rule_type: 'suricata',
-    severity: 'high',
-    signature: 'alert ip any any -> any any (msg:"Custom Rule Match"; sid:1000001; rev:1;)',
-    is_active: true
+    description: '',
+    severity: 'HIGH',
+    action: 'BLOCK',
+    category: 'Authentication',
+    condition: { type: 'suricata', sid: 1000004 }
   });
 
   const fetchRules = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.getRules();
-      setRules(res.data || []);
+      setRules(res?.items || res?.data || (Array.isArray(res) ? res : []));
       setError(null);
     } catch (err) {
       setError(err.message || 'Failed to fetch rules');
@@ -46,50 +47,45 @@ export default function RulesPage() {
     }
   };
 
-  const handleToggleActive = async (rule) => {
+  const handleToggleActive = async (id) => {
     try {
-      await api.updateRule(rule.id, { is_active: !rule.is_active });
+      await api.toggleRule(id);
       fetchRules();
     } catch (err) {
-      alert(`Failed to update rule state: ${err.message}`);
+      alert(`Failed to toggle rule state: ${err.message}`);
     }
   };
 
   return (
-    <Sidebar>
-      <PageLayout
-        title="Detection Rules"
-        subtitle="Suricata, YARA, and Sigma rules deployed to detection engine nodes"
-        actions={
-          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Create Rule
-          </button>
-        }
-      >
+    <PageLayout sidebar={<Sidebar />}>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Detection Rules</h1>
+          <p className="page-subtitle">Suricata, YARA, and Sigma rules deployed to detection engine nodes</p>
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+          + Create Rule
+        </button>
+      </div>
+
+      <div className="page-body">
         {loading ? (
           <Spinner />
         ) : error ? (
-          <div className="card" style={{ borderColor: 'var(--color-danger-border)', color: 'var(--color-danger)' }}>
+          <div className="glass-card" style={{ color: 'var(--sev-critical)', padding: 20 }}>
             {error}
           </div>
         ) : rules.length === 0 ? (
-          <EmptyState
-            title="No Rules Configured"
-            description="Create custom Suricata or YARA signatures to expand threat detection capabilities."
-          />
+          <EmptyState message="No detection rules configured" />
         ) : (
-          <div className="table-container">
-            <table>
+          <div className="glass-card">
+            <table className="data-table">
               <thead>
                 <tr>
-                  <th>Rule ID</th>
-                  <th>Name</th>
-                  <th>Type</th>
+                  <th>Rule Name</th>
+                  <th>Category</th>
                   <th>Severity</th>
-                  <th>Signature / Pattern</th>
+                  <th>Action</th>
                   <th>Status</th>
                   <th>Toggle</th>
                 </tr>
@@ -97,31 +93,26 @@ export default function RulesPage() {
               <tbody>
                 {rules.map((rule) => (
                   <tr key={rule.id}>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      #{rule.id}
-                    </td>
                     <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{rule.name}</td>
                     <td>
                       <span className="badge" style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-cyan)' }}>
-                        {rule.rule_type.toUpperCase()}
+                        {rule.category || 'General'}
                       </span>
                     </td>
                     <td>
                       <SeverityBadge severity={rule.severity} />
                     </td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', maxWidth: 320, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {rule.signature}
-                    </td>
+                    <td style={{ fontSize: '0.85rem' }}>{rule.action}</td>
                     <td>
-                      <StatusBadge status={rule.is_active ? 'active' : 'inactive'} />
+                      <StatusBadge status={rule.enabled ? 'ACTIVE' : 'INACTIVE'} />
                     </td>
                     <td>
                       <button
-                        className={`btn btn-sm ${rule.is_active ? 'btn-danger' : 'btn-primary'}`}
-                        onClick={() => handleToggleActive(rule)}
+                        className={`btn btn-sm ${rule.enabled ? 'btn-danger' : 'btn-primary'}`}
+                        onClick={() => handleToggleActive(rule.id)}
                         style={{ padding: '2px 8px', fontSize: '0.75rem' }}
                       >
-                        {rule.is_active ? 'Disable' : 'Enable'}
+                        {rule.enabled ? 'Disable' : 'Enable'}
                       </button>
                     </td>
                   </tr>
@@ -130,76 +121,78 @@ export default function RulesPage() {
             </table>
           </div>
         )}
+      </div>
 
-        {/* Modal for Creating Rule */}
-        {showModal && (
-          <div className="modal-backdrop" onClick={() => setShowModal(false)}>
-            <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
-              <h3 style={{ marginTop: 0, marginBottom: 16 }}>Create Detection Rule</h3>
-              <form onSubmit={handleCreate}>
-                <div className="form-group">
-                  <label className="form-label">Rule Name</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    required
-                    placeholder="e.g. Cobalt Strike Beaconing Pattern"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
+      {/* Modal for Creating Rule */}
+      {showModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }} onClick={() => setShowModal(false)}>
+          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 500, padding: 24 }}>
+            <h3 style={{ marginTop: 0, marginBottom: 16 }}>Create Detection Rule</h3>
+            <form onSubmit={handleCreate}>
+              <div style={{ marginBottom: 12 }}>
+                <label className="label">Rule Name</label>
+                <input
+                  type="text"
+                  className="input"
+                  required
+                  placeholder="e.g. Cobalt Strike Beaconing Pattern"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label className="label">Description</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="e.g. Detects abnormal C2 outbound requests"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                <div>
+                  <label className="label">Severity</label>
+                  <select
+                    className="select"
+                    value={formData.severity}
+                    onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="CRITICAL">Critical</option>
+                  </select>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div className="form-group">
-                    <label className="form-label">Rule Type</label>
-                    <select
-                      className="form-select"
-                      value={formData.rule_type}
-                      onChange={(e) => setFormData({ ...formData, rule_type: e.target.value })}
-                    >
-                      <option value="suricata">Suricata NIDS</option>
-                      <option value="yara">YARA</option>
-                      <option value="sigma">Sigma</option>
-                      <option value="custom">Custom Anomaly</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Severity Level</label>
-                    <select
-                      className="form-select"
-                      value={formData.severity}
-                      onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="critical">Critical</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="label">Action</label>
+                  <select
+                    className="select"
+                    value={formData.action}
+                    onChange={(e) => setFormData({ ...formData, action: e.target.value })}
+                  >
+                    <option value="ALERT">Alert</option>
+                    <option value="BLOCK">Block</option>
+                    <option value="LOG">Log</option>
+                  </select>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Signature Definition</label>
-                  <textarea
-                    className="form-input"
-                    rows="4"
-                    required
-                    style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}
-                    value={formData.signature}
-                    onChange={(e) => setFormData({ ...formData, signature: e.target.value })}
-                  />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
-                  <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Create Rule
-                  </button>
-                </div>
-              </form>
-            </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Create Rule
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </PageLayout>
-    </Sidebar>
+        </div>
+      )}
+    </PageLayout>
   );
 }
