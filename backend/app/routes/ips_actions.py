@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
+import ipaddress
 import psycopg
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
@@ -97,6 +98,20 @@ def block_ip(
     request: Request,
     current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
 ):
+    # Edge case protection: validate IP address & prevent blocking loopback/system addresses
+    try:
+        ip_obj = ipaddress.ip_address(body.ip_address.strip())
+        if ip_obj.is_loopback or ip_obj.is_unspecified:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot block protected system/loopback address: {body.ip_address}",
+            )
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid IP address format: {body.ip_address}",
+        )
+
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             try:

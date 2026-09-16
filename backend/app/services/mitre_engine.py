@@ -78,6 +78,38 @@ MITRE_TACTICS = [
             {"id": "T1486", "name": "Data Encrypted for Impact", "match_keywords": ["ransom", "encrypt", "lockbit", "wiper"]},
             {"id": "T1489", "name": "Service Stop", "match_keywords": ["stop", "kill", "disable defense"]}
         ]
+    },
+    {
+        "id": "TA0005",
+        "name": "Defense Evasion",
+        "techniques": [
+            {"id": "T1070", "name": "Indicator Removal on Host", "match_keywords": ["log clear", "wevtutil", "rm -rf", "audit off"]},
+            {"id": "T1027", "name": "Obfuscated / Encrypted Files", "match_keywords": ["base64", "xor", "obfuscat", "packer"]}
+        ]
+    },
+    {
+        "id": "TA0003",
+        "name": "Persistence",
+        "techniques": [
+            {"id": "T1547", "name": "Boot or Logon Autostart", "match_keywords": ["registry run", "startup", "systemd service"]},
+            {"id": "T1136", "name": "Create Account", "match_keywords": ["useradd", "net user /add", "new user"]}
+        ]
+    },
+    {
+        "id": "TA0009",
+        "name": "Collection",
+        "techniques": [
+            {"id": "T1005", "name": "Data from Local System", "match_keywords": ["tar", "zip", "find", "dump", "grep secret"]},
+            {"id": "T1113", "name": "Screen Capture / Keystrokes", "match_keywords": ["keylogger", "screenshot", "clipboard"]}
+        ]
+    },
+    {
+        "id": "TA0010",
+        "name": "Exfiltration",
+        "techniques": [
+            {"id": "T1048", "name": "Exfiltration Over Alt Protocol", "match_keywords": ["dns tunnel", "icmp tunnel", "exfil"]},
+            {"id": "T1567", "name": "Exfiltration Over Web Service", "match_keywords": ["mega.nz", "anonfiles", "rclone", "dropbox", "curl -T"]}
+        ]
     }
 ]
 
