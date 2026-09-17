@@ -78,6 +78,23 @@ def list_blocked_ips(
     return {"items": items, "total": total}
 
 
+@router.get("/stats/summary")
+def ips_stats(current_user: dict = Depends(get_current_user)):
+    with get_sync_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    COUNT(*) FILTER (WHERE is_active)               AS active_blocks,
+                    COUNT(*) FILTER (WHERE NOT is_active)           AS lifted_blocks,
+                    COUNT(*) FILTER (WHERE blocked_at > now() - interval '24 hours') AS last_24h,
+                    COUNT(*) FILTER (WHERE expires_at IS NULL AND is_active) AS permanent_blocks
+                FROM blocked_ips
+                """
+            )
+            return cur.fetchone()
+
+
 @router.get("/{block_id}")
 def get_blocked_ip(
     block_id: UUID,
@@ -219,20 +236,3 @@ def unblock_ip(
         source_ip=request.client.host if request.client else None,
     )
     return {"unblocked": True, "record": record}
-
-
-@router.get("/stats/summary")
-def ips_stats(current_user: dict = Depends(get_current_user)):
-    with get_sync_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT
-                    COUNT(*) FILTER (WHERE is_active)               AS active_blocks,
-                    COUNT(*) FILTER (WHERE NOT is_active)           AS lifted_blocks,
-                    COUNT(*) FILTER (WHERE blocked_at > now() - interval '24 hours') AS last_24h,
-                    COUNT(*) FILTER (WHERE expires_at IS NULL AND is_active) AS permanent_blocks
-                FROM blocked_ips
-                """
-            )
-            return cur.fetchone()

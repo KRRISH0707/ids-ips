@@ -54,14 +54,14 @@ export default function DashboardPage() {
 
     try {
       await api.simulateAttack({ scenario: attack.key });
-      const [as, ip, ra] = await Promise.all([
+      const results = await Promise.allSettled([
         api.getAlertsSummary(),
         api.getIPSStats(),
-        api.getAlerts({ limit: 8, status: 'OPEN' }),
+        api.getAlerts({ limit: 12 }),
       ]);
-      setAlertStats(as);
-      setIPSStats(ip);
-      setRecentAlerts(ra?.items || []);
+      if (results[0].status === 'fulfilled' && results[0].value) setAlertStats(results[0].value);
+      if (results[1].status === 'fulfilled' && results[1].value) setIPSStats(results[1].value);
+      if (results[2].status === 'fulfilled' && results[2].value) setRecentAlerts(results[2].value?.items || []);
     } catch (err) {
       console.warn('Real-time attack simulation trigger note:', err);
     }
@@ -95,16 +95,24 @@ export default function DashboardPage() {
     async function load() {
       try {
         await api.ensureAuth();
-        const [as, is, ip, ra] = await Promise.all([
+        const results = await Promise.allSettled([
           api.getAlertsSummary(),
           api.getIncidentsSummary(),
           api.getIPSStats(),
-          api.getAlerts({ limit: 8, status: 'OPEN' }),
+          api.getAlerts({ limit: 12 }),
         ]);
-        setAlertStats(as);
-        setIncidentStats(is);
-        setIPSStats(ip);
-        setRecentAlerts(ra?.items || []);
+        if (results[0].status === 'fulfilled' && results[0].value) {
+          setAlertStats(results[0].value);
+        }
+        if (results[1].status === 'fulfilled' && results[1].value) {
+          setIncidentStats(results[1].value);
+        }
+        if (results[2].status === 'fulfilled' && results[2].value) {
+          setIPSStats(results[2].value);
+        }
+        if (results[3].status === 'fulfilled' && results[3].value) {
+          setRecentAlerts(results[3].value?.items || []);
+        }
       } catch (e) {
         console.error('Error loading dashboard telemetry:', e);
       } finally {
@@ -406,14 +414,14 @@ export default function DashboardPage() {
               <div id="section-recent-alerts" className="glass-card" style={{ marginBottom: 24 }}>
                 <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Recent Open Threat Detections
+                    Recent Threat Detections & Automated Quarantines
                   </h3>
                   <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                     Scroll horizontally if needed on smaller displays
                   </span>
                 </div>
                 {recentAlerts.length === 0 ? (
-                  <EmptyState message="No open alerts — all clear!" />
+                  <EmptyState message="No threat detections recorded — all clear!" />
                 ) : (
                   <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
                     <table className="data-table">

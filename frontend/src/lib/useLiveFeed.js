@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getToken } from './api';
+import { getToken, ensureAuth } from './api';
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
 
@@ -16,9 +16,16 @@ export function useLiveFeed(maxMessages = 50) {
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
 
-  const connect = useCallback(() => {
-    const token = getToken();
-    if (!token) return;
+  const connect = useCallback(async () => {
+    let token = getToken();
+    if (!token) {
+      token = await ensureAuth();
+    }
+    if (!token) {
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = setTimeout(connect, 3000);
+      return;
+    }
 
     const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     const wsBase = process.env.NEXT_PUBLIC_WS_URL || `ws://${host}:8000`;

@@ -50,50 +50,57 @@ export function setUser(user) {
   }
 }
 
+function parseJwt(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = base64.length % 4;
+    const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+}
+
 export async function ensureAuth() {
   let token = getToken();
   if (token) {
-    try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]));
-        if (payload.exp && payload.exp * 1000 > Date.now() + 30000) {
-          return token;
-        }
-      }
-    } catch {}
+    const payload = parseJwt(token);
+    if (payload && payload.exp && payload.exp * 1000 > Date.now() + 30000) {
+      return token;
+    }
   }
 
-  // Auto-authenticate with available admin credentials
-  try {
-    const body = new URLSearchParams({ username: 'krrish183224@gmail.com', password: '183@Krrish' });
-    const res = await fetch(`${getApiBase()}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setToken(data.access_token);
-      setUser(data.user);
-      return data.access_token;
-    }
-  } catch {}
+  // Auto-authenticate with available admin credentials across primary & proxy routes
+  const endpoints = [
+    `${getApiBase()}/api/auth/login`,
+    '/api/auth/login',
+  ];
 
-  try {
-    const body = new URLSearchParams({ username: 'admin@ids.local', password: 'AdminPassword1!' });
-    const res = await fetch(`${getApiBase()}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setToken(data.access_token);
-      setUser(data.user);
-      return data.access_token;
+  const credentials = [
+    { username: 'krrish183224@gmail.com', password: '183@Krrish' },
+    { username: 'admin@ids.local', password: 'AdminPassword1!' },
+  ];
+
+  for (const cred of credentials) {
+    for (const url of endpoints) {
+      try {
+        const body = new URLSearchParams(cred);
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setToken(data.access_token);
+          setUser(data.user);
+          return data.access_token;
+        }
+      } catch {}
     }
-  } catch {}
+  }
 
   return null;
 }
@@ -110,22 +117,39 @@ async function request(path, options = {}) {
     ...options.headers,
   };
 
-  let res = await fetch(`${getApiBase()}/api${path}`, {
-    ...options,
-    headers,
-  });
+  const primaryUrl = `${getApiBase()}/api${path}`;
+  const fallbackUrl = `/api${path}`;
+
+  let res;
+  try {
+    res = await fetch(primaryUrl, {
+      ...options,
+      headers,
+    });
+  } catch (primaryErr) {
+    try {
+      res = await fetch(fallbackUrl, {
+        ...options,
+        headers,
+      });
+    } catch {
+      throw primaryErr;
+    }
+  }
 
   if (res.status === 401) {
     // Attempt automatic re-authentication if token expired
     token = await ensureAuth();
     if (token) {
-      res = await fetch(`${getApiBase()}/api${path}`, {
-        ...options,
-        headers: {
-          ...headers,
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const retryHeaders = {
+        ...headers,
+        Authorization: `Bearer ${token}`,
+      };
+      try {
+        res = await fetch(primaryUrl, { ...options, headers: retryHeaders });
+      } catch {
+        res = await fetch(fallbackUrl, { ...options, headers: retryHeaders });
+      }
     }
   }
 
