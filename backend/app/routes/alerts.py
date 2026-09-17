@@ -345,6 +345,30 @@ def ingest_alert(
             except Exception:
                 pass
 
+        # ── 2b. Synthesize & Persist Hardware/eBPF Drop Rule ──────────
+        if ai_eval.get("synthesized_rule"):
+            rule_obj = ai_eval["synthesized_rule"]
+            try:
+                with get_sync_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            INSERT INTO rules (
+                                name, description, rule_type, condition, conditions, action, severity, category, enabled
+                            )
+                            VALUES (%s, %s, 'ANOMALY', %s, %s, 'BLOCK', 'CRITICAL', 'ai_autonomous_synthesis', TRUE)
+                            """,
+                            (
+                                rule_obj.get("name", "AI Autonomous Rule"),
+                                f"Autonomous ML Signature: {rule_obj.get('rule_syntax', '')}",
+                                Jsonb(rule_obj),
+                                Jsonb(rule_obj),
+                            ),
+                        )
+                        conn.commit()
+            except Exception:
+                pass
+
     # Fire-and-forget: Kafka
     try:
         publish_alert(created)
