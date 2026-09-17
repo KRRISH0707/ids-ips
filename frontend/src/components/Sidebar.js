@@ -20,8 +20,7 @@ const NAV = [
   { href: '/users',        label: 'Users & RBAC',   icon: IconUsers, adminOnly: true },
 ];
 
-export default function Sidebar({ onOpenMenu, onOpenFeatureMenu }) {
-  const handleOpenMenu = onOpenMenu || onOpenFeatureMenu;
+export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const user = getUser();
@@ -73,25 +72,6 @@ export default function Sidebar({ onOpenMenu, onOpenFeatureMenu }) {
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
-        {handleOpenMenu && (
-          <button
-            onClick={handleOpenMenu}
-            className="nav-item"
-            style={{
-              width: 'calc(100% - 16px)',
-              background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(124, 58, 237, 0.15))',
-              border: '1px solid var(--accent-cyan)',
-              color: '#fff',
-              fontWeight: 700,
-              marginBottom: 10,
-              boxShadow: '0 0 12px rgba(0, 212, 255, 0.2)',
-              justifyContent: 'flex-start',
-            }}
-          >
-            <span style={{ fontSize: '1.1rem', color: 'var(--accent-cyan)' }}>☰</span>
-            Menu
-          </button>
-        )}
         {NAV.map(({ href, label, icon: Icon, adminOnly, analystOrAdmin }) => {
           if (adminOnly && user?.role !== 'ADMIN') return null;
           if (analystOrAdmin && user?.role === 'VIEWER') return null;

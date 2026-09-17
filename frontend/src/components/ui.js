@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import FeatureMenuDrawer from './FeatureMenuDrawer';
 
 export function Spinner() {
   return (
@@ -64,7 +63,6 @@ export function EmptyState({ message = 'No data found', icon }) {
 }
 
 export function PageLayout({ children, sidebar }) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const mainRef = useRef(null);
 
@@ -112,27 +110,9 @@ export function PageLayout({ children, sidebar }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const scrollToBottom = () => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  };
-
-  const handleSelectSection = (sectionId) => {
-    const el = document.getElementById(sectionId);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      el.classList.add('feature-highlight');
-      setTimeout(() => el.classList.remove('feature-highlight'), 2500);
-    }
-  };
-
   return (
     <div className="layout">
-      {React.isValidElement(sidebar)
-        ? React.cloneElement(sidebar, {
-            onOpenMenu: () => setMenuOpen(true),
-            onOpenFeatureMenu: () => setMenuOpen(true),
-          })
-        : sidebar}
+      {sidebar}
 
       {/* Main Content Area with unrestricted mouse horizontal & vertical scroll */}
       <main
@@ -143,46 +123,12 @@ export function PageLayout({ children, sidebar }) {
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
       >
-        {/* Sticky Top Command Bar featuring prominent Left Menu Button */}
-        <div className="top-command-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {/* ☰ Left Menu Button */}
-            <button
-              onClick={() => setMenuOpen(true)}
-              className="btn-menu-trigger"
-              title="Open Menu to access Dashboard, Alerts, Rules & all platform features"
-            >
-              <span style={{ fontSize: '1.15rem', lineHeight: 1 }}>☰</span>
-              <span>Menu</span>
-            </button>
-
-            {/* Mouse Scroll Indicator */}
-            <div className="scroll-indicator-hint" title="Scroll horizontally left and right using mouse wheel, drag, or horizontal scrollbar">
-              <span style={{ color: 'var(--accent-cyan)' }}>⇄</span>
-              <span>Mouse Scroll: Left ↔ Right</span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-              Scroll down or left/right to view all info
-            </span>
-            <button
-              onClick={scrollToBottom}
-              className="btn-scroll-jump"
-              title="Scroll directly to bottom"
-            >
-              ↓ Bottom
-            </button>
-          </div>
-        </div>
-
         {/* Page Content */}
         {children}
 
-        {/* Floating Quick Controls (Always accessible when scrolled) */}
-        <div className="floating-scroll-controls">
-          {showScrollTop && (
+        {/* Floating Quick Controls (Top button appears when scrolled down) */}
+        {showScrollTop && (
+          <div className="floating-scroll-controls">
             <button
               onClick={scrollToTop}
               className="floating-btn"
@@ -190,23 +136,9 @@ export function PageLayout({ children, sidebar }) {
             >
               ↑ Top
             </button>
-          )}
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="floating-btn floating-menu-btn"
-            title="Open Menu"
-          >
-            ☰ Menu
-          </button>
-        </div>
+          </div>
+        )}
       </main>
-
-      {/* Interactive Platform Menu Drawer */}
-      <FeatureMenuDrawer
-        isOpen={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        onSelectSection={handleSelectSection}
-      />
     </div>
   );
 }
