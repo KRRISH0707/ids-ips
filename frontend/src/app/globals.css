@@ -358,14 +358,6 @@ input, select, textarea { font-family: inherit; }
   box-shadow: 0 0 12px rgba(0, 212, 255, 0.6);
 }
 
-.main-content.mouse-grab {
-  cursor: grab;
-}
-.main-content.mouse-grabbing {
-  cursor: grabbing;
-  user-select: none;
-}
-
 /* ── Floating Controls ────────────────────────────────────────────────────── */
 .floating-scroll-controls {
   position: fixed;

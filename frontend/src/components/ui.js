@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export function Spinner() {
   return (
@@ -64,12 +64,6 @@ export function EmptyState({ message = 'No data found', icon }) {
 
 export function PageLayout({ children, sidebar }) {
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const mainRef = useRef(null);
-
-  // Mouse horizontal drag-to-scroll state
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeftPos, setScrollLeftPos] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -79,33 +73,6 @@ export function PageLayout({ children, sidebar }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Mouse drag-to-scroll handlers for horizontal panning
-  const handleMouseDown = (e) => {
-    if (e.button !== 0) return; // only left click
-    if (['INPUT', 'BUTTON', 'A', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
-    if (e.target.closest('button, a, input, select, textarea, .data-table, .recharts-wrapper')) return;
-    
-    setIsDragging(true);
-    setStartX(e.pageX - (mainRef.current?.offsetLeft || 0));
-    setScrollLeftPos(mainRef.current?.scrollLeft || 0);
-  };
-
-  const handleMouseLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging || !mainRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - (mainRef.current.offsetLeft || 0);
-    const walk = (x - startX) * 1.5;
-    mainRef.current.scrollLeft = scrollLeftPos - walk;
-  };
-
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -114,15 +81,8 @@ export function PageLayout({ children, sidebar }) {
     <div className="layout">
       {sidebar}
 
-      {/* Main Content Area with unrestricted mouse horizontal & vertical scroll */}
-      <main
-        ref={mainRef}
-        className={`main-content ${isDragging ? 'mouse-grabbing' : ''}`}
-        onMouseDown={handleMouseDown}
-        onMouseLeave={handleMouseLeave}
-        onMouseUp={handleMouseUp}
-        onMouseMove={handleMouseMove}
-      >
+      {/* Main Content Area with active custom scrollbar */}
+      <main className="main-content">
         {/* Page Content */}
         {children}
 
