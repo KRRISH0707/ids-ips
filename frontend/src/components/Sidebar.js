@@ -20,7 +20,8 @@ const NAV = [
   { href: '/users',        label: 'Users & RBAC',   icon: IconUsers, adminOnly: true },
 ];
 
-export default function Sidebar({ onOpenFeatureMenu, onToggleCollapse, isCollapsed }) {
+export default function Sidebar({ onOpenMenu, onOpenFeatureMenu }) {
+  const handleOpenMenu = onOpenMenu || onOpenFeatureMenu;
   const pathname = usePathname();
   const router = useRouter();
   const user = getUser();
@@ -31,7 +32,7 @@ export default function Sidebar({ onOpenFeatureMenu, onToggleCollapse, isCollaps
   };
 
   return (
-    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+    <aside className="sidebar">
       {/* Logo & Header */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -47,23 +48,6 @@ export default function Sidebar({ onOpenFeatureMenu, onToggleCollapse, isCollaps
             </div>
           </div>
 
-          {onToggleCollapse && (
-            <button
-              onClick={onToggleCollapse}
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 6,
-                color: 'var(--text-muted)',
-                padding: '4px 8px',
-                fontSize: '0.68rem',
-                cursor: 'pointer',
-              }}
-              title="Collapse Sidebar (Maximize Viewport Width)"
-            >
-              ◀ Hide
-            </button>
-          )}
         </div>
 
         {/* Live Active Sensor Mesh Pill */}
@@ -89,9 +73,9 @@ export default function Sidebar({ onOpenFeatureMenu, onToggleCollapse, isCollaps
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
-        {onOpenFeatureMenu && (
+        {handleOpenMenu && (
           <button
-            onClick={onOpenFeatureMenu}
+            onClick={handleOpenMenu}
             className="nav-item"
             style={{
               width: 'calc(100% - 16px)',
@@ -105,7 +89,7 @@ export default function Sidebar({ onOpenFeatureMenu, onToggleCollapse, isCollaps
             }}
           >
             <span style={{ fontSize: '1.1rem', color: 'var(--accent-cyan)' }}>☰</span>
-            Feature Command Menu
+            Menu
           </button>
         )}
         {NAV.map(({ href, label, icon: Icon, adminOnly, analystOrAdmin }) => {

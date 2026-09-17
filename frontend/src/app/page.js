@@ -165,7 +165,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="page-body">
+      <div className="page-body" style={{ minWidth: 1280 }}>
         {/* Interactive Feature Selector & Quick Jump Bar */}
         <div className="feature-quick-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>

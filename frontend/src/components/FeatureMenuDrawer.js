@@ -85,8 +85,6 @@ export default function FeatureMenuDrawer({
   isOpen,
   onClose,
   onSelectSection,
-  isSidebarCollapsed,
-  onToggleSidebar,
 }) {
   const [search, setSearch] = useState('');
   const pathname = usePathname();
@@ -176,11 +174,11 @@ export default function FeatureMenuDrawer({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <BrandLogo size={34} />
               <div>
-                <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, letterSpacing: '0.04em' }}>
-                  FEATURE COMMAND MENU
+                <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, letterSpacing: '0.04em' }}>
+                  Menu
                 </h2>
                 <div style={{ fontSize: '0.68rem', color: 'var(--accent-cyan)', fontWeight: 600, letterSpacing: '0.06em' }}>
-                  APEX SENTINEL NAVIGATION & SCROLL SELECTOR
+                  AVAILABLE FEATURES & PLATFORM MODULES
                 </div>
               </div>
             </div>
@@ -216,111 +214,15 @@ export default function FeatureMenuDrawer({
               🔍
             </span>
           </div>
-
-          {/* View Width & Scroll Quick Controls */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <button
-              onClick={onToggleSidebar}
-              className="btn btn-sm"
-              style={{
-                flex: 1,
-                fontSize: '0.72rem',
-                padding: '6px 8px',
-                background: isSidebarCollapsed ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(0, 212, 255, 0.3)',
-                color: isSidebarCollapsed ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-              }}
-            >
-              {isSidebarCollapsed ? '▶ Expand Sidebar' : '◀ Maximize Screen (Hide Sidebar)'}
-            </button>
-            <button
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                onClose();
-              }}
-              className="btn btn-ghost btn-sm"
-              style={{ fontSize: '0.72rem', padding: '6px 10px', border: '1px solid rgba(255, 255, 255, 0.1)' }}
-            >
-              ↑ Top
-            </button>
-            <button
-              onClick={() => {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-                onClose();
-              }}
-              className="btn btn-ghost btn-sm"
-              style={{ fontSize: '0.72rem', padding: '6px 10px', border: '1px solid rgba(255, 255, 255, 0.1)' }}
-            >
-              ↓ Bottom
-            </button>
-          </div>
         </div>
 
         {/* Scrollable Feature List */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
-          {/* Section 1: Dashboard In-Page Features (Quick Scroll) */}
+          {/* Section 1: Full Platform Features & Modules */}
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>✦ Current Screen Features (Click to Scroll & View)</span>
-              <span style={{ color: 'var(--accent-green)', fontSize: '0.65rem' }}>8 SECTIONS</span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {filteredSections.map((sec) => (
-                <div
-                  key={sec.id}
-                  onClick={() => handleSectionClick(sec.id)}
-                  style={{
-                    padding: '10px 14px',
-                    borderRadius: 8,
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)';
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.3)';
-                    e.currentTarget.style.transform = 'translateX(3px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
-                    e.currentTarget.style.transform = 'translateX(0)';
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.82rem', color: '#f1f5f9' }}>
-                      <span>{sec.icon}</span>
-                      <span>{sec.label}</span>
-                    </div>
-                    <span
-                      style={{
-                        fontSize: '0.6rem',
-                        fontWeight: 800,
-                        padding: '1px 6px',
-                        borderRadius: 4,
-                        background: 'rgba(0, 212, 255, 0.12)',
-                        color: 'var(--accent-cyan)',
-                        border: '1px solid rgba(0, 212, 255, 0.25)',
-                      }}
-                    >
-                      {sec.badge}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.4 }}>
-                    {sec.desc}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Section 2: Full Platform Modules */}
-          <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>✦ Platform Security Modules</span>
-              <span style={{ color: 'var(--accent-purple)', fontSize: '0.65rem' }}>14 MODULES</span>
+              <span>✦ Available Features & Pages</span>
+              <span style={{ color: 'var(--accent-cyan)', fontSize: '0.65rem' }}>{filteredModules.length} FEATURES</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -333,31 +235,33 @@ export default function FeatureMenuDrawer({
                     style={{
                       padding: '10px 12px',
                       borderRadius: 8,
-                      background: isActive ? 'rgba(0, 212, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)',
-                      border: isActive ? '1px solid var(--accent-cyan)' : '1px solid rgba(255, 255, 255, 0.06)',
+                      background: isActive ? 'rgba(0, 212, 255, 0.14)' : 'rgba(255, 255, 255, 0.025)',
+                      border: isActive ? '1px solid var(--accent-cyan)' : '1px solid rgba(255, 255, 255, 0.08)',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.background = 'rgba(124, 58, 237, 0.1)';
-                        e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.3)';
+                        e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)';
+                        e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.3)';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.025)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                        e.currentTarget.style.transform = 'translateY(0)';
                       }
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.78rem', color: isActive ? 'var(--accent-cyan)' : '#e2e8f0' }}>
-                      <span>{mod.icon}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.82rem', color: isActive ? 'var(--accent-cyan)' : '#f1f5f9' }}>
+                      <span style={{ fontSize: '1rem' }}>{mod.icon}</span>
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {mod.label}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {mod.desc}
                     </div>
                   </div>
@@ -365,6 +269,66 @@ export default function FeatureMenuDrawer({
               })}
             </div>
           </div>
+
+          {/* Section 2: Dashboard In-Page Sections (Quick Scroll) */}
+          {isDashboard && (
+            <div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>✦ In-Page Dashboard Sections (Click to Scroll)</span>
+                <span style={{ color: 'var(--accent-green)', fontSize: '0.65rem' }}>8 WIDGETS</span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {filteredSections.map((sec) => (
+                  <div
+                    key={sec.id}
+                    onClick={() => handleSectionClick(sec.id)}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(124, 58, 237, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.35)';
+                      e.currentTarget.style.transform = 'translateX(3px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                      e.currentTarget.style.transform = 'translateX(0)';
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.82rem', color: '#f1f5f9' }}>
+                        <span>{sec.icon}</span>
+                        <span>{sec.label}</span>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.6rem',
+                          fontWeight: 800,
+                          padding: '1px 6px',
+                          borderRadius: 4,
+                          background: 'rgba(0, 212, 255, 0.12)',
+                          color: 'var(--accent-cyan)',
+                          border: '1px solid rgba(0, 212, 255, 0.25)',
+                        }}
+                      >
+                        {sec.badge}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.4 }}>
+                      {sec.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Drawer Footer */}

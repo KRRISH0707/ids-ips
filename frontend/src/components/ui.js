@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import FeatureMenuDrawer from './FeatureMenuDrawer';
 
 export function Spinner() {
@@ -64,9 +64,14 @@ export function EmptyState({ message = 'No data found', icon }) {
 }
 
 export function PageLayout({ children, sidebar }) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [featureMenuOpen, setFeatureMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const mainRef = useRef(null);
+
+  // Mouse horizontal drag-to-scroll state
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftPos, setScrollLeftPos] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,6 +80,33 @@ export function PageLayout({ children, sidebar }) {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Mouse drag-to-scroll handlers for horizontal panning
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return; // only left click
+    if (['INPUT', 'BUTTON', 'A', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+    if (e.target.closest('button, a, input, select, textarea, .data-table, .recharts-wrapper')) return;
+    
+    setIsDragging(true);
+    setStartX(e.pageX - (mainRef.current?.offsetLeft || 0));
+    setScrollLeftPos(mainRef.current?.scrollLeft || 0);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || !mainRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - (mainRef.current.offsetLeft || 0);
+    const walk = (x - startX) * 1.5;
+    mainRef.current.scrollLeft = scrollLeftPos - walk;
+  };
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -95,42 +127,45 @@ export function PageLayout({ children, sidebar }) {
 
   return (
     <div className="layout">
-        {React.isValidElement(sidebar)
-          ? React.cloneElement(sidebar, {
-              onOpenFeatureMenu: () => setFeatureMenuOpen(true),
-              onToggleCollapse: () => setSidebarCollapsed(!sidebarCollapsed),
-              isCollapsed: sidebarCollapsed,
-            })
-          : sidebar}
+      {React.isValidElement(sidebar)
+        ? React.cloneElement(sidebar, {
+            onOpenMenu: () => setMenuOpen(true),
+            onOpenFeatureMenu: () => setMenuOpen(true),
+          })
+        : sidebar}
 
-      {/* Main Content Area */}
-      <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      {/* Main Content Area with unrestricted mouse horizontal & vertical scroll */}
+      <main
+        ref={mainRef}
+        className={`main-content ${isDragging ? 'mouse-grabbing' : ''}`}
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+      >
         {/* Sticky Top Command Bar featuring prominent Left Menu Button */}
         <div className="top-command-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* ☰ Left Menu Button */}
             <button
-              onClick={() => setFeatureMenuOpen(true)}
+              onClick={() => setMenuOpen(true)}
               className="btn-menu-trigger"
-              title="Open Feature Command Menu & Quick Jump"
+              title="Open Menu to access Dashboard, Alerts, Rules & all platform features"
             >
-              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>☰</span>
-              <span>Features & Menu</span>
+              <span style={{ fontSize: '1.15rem', lineHeight: 1 }}>☰</span>
+              <span>Menu</span>
             </button>
 
-            {/* Maximize Screen / Sidebar Toggle */}
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="btn-sidebar-toggle"
-              title={sidebarCollapsed ? "Expand Sidebar" : "Hide Sidebar to Maximize Screen"}
-            >
-              {sidebarCollapsed ? '▶ Show Sidebar' : '◀ Maximize Screen'}
-            </button>
+            {/* Mouse Scroll Indicator */}
+            <div className="scroll-indicator-hint" title="Scroll horizontally left and right using mouse wheel, drag, or horizontal scrollbar">
+              <span style={{ color: 'var(--accent-cyan)' }}>⇄</span>
+              <span>Mouse Scroll: Left ↔ Right</span>
+            </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-              Scroll down to view all widgets & telemetry
+              Scroll down or left/right to view all info
             </span>
             <button
               onClick={scrollToBottom}
@@ -157,22 +192,20 @@ export function PageLayout({ children, sidebar }) {
             </button>
           )}
           <button
-            onClick={() => setFeatureMenuOpen(true)}
+            onClick={() => setMenuOpen(true)}
             className="floating-btn floating-menu-btn"
-            title="Open Feature Menu & Quick Select"
+            title="Open Menu"
           >
-            ☰ Features
+            ☰ Menu
           </button>
         </div>
       </main>
 
-      {/* Interactive Feature Command Drawer */}
+      {/* Interactive Platform Menu Drawer */}
       <FeatureMenuDrawer
-        isOpen={featureMenuOpen}
-        onClose={() => setFeatureMenuOpen(false)}
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
         onSelectSection={handleSelectSection}
-        isSidebarCollapsed={sidebarCollapsed}
-        onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
     </div>
   );
