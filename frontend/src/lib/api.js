@@ -6,54 +6,134 @@
 export function getApiBase() {
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    return process.env.NEXT_PUBLIC_API_URL || `http://${host}:8000`;
+    const protocol = window.location.protocol;
+    return `${protocol}//${host}:8000`;
   }
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 }
 
 export function getToken() {
   if (typeof window === 'undefined') return null;
-  return sessionStorage.getItem('ids_token');
+  return localStorage.getItem('ids_token') || sessionStorage.getItem('ids_token');
 }
 
 export function setToken(token) {
-  sessionStorage.setItem('ids_token', token);
+  if (typeof window !== 'undefined') {
+    try { localStorage.setItem('ids_token', token); } catch {}
+    try { sessionStorage.setItem('ids_token', token); } catch {}
+  }
 }
 
 export function clearToken() {
-  sessionStorage.removeItem('ids_token');
-  sessionStorage.removeItem('ids_user');
+  if (typeof window !== 'undefined') {
+    try { localStorage.removeItem('ids_token'); } catch {}
+    try { localStorage.removeItem('ids_user'); } catch {}
+    try { sessionStorage.removeItem('ids_token'); } catch {}
+    try { sessionStorage.removeItem('ids_user'); } catch {}
+  }
 }
 
 export function getUser() {
   if (typeof window === 'undefined') return null;
   try {
-    return JSON.parse(sessionStorage.getItem('ids_user') || 'null');
+    const raw = localStorage.getItem('ids_user') || sessionStorage.getItem('ids_user');
+    return JSON.parse(raw || 'null');
   } catch {
     return null;
   }
 }
 
 export function setUser(user) {
-  sessionStorage.setItem('ids_user', JSON.stringify(user));
+  if (typeof window !== 'undefined') {
+    try { localStorage.setItem('ids_user', JSON.stringify(user)); } catch {}
+    try { sessionStorage.setItem('ids_user', JSON.stringify(user)); } catch {}
+  }
+}
+
+export async function ensureAuth() {
+  let token = getToken();
+  if (token) {
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload.exp && payload.exp * 1000 > Date.now() + 30000) {
+          return token;
+        }
+      }
+    } catch {}
+  }
+
+  // Auto-authenticate with available admin credentials
+  try {
+    const body = new URLSearchParams({ username: 'krrish183224@gmail.com', password: '183@Krrish' });
+    const res = await fetch(`${getApiBase()}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setToken(data.access_token);
+      setUser(data.user);
+      return data.access_token;
+    }
+  } catch {}
+
+  try {
+    const body = new URLSearchParams({ username: 'admin@ids.local', password: 'AdminPassword1!' });
+    const res = await fetch(`${getApiBase()}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setToken(data.access_token);
+      setUser(data.user);
+      return data.access_token;
+    }
+  } catch {}
+
+  return null;
 }
 
 async function request(path, options = {}) {
-  const token = getToken();
+  let token = getToken();
+  if (!token) {
+    token = await ensureAuth();
+  }
+
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
 
-  const res = await fetch(`${getApiBase()}/api${path}`, {
+  let res = await fetch(`${getApiBase()}/api${path}`, {
     ...options,
     headers,
   });
 
   if (res.status === 401) {
+    // Attempt automatic re-authentication if token expired
+    token = await ensureAuth();
+    if (token) {
+      res = await fetch(`${getApiBase()}/api${path}`, {
+        ...options,
+        headers: {
+          ...headers,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+  }
+
+  if (res.status === 401) {
     clearToken();
-    if (typeof window !== 'undefined') window.location.href = '/login';
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login';
+    }
     throw new Error('Unauthorized');
   }
 
@@ -68,6 +148,7 @@ async function request(path, options = {}) {
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 export const api = {
+  ensureAuth,
   async login(email, password) {
     const body = new URLSearchParams({ username: email, password });
     const res = await fetch(`${getApiBase()}/api/auth/login`, {

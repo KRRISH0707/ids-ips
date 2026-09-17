@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     # ── JWT Auth ──────────────────────────────────────────────────────────────
     jwt_secret: str = "replace-with-a-long-random-secret"
     jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 60
+    jwt_expire_minutes: int = 10080  # 7 days
     jwt_refresh_expire_days: int = 7
 
     # ── CORS ──────────────────────────────────────────────────────────────────

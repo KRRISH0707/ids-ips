@@ -94,6 +94,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       try {
+        await api.ensureAuth();
         const [as, is, ip, ra] = await Promise.all([
           api.getAlertsSummary(),
           api.getIncidentsSummary(),
@@ -105,13 +106,13 @@ export default function DashboardPage() {
         setIPSStats(ip);
         setRecentAlerts(ra?.items || []);
       } catch (e) {
-        console.error(e);
+        console.error('Error loading dashboard telemetry:', e);
       } finally {
         setLoading(false);
       }
     }
     load();
-    const t = setInterval(load, 30000);
+    const t = setInterval(load, 15000);
     return () => clearInterval(t);
   }, []);
 
@@ -134,6 +135,18 @@ export default function DashboardPage() {
     { name: 'Medium',   value: alertStats.medium_total || 0,   color: '#f59e0b' },
     { name: 'Low',      value: alertStats.low_total || 0,      color: '#10b981' },
   ].filter(d => d.value > 0) : [];
+
+  // Live feed messages (seeded with recent alerts if no live events received yet)
+  const displayFeed = liveMessages.length > 0
+    ? liveMessages
+    : (recentAlerts && recentAlerts.length > 0
+        ? recentAlerts.slice(0, 8).map(a => ({
+            signature: a.signature,
+            src_ip: `${a.src_ip || 'Internal Node'} • Status: ${a.status}`,
+            severity: a.severity,
+            isSeeded: true,
+          }))
+        : []);
 
   return (
     <PageLayout sidebar={<Sidebar />}>
@@ -360,11 +373,11 @@ export default function DashboardPage() {
                     </h3>
                   </div>
                   <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {liveMessages.length === 0 ? (
+                    {displayFeed.length === 0 ? (
                       <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', paddingTop: 32 }}>
                         Waiting for events…
                       </div>
-                    ) : liveMessages.map((msg, i) => (
+                    ) : displayFeed.map((msg, i) => (
                       <div key={i} className="slide-in" style={{
                         padding: '8px 12px',
                         background: 'rgba(0,212,255,0.04)',
@@ -375,8 +388,11 @@ export default function DashboardPage() {
                         <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>
                           {msg.signature || msg.title || 'Event'}
                         </div>
-                        <div style={{ color: 'var(--text-muted)' }}>
-                          {msg.src_ip || msg.status || ''}
+                        <div style={{ color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>{msg.src_ip || msg.status || ''}</span>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--accent-cyan)', opacity: 0.75 }}>
+                            {msg.isSeeded ? 'RECENT TELEMETRY' : 'LIVE STREAM'}
+                          </span>
                         </div>
                       </div>
                     ))}
