@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
+import BrandLogo from '@/components/BrandLogo';
 import AIPredictorCard from '@/components/AIPredictorCard';
 import ThreatPostureGauge from '@/components/ThreatPostureGauge';
 import CyberKillChain from '@/components/CyberKillChain';
@@ -139,8 +140,9 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <span style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '0.05em' }} className="glow-gradient">APEX SENTINEL</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+            <BrandLogo size={32} />
+            <span style={{ fontSize: '1.25rem', fontWeight: 900, letterSpacing: '0.05em' }} className="glow-gradient">APEX SENTINEL</span>
             <span style={{ fontSize: '0.68rem', color: 'var(--accent-cyan)', background: 'rgba(0, 212, 255, 0.1)', padding: '2px 8px', borderRadius: 4, border: '1px solid rgba(0, 212, 255, 0.3)', fontFamily: 'JetBrains Mono', fontWeight: 700 }}>
               PRODUCTION SOC
             </span>

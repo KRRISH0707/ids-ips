@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import BrandLogo from './BrandLogo';
 
 export const DASHBOARD_SECTIONS = [
   {
@@ -173,21 +174,7 @@ export default function FeatureMenuDrawer({
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  background: 'linear-gradient(135deg, rgba(0,212,255,0.3), rgba(124,58,237,0.3))',
-                  border: '1px solid var(--accent-cyan)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 0 12px rgba(0, 212, 255, 0.3)',
-                }}
-              >
-                <span style={{ fontSize: '1.1rem' }}>☰</span>
-              </div>
+              <BrandLogo size={34} />
               <div>
                 <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, letterSpacing: '0.04em' }}>
                   FEATURE COMMAND MENU

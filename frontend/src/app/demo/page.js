@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import BrandLogo from '@/components/BrandLogo';
 import ThreatPostureGauge from '@/components/ThreatPostureGauge';
 import CyberKillChain from '@/components/CyberKillChain';
 import GeoThreatRadar from '@/components/GeoThreatRadar';
@@ -184,18 +185,7 @@ function DemoDashboardContent() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, gap: 20, flexWrap: 'wrap' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 38, height: 38,
-                borderRadius: 10,
-                background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(124,58,237,0.2))',
-                border: '1px solid var(--border-bright)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--accent-cyan)',
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-              </div>
+              <BrandLogo size={38} />
               <div>
                 <h1 style={{ fontSize: '1.45rem', fontWeight: 900, margin: 0, letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span className="glow-gradient">APEX SENTINEL</span>
