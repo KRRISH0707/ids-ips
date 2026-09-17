@@ -6,15 +6,16 @@ import PCAPViewerModal from '@/components/PCAPViewerModal';
 import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState } from '@/components/ui';
 import { api } from '@/lib/api';
 
-const STATUSES = ['', 'OPEN', 'INVESTIGATING', 'RESOLVED', 'FALSE_POSITIVE'];
+const STATUSES = ['', 'OPEN', 'AUTO_BLOCKED', 'INVESTIGATING', 'RESOLVED', 'FALSE_POSITIVE'];
 const SEVERITIES = ['', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [batchResolving, setBatchResolving] = useState(false);
   const [severity, setSeverity] = useState('');
-  const [alertStatus, setAlertStatus] = useState('OPEN');
+  const [alertStatus, setAlertStatus] = useState('');
   const [selectedAlertForPCAP, setSelectedAlertForPCAP] = useState(null);
   const [skip, setSkip] = useState(0);
   const limit = 25;
@@ -46,6 +47,19 @@ export default function AlertsPage() {
     }
   };
 
+  const handleBatchResolve = async (flag) => {
+    try {
+      setBatchResolving(true);
+      const payload = flag === 'OPEN' ? { resolve_all_open: true } : { resolve_all_blocked: true };
+      await api.batchResolveAlerts(payload);
+      load();
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setBatchResolving(false);
+    }
+  };
+
   return (
     <PageLayout sidebar={<Sidebar />}>
       <div className="page-header">
@@ -55,20 +69,53 @@ export default function AlertsPage() {
         </div>
       </div>
       <div className="page-body">
-        {/* Filters */}
+        {/* Filters & Actions */}
         <div className="glass-card" style={{ padding: '14px 20px', marginBottom: 20, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <select id="filter-severity" className="select" style={{ width: 160 }} value={severity} onChange={e => { setSeverity(e.target.value); setSkip(0); }}>
             {SEVERITIES.map(s => <option key={s} value={s}>{s || 'All Severities'}</option>)}
           </select>
           <select id="filter-status" className="select" style={{ width: 180 }} value={alertStatus} onChange={e => { setAlertStatus(e.target.value); setSkip(0); }}>
-            {STATUSES.map(s => <option key={s} value={s}>{s || 'All Statuses'}</option>)}
+            {STATUSES.map(s => <option key={s} value={s}>{s ? s.replace(/_/g, ' ') : 'All Statuses'}</option>)}
           </select>
-          <button className="btn btn-ghost btn-sm" onClick={() => { setSeverity(''); setAlertStatus('OPEN'); setSkip(0); }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => { setSeverity(''); setAlertStatus(''); setSkip(0); }}>
             Reset
           </button>
-          <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            Showing {skip + 1}–{Math.min(skip + limit, total)} of {total}
-          </span>
+
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
+            <button
+              className="btn btn-sm"
+              disabled={batchResolving}
+              style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: 'var(--accent-green)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                fontSize: '0.75rem',
+                padding: '5px 12px',
+              }}
+              onClick={() => handleBatchResolve('OPEN')}
+              title="Batch resolve all OPEN alerts"
+            >
+              ✓ Resolve All Open
+            </button>
+            <button
+              className="btn btn-sm"
+              disabled={batchResolving}
+              style={{
+                background: 'rgba(124, 58, 237, 0.12)',
+                color: 'var(--accent-purple)',
+                border: '1px solid rgba(124, 58, 237, 0.3)',
+                fontSize: '0.75rem',
+                padding: '5px 12px',
+              }}
+              onClick={() => handleBatchResolve('BLOCKED')}
+              title="Batch resolve all AUTO_BLOCKED threats"
+            >
+              🛡️ Resolve All Quarantined
+            </button>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: 8 }}>
+              Showing {total === 0 ? 0 : skip + 1}–{Math.min(skip + limit, total)} of {total}
+            </span>
+          </div>
         </div>
 
         {/* Table */}
@@ -119,14 +166,30 @@ export default function AlertsPage() {
                       >
                         📦 DPI
                       </button>
+                      {a.status !== 'RESOLVED' && (
+                        <button
+                          className="btn btn-sm"
+                          style={{
+                            fontSize: '0.7rem',
+                            padding: '4px 8px',
+                            background: 'rgba(16, 185, 129, 0.12)',
+                            color: 'var(--accent-green)',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                          }}
+                          title="Mark alert as Resolved"
+                          onClick={() => handleStatusChange(a.id, 'RESOLVED')}
+                        >
+                          ✓ Resolve
+                        </button>
+                      )}
                       <select
                         className="select"
-                        style={{ width: 130, padding: '4px 8px', fontSize: '0.75rem' }}
+                        style={{ width: 140, padding: '4px 8px', fontSize: '0.75rem' }}
                         value={a.status}
                         onChange={e => handleStatusChange(a.id, e.target.value)}
                       >
-                        {['OPEN','INVESTIGATING','RESOLVED','FALSE_POSITIVE'].map(s =>
-                          <option key={s} value={s}>{s.replace(/_/g,' ')}</option>
+                        {['OPEN', 'AUTO_BLOCKED', 'INVESTIGATING', 'RESOLVED', 'FALSE_POSITIVE'].map(s =>
+                          <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
                         )}
                       </select>
                     </td>

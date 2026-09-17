@@ -194,6 +194,7 @@ export const api = {
   simulateAttack: (data) => request('/alerts/simulate', { method: 'POST', body: JSON.stringify(data) }),
   updateAlertStatus: (id, status_) =>
     request(`/alerts/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: status_ }) }),
+  batchResolveAlerts: (data) => request('/alerts/batch-resolve', { method: 'POST', body: JSON.stringify(data) }),
 
   // ── Incidents ─────────────────────────────────────────────────────────────
   getIncidents: (params = {}) => request('/incidents?' + new URLSearchParams(params)),

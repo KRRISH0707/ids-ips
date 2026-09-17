@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from psycopg.types.json import Jsonb
 
 from ..core.database import get_sync_connection
-from ..core.security import get_current_user, write_audit_log
+from ..core.security import get_current_user, require_role, write_audit_log
 from ..core.metrics import alerts_ingested_total, open_alerts_gauge
 from ..services.kafka import publish_alert
 from ..services.redis_pubsub import publish_live_alert, publish_ips_action
@@ -38,11 +38,11 @@ class AlertCreate(BaseModel):
 
 
 class AlertStatusUpdate(BaseModel):
-    status: str = Field(..., pattern="^(OPEN|INVESTIGATING|RESOLVED|FALSE_POSITIVE)$")
+    status: str = Field(..., pattern="^(OPEN|INVESTIGATING|RESOLVED|FALSE_POSITIVE|AUTO_BLOCKED)$")
 
 
 ALLOWED_SEVERITIES = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
-ALLOWED_STATUSES = {"OPEN", "INVESTIGATING", "RESOLVED", "FALSE_POSITIVE"}
+ALLOWED_STATUSES = {"OPEN", "INVESTIGATING", "RESOLVED", "FALSE_POSITIVE", "AUTO_BLOCKED"}
 
 _SELECT_COLS = """
     id, sensor_id, incident_id, rule_id,
@@ -590,3 +590,89 @@ def download_pcap(alert_id: UUID, current_user: dict = Depends(get_current_user)
         media_type="application/vnd.tcpdump.pcap",
         headers={"Content-Disposition": f"attachment; filename=alert_{str(alert_id)[:8]}.pcap"}
     )
+
+
+@router.patch("/{alert_id}/status")
+def update_alert_status(
+    alert_id: UUID,
+    body: AlertStatusUpdate,
+    request: Request,
+    current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
+):
+    """Update alert lifecycle status (OPEN, INVESTIGATING, RESOLVED, FALSE_POSITIVE, AUTO_BLOCKED)."""
+    with get_sync_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE alerts
+                SET status = %s
+                WHERE id = %s
+                RETURNING {_SELECT_COLS}
+                """,
+                (body.status, str(alert_id)),
+            )
+            updated = cur.fetchone()
+            conn.commit()
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    write_audit_log(
+        actor_id=current_user["id"],
+        actor=current_user["email"],
+        action="ALERT_STATUS_CHANGED",
+        resource="alerts",
+        resource_id=str(alert_id),
+        details={"new_status": body.status, "signature": updated.get("signature")},
+        source_ip=request.client.host if request.client else None,
+    )
+    return updated
+
+
+class BatchResolveRequest(BaseModel):
+    alert_ids: Optional[list[UUID]] = None
+    resolve_all_open: bool = False
+    resolve_all_blocked: bool = False
+    target_status: str = "RESOLVED"
+
+
+@router.post("/batch-resolve")
+def batch_resolve_alerts(
+    body: BatchResolveRequest,
+    request: Request,
+    current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
+):
+    """Batch update alerts to RESOLVED or FALSE_POSITIVE."""
+    where_clauses = []
+    params = [body.target_status]
+
+    if body.alert_ids:
+        where_clauses.append("id = ANY(%s)")
+        params.append([str(uid) for uid in body.alert_ids])
+    elif body.resolve_all_open:
+        where_clauses.append("status = 'OPEN'")
+    elif body.resolve_all_blocked:
+        where_clauses.append("status = 'AUTO_BLOCKED'")
+    else:
+        raise HTTPException(status_code=400, detail="Must specify alert_ids or a resolve flag")
+
+    query = f"UPDATE alerts SET status = %s WHERE {' AND '.join(where_clauses)} RETURNING id"
+
+    with get_sync_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            rows = cur.fetchall()
+            conn.commit()
+
+    resolved_count = len(rows)
+    write_audit_log(
+        actor_id=current_user["id"],
+        actor=current_user["email"],
+        action="ALERTS_BATCH_RESOLVED",
+        resource="alerts",
+        resource_id="batch",
+        details={"count": resolved_count, "target_status": body.target_status},
+        source_ip=request.client.host if request.client else None,
+    )
+    return {"resolved_count": resolved_count, "status": body.target_status}
+
