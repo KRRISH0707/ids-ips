@@ -19,7 +19,7 @@ const NAV = [
   { href: '/users',        label: 'Users & RBAC',   icon: IconUsers, adminOnly: true },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onOpenFeatureMenu, onToggleCollapse, isCollapsed }) {
   const pathname = usePathname();
   const router = useRouter();
   const user = getUser();
@@ -30,30 +30,50 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="sidebar">
-      {/* Logo */}
+    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+      {/* Logo & Header */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 38, height: 38,
-            background: 'linear-gradient(135deg, rgba(0,212,255,0.25), rgba(124,58,237,0.25))',
-            border: '1px solid var(--border-bright)',
-            borderRadius: 10,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 16px rgba(0, 212, 255, 0.25)',
-          }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" strokeWidth="2.2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 900, letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span className="glow-gradient">AEGIS-X</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 36, height: 36,
+              background: 'linear-gradient(135deg, rgba(0,212,255,0.25), rgba(124,58,237,0.25))',
+              border: '1px solid var(--border-bright)',
+              borderRadius: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 16px rgba(0, 212, 255, 0.25)',
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" strokeWidth="2.2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
             </div>
-            <div style={{ fontSize: '0.62rem', color: 'var(--accent-cyan)', letterSpacing: '0.08em', fontWeight: 700 }}>
-              NEURAL THREAT INTERCEPTOR
+            <div>
+              <div style={{ fontSize: '1rem', fontWeight: 900, letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="glow-gradient">AEGIS-X</span>
+              </div>
+              <div style={{ fontSize: '0.6rem', color: 'var(--accent-cyan)', letterSpacing: '0.08em', fontWeight: 700 }}>
+                THREAT INTERCEPTOR
+              </div>
             </div>
           </div>
+
+          {onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 6,
+                color: 'var(--text-muted)',
+                padding: '4px 8px',
+                fontSize: '0.68rem',
+                cursor: 'pointer',
+              }}
+              title="Collapse Sidebar (Maximize Viewport Width)"
+            >
+              ◀ Hide
+            </button>
+          )}
         </div>
 
         {/* Live Active Sensor Mesh Pill */}
@@ -79,6 +99,25 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
+        {onOpenFeatureMenu && (
+          <button
+            onClick={onOpenFeatureMenu}
+            className="nav-item"
+            style={{
+              width: 'calc(100% - 16px)',
+              background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(124, 58, 237, 0.15))',
+              border: '1px solid var(--accent-cyan)',
+              color: '#fff',
+              fontWeight: 700,
+              marginBottom: 10,
+              boxShadow: '0 0 12px rgba(0, 212, 255, 0.2)',
+              justifyContent: 'flex-start',
+            }}
+          >
+            <span style={{ fontSize: '1.1rem', color: 'var(--accent-cyan)' }}>☰</span>
+            Feature Command Menu
+          </button>
+        )}
         {NAV.map(({ href, label, icon: Icon, adminOnly, analystOrAdmin }) => {
           if (adminOnly && user?.role !== 'ADMIN') return null;
           if (analystOrAdmin && user?.role === 'VIEWER') return null;
