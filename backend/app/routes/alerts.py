@@ -311,7 +311,7 @@ def ingest_alert(
                                     (
                                         body.src_ip,
                                         f"Autonomous IPS Sever: {body.signature} [{ai_eval.get('attack_family', 'CRITICAL')}]",
-                                        "AEGIS-X_AUTONOMOUS_IPS",
+                                        "APEX_SENTINEL_AUTONOMOUS_IPS",
                                         created["id"],
                                     ),
                                 )

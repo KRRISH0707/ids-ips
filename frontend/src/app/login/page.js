@@ -65,11 +65,11 @@ export default function LoginPage() {
             <span className="live-dot" style={{ width: 6, height: 6 }} />
             <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-cyan)', letterSpacing: '0.06em' }}>AUTONOMOUS IDS/IPS</span>
           </div>
-          <h1 style={{ fontSize: '1.7rem', fontWeight: 900, letterSpacing: '0.02em', margin: 0 }}>
-            <span className="glow-gradient">AEGIS-X</span>
+          <h1 style={{ fontSize: '1.7rem', fontWeight: 900, letterSpacing: '0.04em', margin: 0 }}>
+            <span className="glow-gradient">APEX SENTINEL</span>
           </h1>
           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4, letterSpacing: '0.04em' }}>
-            NEURAL THREAT INTERCEPTOR & SOC CONSOLE
+            AUTONOMOUS THREAT DEFENSE & SOC CONSOLE
           </p>
         </div>
 

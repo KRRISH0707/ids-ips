@@ -48,11 +48,11 @@ export default function Sidebar({ onOpenFeatureMenu, onToggleCollapse, isCollaps
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: '1rem', fontWeight: 900, letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span className="glow-gradient">AEGIS-X</span>
+              <div style={{ fontSize: '0.95rem', fontWeight: 900, letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="glow-gradient">APEX SENTINEL</span>
               </div>
               <div style={{ fontSize: '0.6rem', color: 'var(--accent-cyan)', letterSpacing: '0.08em', fontWeight: 700 }}>
-                THREAT INTERCEPTOR
+                AUTONOMOUS DEFENSE
               </div>
             </div>
           </div>

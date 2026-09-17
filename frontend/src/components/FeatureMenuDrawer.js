@@ -193,7 +193,7 @@ export default function FeatureMenuDrawer({
                   FEATURE COMMAND MENU
                 </h2>
                 <div style={{ fontSize: '0.68rem', color: 'var(--accent-cyan)', fontWeight: 600, letterSpacing: '0.06em' }}>
-                  AEGIS-X NAVIGATION & SCROLL SELECTOR
+                  APEX SENTINEL NAVIGATION & SCROLL SELECTOR
                 </div>
               </div>
             </div>

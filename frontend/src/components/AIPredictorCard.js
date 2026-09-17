@@ -204,7 +204,7 @@ export default function AIPredictorCard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ fontSize: '1.25rem' }}>⚡</span>
             <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              AEGIS-X Autonomous AI/ML Threat Engine
+              Apex Sentinel Autonomous AI/ML Threat Engine
             </h3>
             <span
               style={{
@@ -390,7 +390,7 @@ export default function AIPredictorCard() {
                 </span>
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                Test any arbitrary, unseen or obfuscated payload. AEGIS-X extracts statistical vectors, compares against its adaptive baseline, and auto-severs the IP.
+                Test any arbitrary, unseen or obfuscated payload. Apex Sentinel extracts statistical vectors, compares against its adaptive baseline, and auto-severs the IP.
               </p>
             </div>
           </div>

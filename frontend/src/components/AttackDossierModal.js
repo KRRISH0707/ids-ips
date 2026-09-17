@@ -327,10 +327,10 @@ export default function AttackDossierModal({ attack, onClose }) {
 
               <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 8, padding: 16 }}>
                 <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase' }}>
-                  AEGIS-X Automated MITRE Detection Logic:
+                  Apex Sentinel Automated MITRE Detection Logic:
                 </div>
                 <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  AEGIS-X correlates raw libpcap flow telemetry against the MITRE ATT&CK knowledgebase.
+                  Apex Sentinel correlates raw libpcap flow telemetry against the MITRE ATT&CK knowledgebase.
                   When matching the signature {attack.cve}, the heuristic classifier calculates anomaly confidence,
                   maps the adversary to {attack.actor}, and initiates zero-touch containment playbooks before privilege escalation.
                 </p>
@@ -414,7 +414,7 @@ export default function AttackDossierModal({ attack, onClose }) {
         }}>
           <span style={{ color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span className="live-dot" style={{ width: 6, height: 6 }} />
-            Threat Intercepted & Host Quarantined by AEGIS-X IPS Controller
+            Threat Intercepted & Host Quarantined by Apex Sentinel IPS Controller
           </span>
           <button
             onClick={onClose}

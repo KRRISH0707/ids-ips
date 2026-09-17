@@ -30,10 +30,10 @@ export default function LandingPage() {
           </div>
           <div>
             <div style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span className="glow-gradient">AEGIS-X</span>
+              <span className="glow-gradient">APEX SENTINEL</span>
             </div>
             <div style={{ fontSize: '0.62rem', color: '#00d4ff', letterSpacing: '0.1em', fontWeight: 700 }}>
-              NEURAL THREAT INTERCEPTOR
+              AUTONOMOUS THREAT DEFENSE
             </div>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function LandingPage() {
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 20, background: 'rgba(0, 212, 255, 0.08)', border: '1px solid rgba(0, 212, 255, 0.3)', marginBottom: 24, boxShadow: '0 0 20px rgba(0, 212, 255, 0.15)' }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 10px #00d4ff', display: 'inline-block' }} />
           <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.08em', fontFamily: 'JetBrains Mono, monospace' }}>
-            AEGIS-X v2.4 // AUTONOMOUS NEURAL THREAT INTERCEPTOR
+            APEX SENTINEL v2.4 // AUTONOMOUS NEURAL THREAT INTERCEPTOR
           </span>
         </div>
 
@@ -84,7 +84,7 @@ export default function LandingPage() {
         </h1>
 
         <p style={{ fontSize: '1.2rem', color: '#94a3b8', maxWidth: 820, margin: '0 auto 36px', lineHeight: 1.6 }}>
-          AEGIS-X intercepts, classifies, and neutralizes multi-vector cyber adversaries in sub-seconds. Powered by real-time packet telemetry, AI anomaly inference, MITRE ATT&CK® correlation, and automated IPS isolation.
+          Apex Sentinel intercepts, classifies, and neutralizes multi-vector cyber adversaries in sub-seconds. Powered by real-time packet telemetry, AI anomaly inference, MITRE ATT&CK® correlation, and automated IPS isolation.
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 50 }}>
@@ -109,7 +109,7 @@ export default function LandingPage() {
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444' }} />
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b' }} />
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#10b981' }} />
-              <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: 8, fontFamily: 'monospace' }}>aegis-soc-telemetry-engine // live-feed</span>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: 8, fontFamily: 'monospace' }}>apex-sentinel-soc-telemetry-engine // live-feed</span>
             </div>
             <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }} /> ACTIVE THREAT MONITORING
@@ -357,7 +357,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', padding: '36px 48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', color: '#64748b' }}>
         <div>
-          © 2026 Aegis Enterprise IDS/IPS Platform. All rights reserved.
+          © 2026 Apex Sentinel Enterprise IDS/IPS Platform. All rights reserved.
         </div>
         <div style={{ display: 'flex', gap: 20 }}>
           <Link href="/login" style={{ color: '#94a3b8', textDecoration: 'none' }}>SOC Login</Link>

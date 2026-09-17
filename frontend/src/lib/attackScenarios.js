@@ -1,5 +1,5 @@
 /**
- * AEGIS-X Threat Intelligence & Attack Laboratory Scenarios
+ * Apex Sentinel Threat Intelligence & Attack Laboratory Scenarios
  * Deep, production-grade cybersecurity profiles covering real CVEs, actual network payloads,
  * realistic packet hex dumps, MITRE ATT&CK mappings, and kernel containment receipts.
  */
@@ -31,7 +31,7 @@ export const ATTACK_SCENARIOS = [
       '2. Privilege escalation via SeDebugPrivilege token stealing.',
       '3. Invocation of WMI and PowerShell to purge volume shadow copies.',
       '4. Multithreaded file encryption with .lockbit extension append.',
-      '5. AEGIS-X autonomous anomaly scoring triggered at 150 ops/sec.',
+      '5. Apex Sentinel autonomous anomaly scoring triggered at 150 ops/sec.',
       '6. Kernel host quarantine enforced via iptables & endpoint agent severed.',
     ],
     payload: `powershell.exe -NoP -NonI -W Hidden -Exec Bypass -Command "Get-WmiObject Win32_ShadowCopy | ForEach-Object { $_.Delete(); }; bcdedit.exe /set {default} bootstatuspolicy ignoreallfailures; bcdedit.exe /set {default} recoveryenabled no; vssadmin.exe delete shadows /all /quiet"`,
@@ -85,7 +85,7 @@ export const ATTACK_SCENARIOS = [
       '1. Attacker sends HTTP GET with obfuscated JNDI payload in User-Agent header.',
       '2. Web application passes header string to log4j.logger.info().',
       '3. Log4j JNDI plugin triggers outbound LDAP connection to rogue listener (185.220.101.5:1389).',
-      '4. AEGIS-X DPI engine intercepts packet and unpacks recursive string obfuscation.',
+      '4. Apex Sentinel DPI engine intercepts packet and unpacks recursive string obfuscation.',
       '5. Active TCP RST injected; perimeter IP blackholed at edge proxy.',
       '6. Zero Java class execution permitted.',
     ],
@@ -140,7 +140,7 @@ export const ATTACK_SCENARIOS = [
       '1. Host infected via spearphishing document payload.',
       '2. Beacon spawns rundll32.exe and injects shellcode into memory.',
       '3. Encrypted periodic heartbeat sent to 45.33.32.156 with 30s jittered sleep.',
-      '4. AEGIS-X Fast Fourier Transform (FFT) analysis identifies recurring periodicity.',
+      '4. Apex Sentinel Fast Fourier Transform (FFT) analysis identifies recurring periodicity.',
       '5. Autonomous DNS sinkhole redirect applied, severing operator control.',
       '6. Rogue C2 server null-routed across internal edge routing table.',
     ],
@@ -195,7 +195,7 @@ export const ATTACK_SCENARIOS = [
       '1. Attacker uses compromised domain user account on WS-22.',
       '2. Enumerates SPNs in Active Directory using LDAP query (servicePrincipalName=*).',
       '3. Requests TGS tickets using RC4-HMAC cipher for high-privilege service accounts.',
-      '4. AEGIS-X behavioral engine detects abnormal ticket request spike (14 tickets in 12 seconds).',
+      '4. Apex Sentinel behavioral engine detects abnormal ticket request spike (14 tickets in 12 seconds).',
       '5. SOAR Playbook PB-04 triggers automatic AD account lockout and Kerberos session kill.',
       '6. Lateral privilege escalation thwarted.',
     ],
@@ -253,7 +253,7 @@ Extracted Hash: $krb5tgs$23$*MSSQLSvc/db-prod-cluster.corp*$92f8b0112a874c93f0b2
       '1. Attacker sends HTTP POST with ClassLoader property manipulation strings.',
       '2. Targets Tomcat pipeline to rewrite log pattern, file suffix, and directory.',
       '3. Writes persistent backdoor: shell.jsp containing Runtime.getRuntime().exec().',
-      '4. AEGIS-X WAF inspection intercepts class.module parameter traversal.',
+      '4. Apex Sentinel WAF inspection intercepts class.module parameter traversal.',
       '5. Connection terminated with HTTP 403 Forbidden; IP banned across cluster.',
       '6. Zero files written to container filesystem.',
     ],
@@ -308,7 +308,7 @@ Extracted Hash: $krb5tgs$23$*MSSQLSvc/db-prod-cluster.corp*$92f8b0112a874c93f0b2
       '1. Attacker triggers distributed command to 4,200 botnet nodes.',
       '2. Ingress traffic spikes to 120,000 packets/sec on financial payment gateway.',
       '3. Linux conntrack table reaches 85% capacity in 1.5 seconds.',
-      '4. AEGIS-X eBPF fast-path driver engages autonomous SYN Cookies (syncookies=1).',
+      '4. Apex Sentinel eBPF fast-path driver engages autonomous SYN Cookies (syncookies=1).',
       '5. Rate-limiting enforced at hardware NIC level via XDP filter.',
       '6. Zero connection drops for authenticated banking clients.',
     ],

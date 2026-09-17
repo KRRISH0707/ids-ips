@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AEGIS-X Autonomous Threat Interceptor: Real-Time Detection & Prevention Audit Suite
+Apex Sentinel Autonomous Threat Interceptor: Real-Time Detection & Prevention Audit Suite
 
 Validates:
 1. Attack Detection: Suricata heuristic + AI/ML multi-vector anomaly classification.
@@ -86,7 +86,7 @@ def query_stats_summary(token):
 
 def run_realtime_audit():
     print("=" * 78)
-    print("  AEGIS-X: END-TO-END REAL-TIME ATTACK DETECTION & PREVENTION AUDIT")
+    print("  APEX SENTINEL: END-TO-END REAL-TIME ATTACK DETECTION & PREVENTION AUDIT")
     print("=" * 78)
 
     token = get_token()

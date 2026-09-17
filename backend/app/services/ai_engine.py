@@ -1,5 +1,5 @@
 """
-AEGIS-X Autonomous AI/ML Threat Detection & Adaptive Mitigation Engine
+Apex Sentinel Autonomous AI/ML Threat Detection & Adaptive Mitigation Engine
 
 Provides mathematical unsupervised machine learning, multi-vector anomaly detection,
 online statistical baselining, and automated active containment without requiring
@@ -336,7 +336,7 @@ class AIEngine:
         clean_name = family.replace("_", " ").title()
         suricata_rule = (
             f'drop ip {attacker_ip} any -> any {dst_port} '
-            f'(msg:"AEGIS-X AUTONOMOUS AI/ML SEVER: {clean_name}"; '
+            f'(msg:"APEX SENTINEL AUTONOMOUS AI/ML SEVER: {clean_name}"; '
             f'threshold:type limit,track by_src,count 1,seconds 3600; '
             f'classtype:attempted-admin; sid:{abs(sid)}; rev:1;)'
         )

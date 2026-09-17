@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AEGIS-X Autonomous AI/ML Zero-Day Threat Interceptor Audit
+Apex Sentinel Autonomous AI/ML Zero-Day Threat Interceptor Audit
 
 Validates:
 1. Mathematical Detection: Identifies zero-day / novel attacks having ZERO matching keywords
@@ -104,12 +104,12 @@ def query_rules(token):
 
 def run_zero_day_audit():
     print("=" * 80)
-    print("  AEGIS-X: AUTONOMOUS AI/ML ZERO-DAY DETECTION & WIRE-SPEED IPS AUDIT")
+    print("  APEX SENTINEL: AUTONOMOUS AI/ML ZERO-DAY DETECTION & WIRE-SPEED IPS AUDIT")
     print("  Testing Unknown Attacks with ZERO Hardcoded Keywords or Signatures")
     print("=" * 80)
 
     token = get_token()
-    print("[+] Successfully authenticated to AEGIS-X Backend API")
+    print("[+] Successfully authenticated to Apex Sentinel Backend API")
 
     passed = 0
     total = len(NOVEL_ZERO_DAY_PAYLOADS) + 1  # 3 attacks + 1 benign

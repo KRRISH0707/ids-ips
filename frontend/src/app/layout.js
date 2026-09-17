@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'AEGIS-X // Autonomous Neural Threat Interceptor',
-  description: 'Next-Gen Multi-Vector IDS/IPS & Active Mitigation Platform',
+  title: 'Apex Sentinel // Autonomous Neural Threat Interceptor',
+  description: 'Enterprise IDS/IPS & Next-Gen Autonomous Threat Defense Platform',
 };
 
 export default function RootLayout({ children }) {

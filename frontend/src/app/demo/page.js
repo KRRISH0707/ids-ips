@@ -197,8 +197,8 @@ function DemoDashboardContent() {
                 </svg>
               </div>
               <div>
-                <h1 style={{ fontSize: '1.45rem', fontWeight: 900, margin: 0, letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="glow-gradient">AEGIS-X</span>
+                <h1 style={{ fontSize: '1.45rem', fontWeight: 900, margin: 0, letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="glow-gradient">APEX SENTINEL</span>
                   <span style={{ fontSize: '0.78rem', color: 'var(--accent-cyan)', background: 'rgba(0, 212, 255, 0.1)', padding: '2px 8px', borderRadius: 4, border: '1px solid rgba(0, 212, 255, 0.3)', fontFamily: 'JetBrains Mono' }}>
                     SANDBOX
                   </span>
