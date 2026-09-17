@@ -14,11 +14,13 @@ from datetime import datetime, timezone
 
 # Threat signature keywords for payload heuristic scoring
 CRITICAL_INDICATORS = {
-    "ransomware": ["vssadmin", "wbadmin", ".locked", "encrypt", "shadowcopy", "cipher", "wannacry"],
-    "c2_beaconing": ["cobalt", "beacon", "malleable", "c2", "empire", "meterpreter", "reverse_tcp"],
-    "credential_theft": ["mimikatz", "lsass", "sam", "procdump", "ntdsutil", "sekurlsa"],
+    "ransomware": ["vssadmin", "wbadmin", ".locked", "encrypt", "shadowcopy", "cipher", "wannacry", "lockbit"],
+    "c2_beaconing": ["cobalt", "beacon", "malleable", "c2", "empire", "meterpreter", "reverse_tcp", "apt29"],
+    "credential_theft": ["mimikatz", "lsass", "sam", "procdump", "ntdsutil", "sekurlsa", "kerberoast", "tgs-req", "golden ticket"],
     "lateral_movement": ["psexec", "wmic", "winrm", "remote_exec", "smbexec", "dcom"],
-    "exfiltration": ["mega.nz", "curl -T", "rclone", "anonfiles", "base64_decode"]
+    "exfiltration": ["mega.nz", "curl -T", "rclone", "anonfiles", "base64_decode"],
+    "zero_day_rce": ["log4j", "jndi", "ldap://", "rmi://", "spring4shell", "cve-2021-44228", "cve-2022-22965", "eval(", "exec("],
+    "ddos_flood": ["syn flood", "mirai", "udp flood", "amplification", "tcp syn", "icmp flood"],
 }
 
 class AIEngine:
@@ -74,22 +76,36 @@ class AIEngine:
         signature_boost = 0.25 if indicators_matched else 0.0
 
         anomaly_score = min(1.0, base_score * 0.5 + entropy_boost + velocity_boost + signature_boost)
+        if indicators_matched or severity == "CRITICAL":
+            anomaly_score = max(anomaly_score, 0.88 if severity == "CRITICAL" else 0.75)
         confidence = min(99, int(anomaly_score * 85 + (15 if indicators_matched else 5)))
 
         # 3. Attack Family Classification & Threat Trajectory Forecasting
-        if "ransomware" in indicators_matched or "encrypt" in signature:
+        if "ransomware" in indicators_matched or "encrypt" in signature or "lockbit" in signature:
             attack_family = "RANSOMWARE_BURST"
             next_stage = "Stage 3: Mass Volume Encryption & Master Boot Record Overwrite within 10 minutes"
             threat_level = "CRITICAL_IMMINENT"
-            recommended_action = "ISOLATE_HOST"
-            auto_isolate = True
-        elif "c2_beaconing" in indicators_matched or category == "c2":
+            recommended_action = "ISOLATE_HOST" if is_internal_src else "BLOCK_IP"
+            auto_isolate = is_internal_src
+        elif "zero_day_rce" in indicators_matched or "log4j" in signature or "jndi" in signature or "spring" in signature:
+            attack_family = "REMOTE_CODE_EXECUTION_ZERO_DAY"
+            next_stage = "Stage 2: Interactive Reverse Shell Spawn & Payload Drop within 5 minutes"
+            threat_level = "CRITICAL_IMMINENT"
+            recommended_action = "BLOCK_IP"
+            auto_isolate = False
+        elif "c2_beaconing" in indicators_matched or category == "c2" or "cobalt" in signature:
             attack_family = "C2_ACTIVE_SESSION"
             next_stage = "Stage 2: Lateral Movement sweep to domain controller via SMB/RPC"
             threat_level = "HIGH_COMPROMISE"
             recommended_action = "ISOLATE_HOST" if is_internal_src else "BLOCK_IP"
             auto_isolate = is_internal_src
-        elif "credential_theft" in indicators_matched or failed_attempts >= 15:
+        elif "ddos_flood" in indicators_matched or "syn flood" in signature or "mirai" in signature:
+            attack_family = "DISTRIBUTED_DENIAL_OF_SERVICE"
+            next_stage = "Stage 2: Edge DMZ Ingress Saturation & BGP Route Overload"
+            threat_level = "CRITICAL_DENIAL"
+            recommended_action = "BLOCK_IP"
+            auto_isolate = False
+        elif "credential_theft" in indicators_matched or "kerberoast" in signature or failed_attempts >= 15:
             attack_family = "CREDENTIAL_STUFFING_ATTACK"
             next_stage = "Stage 2: Privilege Escalation & Shadow Admin account creation within 30 minutes"
             threat_level = "HIGH_VELOCITY"
@@ -104,8 +120,8 @@ class AIEngine:
         else:
             attack_family = "BEHAVIORAL_ANOMALY"
             next_stage = "Stage 1: Initial anomaly baseline deviation under automated observation"
-            threat_level = "ELEVATED"
-            recommended_action = "MONITOR"
+            threat_level = "ELEVATED" if severity in ("CRITICAL", "HIGH") else "NORMAL"
+            recommended_action = "BLOCK_IP" if severity == "CRITICAL" and not is_internal_src else "MONITOR"
             auto_isolate = False
 
         # If high risk internal machine, always recommend isolation

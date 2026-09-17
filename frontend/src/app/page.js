@@ -32,9 +32,23 @@ export default function DashboardPage() {
   const [activeKillChainStage, setActiveKillChainStage] = useState(null);
   const [simulatedThreatScore, setSimulatedThreatScore] = useState(null);
 
-  const handleAttackTriggered = (attack) => {
+  const handleAttackTriggered = async (attack) => {
     setActiveKillChainStage(attack.killChainStage);
     setSimulatedThreatScore(attack.threatScore);
+
+    try {
+      await api.simulateAttack({ scenario: attack.key });
+      const [as, ip, ra] = await Promise.all([
+        api.getAlertsSummary(),
+        api.getIPSStats(),
+        api.getAlerts({ limit: 8, status: 'OPEN' }),
+      ]);
+      setAlertStats(as);
+      setIPSStats(ip);
+      setRecentAlerts(ra?.items || []);
+    } catch (err) {
+      console.warn('Real-time attack simulation trigger note:', err);
+    }
   };
 
   const handleResetBaseline = () => {

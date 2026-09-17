@@ -85,6 +85,8 @@ export const api = {
   // ── Alerts ────────────────────────────────────────────────────────────────
   getAlerts: (params = {}) => request('/alerts?' + new URLSearchParams(params)),
   getAlertsSummary: () => request('/alerts/stats/summary'),
+  createAlert: (data) => request('/alerts', { method: 'POST', body: JSON.stringify(data) }),
+  simulateAttack: (data) => request('/alerts/simulate', { method: 'POST', body: JSON.stringify(data) }),
   updateAlertStatus: (id, status_) =>
     request(`/alerts/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: status_ }) }),
 
