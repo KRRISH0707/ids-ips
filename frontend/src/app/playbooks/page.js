@@ -431,6 +431,7 @@ export default function PlaybooksPage() {
                               ); })()}
                             </div>
                           )}
+                        </div>
                       );
                     })()}
                   </div>

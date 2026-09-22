@@ -110,11 +110,11 @@ def run_full_seed():
             # 4. SOAR PLAYBOOKS (All 55 Autonomous Playbooks)
             logger.info("[4/7] Seeding 55 Autonomous Enterprise SOAR Playbooks (PB-01 to PB-55)...")
             try:
-                from scripts.seed_55_playbooks import seed_55_playbooks
+                from .seed_55_playbooks import seed_55_playbooks
                 seed_55_playbooks(conn)
             except Exception as pb_err:
-                logger.warning(f"  Playbooks seed warning ({pb_err}), falling back to internal import...")
-                from ..scripts.seed_55_playbooks import seed_55_playbooks
+                logger.warning(f"  Playbooks seed warning ({pb_err}), falling back to scripts import...")
+                from scripts.seed_55_playbooks import seed_55_playbooks
                 seed_55_playbooks(conn)
             logger.info("  ✓ 55 Enterprise SOAR Playbooks active & mapped to MITRE ATT&CK.")
 
