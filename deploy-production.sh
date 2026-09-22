@@ -175,8 +175,14 @@ if [[ "$DOMAIN" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
         --no-eff-email \
         -d "$DOMAIN" || echo -e "${YELLOW}[NOTE] Let's Encrypt request skipped/deferred. Self-signed certificate active.${NC}"
 
-    # Reload Nginx with new certificate
-    docker compose --env-file .env.production -f docker-compose.prod.yml exec nginx nginx -s reload || true
+    # Ensure Nginx uses the real domain certificate and reloads
+    docker compose --env-file .env.production -f docker-compose.prod.yml exec nginx sh -c "
+        if [ -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
+            rm -rf /etc/letsencrypt/live/default
+            ln -sf /etc/letsencrypt/live/$DOMAIN /etc/letsencrypt/live/default
+        fi
+        nginx -s reload
+    " || true
 fi
 
 # Step 6: Install systemd auto-restart service
