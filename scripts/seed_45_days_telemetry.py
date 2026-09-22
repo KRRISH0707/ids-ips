@@ -238,21 +238,37 @@ def seed_45_days(conn=None):
     with conn.cursor() as cur:
         # Check current date / anchor date (using Sept 21, 2026 as reference base)
         cur.execute("SELECT now()")
-        db_now = cur.fetchone()[0]
+        row_now = cur.fetchone()
+        db_now = (list(row_now.values())[0] if isinstance(row_now, dict) else row_now[0]) if row_now else datetime.now(timezone.utc)
         print(f"Database Current Time: {db_now}")
 
         # Fetch active admin user id & sensor id
         cur.execute("SELECT id, email FROM users WHERE role = 'ADMIN' LIMIT 1")
         admin_row = cur.fetchone()
-        admin_id = admin_row[0] if admin_row else None
-        admin_email = admin_row[1] if admin_row else "admin@ids-soc.com"
+        admin_id = None
+        admin_email = "admin@ids-soc.com"
+        if admin_row:
+            if isinstance(admin_row, dict):
+                admin_id = admin_row.get("id")
+                admin_email = admin_row.get("email", admin_email)
+            else:
+                admin_id = admin_row[0]
+                admin_email = admin_row[1] if len(admin_row) > 1 else admin_email
 
         cur.execute("SELECT id FROM sensors LIMIT 1")
         sensor_row = cur.fetchone()
-        sensor_id = sensor_row[0] if sensor_row else None
+        sensor_id = None
+        if sensor_row:
+            sensor_id = sensor_row.get("id") if isinstance(sensor_row, dict) else sensor_row[0]
 
         cur.execute("SELECT id, name, trigger_event FROM playbooks")
-        playbooks = cur.fetchall()
+        raw_playbooks = cur.fetchall()
+        playbooks = []
+        for pb in raw_playbooks:
+            if isinstance(pb, dict):
+                playbooks.append((pb.get("id"), pb.get("name"), pb.get("trigger_event")))
+            else:
+                playbooks.append(pb)
 
         print("\n--- Generating 45-Day Historic Data (Day -45 to Day 0) ---")
 
@@ -300,7 +316,8 @@ def seed_45_days(conn=None):
                         resolved_at
                     )
                 )
-                inc_id = cur.fetchone()[0]
+                inc_row = cur.fetchone()
+                inc_id = (inc_row.get("id") if isinstance(inc_row, dict) else inc_row[0]) if inc_row else None
                 created_incidents.append((inc_id, incident_time, status))
 
         print(f"Created {len(created_incidents)} incidents distributed across 45 days.")

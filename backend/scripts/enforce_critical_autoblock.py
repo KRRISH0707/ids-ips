@@ -64,7 +64,15 @@ def enforce_autoblock(conn=None):
 
             blocked_ips_count = 0
             for row in open_critical:
-                alert_id, src_ip, signature, severity, risk_score, incident_id = row
+                if isinstance(row, dict):
+                    alert_id = row.get("id")
+                    src_ip = row.get("src_ip")
+                    signature = row.get("signature")
+                    severity = row.get("severity")
+                    risk_score = row.get("risk_score")
+                    incident_id = row.get("incident_id")
+                else:
+                    alert_id, src_ip, signature, severity, risk_score, incident_id = row
                 
                 # Quarantine source IP
                 if src_ip:
@@ -102,9 +110,11 @@ def enforce_autoblock(conn=None):
 
             # Verify count
             cur.execute("SELECT COUNT(*) FROM alerts WHERE severity = 'CRITICAL' AND status = 'OPEN'")
-            remaining = cur.fetchone()[0]
+            rem_row = cur.fetchone()
+            remaining = (list(rem_row.values())[0] if isinstance(rem_row, dict) else rem_row[0]) if rem_row else 0
             cur.execute("SELECT status, count(*) FROM alerts WHERE severity = 'CRITICAL' GROUP BY status")
-            breakdown = cur.fetchall()
+            raw_breakdown = cur.fetchall()
+            breakdown = [(r.get("status"), r.get("count")) if isinstance(r, dict) else r for r in raw_breakdown]
 
             print("\n=== Critical Threat Auto-Block Enforcement Complete ===")
             print(f"Remaining OPEN critical alerts: {remaining}")
