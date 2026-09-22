@@ -54,58 +54,6 @@ logging.basicConfig(
 )
 
 
-def _generate_autonomous_telemetry(key: str):
-    try:
-        from .routes.alerts import SIMULATED_SCENARIOS, AlertCreate, ingest_alert
-        scen = SIMULATED_SCENARIOS.get(key)
-        if not scen:
-            return
-        dst_p = scen.get("dst_port")
-        alert_create = AlertCreate(
-            src_ip=scen["src_ip"],
-            src_port=49152,
-            dst_ip=scen["dst_ip"],
-            dst_port=dst_p if dst_p and dst_p > 0 else None,
-            protocol=scen["protocol"],
-            signature=scen["signature"],
-            category=scen["category"],
-            severity=scen["severity"],
-            risk_score=scen["risk_score"],
-            status="OPEN",
-            raw_event=scen.get("raw_event", {"autonomous": True}),
-        )
-        fake_user = {"sub": "system-autonomous-telemetry", "role": "admin"}
-        ingest_alert(alert_create, None, fake_user)
-        logger.info("Autonomous Telemetry Event: %s [%s]", scen["signature"], scen["severity"])
-    except Exception as exc:
-        logger.warning("Autonomous telemetry generation error: %s", exc)
-
-
-async def autonomous_background_telemetry_loop():
-    """Generates continuous autonomous attack & telemetry events so the platform lives and updates 24/7."""
-    import random
-    await asyncio.sleep(15)  # initial delay on startup
-    scenario_keys = [
-        "SQLI", "SYN_FLOOD", "LOCKBIT", "BRUTE_FORCE", "LOG4J",
-        "TROJAN", "WEB_SHELL", "CLOUD_METADATA", "XSS", "RCE",
-        "DATA_EXFIL", "RAT", "ROOTKIT"
-    ]
-    idx = 0
-    while True:
-        try:
-            # Vary interval slightly between 40 and 65 seconds for authentic live telemetry cadence
-            sleep_interval = random.randint(40, 65)
-            await asyncio.sleep(sleep_interval)
-            key = scenario_keys[idx % len(scenario_keys)]
-            idx += 1
-            await asyncio.to_thread(_generate_autonomous_telemetry, key)
-        except asyncio.CancelledError:
-            break
-        except Exception as err:
-            logger.warning("Autonomous background loop error: %s", err)
-            await asyncio.sleep(10)
-
-
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 
 @asynccontextmanager
@@ -147,14 +95,10 @@ async def lifespan(app: FastAPI):
         logger.warning("⚠️   Redis unreachable (live feed disabled): %s", exc)
 
     logger.info("🚀  IDS/IPS API started  [env=%s]", os.getenv("APP_ENV", "development"))
-
-    # Start autonomous 24/7 background telemetry engine
-    bg_task = asyncio.create_task(autonomous_background_telemetry_loop())
-    logger.info("🛡️  Autonomous Background Telemetry Engine ACTIVE (24/7 self-updating)")
+    logger.info("🛡️  True Production Mode: Live network & Suricata telemetry active")
 
     yield
 
-    bg_task.cancel()
     logger.info("🛑  IDS/IPS API shutting down")
 
 

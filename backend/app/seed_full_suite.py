@@ -131,31 +131,8 @@ def run_full_seed():
             except Exception as e:
                 logger.warning(f"  Threat intel note: {e}")
 
-            # 6. HISTORICAL 45-DAY TELEMETRY (Import from scripts/seed_45_days_telemetry.py)
-            logger.info("[6/7] Populating 45-Day High-Fidelity Historical Telemetry...")
-            try:
-                cur.execute("SELECT COUNT(*) as c FROM alerts")
-                total_alerts = cur.fetchone()["c"] or 0
-                if total_alerts < 200:
-                    from scripts.seed_45_days_telemetry import seed_45_days
-                    seed_45_days(conn)
-                    logger.info("  ✓ 45-day telemetry history fully populated.")
-                else:
-                    logger.info(f"  ✓ {total_alerts} telemetry alerts already active.")
-            except Exception as e:
-                logger.warning(f"  Telemetry history note: {e}")
-
-            # 7. ENFORCE AUTONOMOUS IPS AUTO-BLOCKING
-            logger.info("[7/7] Enforcing Autonomous Kernel Quarantine & Containment...")
-            try:
-                from scripts.enforce_critical_autoblock import enforce_autoblock
-                enforce_autoblock(conn)
-                logger.info("  ✓ Autonomous IPS auto-blocking active.")
-            except Exception as e:
-                logger.warning(f"  Autoblock note: {e}")
-
     logger.info("==================================================================")
-    logger.info("  ✅ ALL DATA SUCCESSFULLY INTEGRATED AND ACTIVE ON PRODUCTION!   ")
+    logger.info("  ✅ TRUE PRODUCTION BASELINE INITIALIZED (NO SYNTHETIC DATA)     ")
     logger.info("==================================================================")
 
 
