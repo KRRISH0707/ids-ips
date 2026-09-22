@@ -152,6 +152,7 @@ if [[ "$DOMAIN" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
     sleep 5
     docker compose --env-file .env.production -f docker-compose.prod.yml run --rm certbot certonly --webroot \
         --webroot-path=/var/www/certbot \
+        --cert-name default \
         --email "$ADMIN_EMAIL" \
         --agree-tos \
         --no-eff-email \
