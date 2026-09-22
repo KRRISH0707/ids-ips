@@ -107,12 +107,27 @@ if command -v ufw &> /dev/null; then
     echo "Firewall active. Only ports 22, 80, 443 permitted."
 fi
 
-# Step 3: Generate Strong Cryptographic Secrets
+# Step 3: Generate Strong Cryptographic Secrets (preserve existing if present)
 echo -e "${CYAN}[3/6] Generating Cryptographic Keys & Secrets...${NC}"
-JWT_SECRET=$(openssl rand -hex 32)
-POSTGRES_PASSWORD=$(openssl rand -hex 16)
-REDIS_PASSWORD=$(openssl rand -hex 16)
-GRAFANA_PASSWORD=$(openssl rand -hex 16)
+EXISTING_POSTGRES_PASSWORD=""
+EXISTING_REDIS_PASSWORD=""
+EXISTING_JWT_SECRET=""
+EXISTING_GRAFANA_PASSWORD=""
+EXISTING_ALLOWLIST=""
+
+if [ -f .env.production ]; then
+    EXISTING_POSTGRES_PASSWORD=$(grep -E '^POSTGRES_PASSWORD=' .env.production | cut -d= -f2- || true)
+    EXISTING_REDIS_PASSWORD=$(grep -E '^REDIS_PASSWORD=' .env.production | cut -d= -f2- || true)
+    EXISTING_JWT_SECRET=$(grep -E '^JWT_SECRET=' .env.production | cut -d= -f2- || true)
+    EXISTING_GRAFANA_PASSWORD=$(grep -E '^GRAFANA_ADMIN_PASSWORD=' .env.production | cut -d= -f2- || true)
+    EXISTING_ALLOWLIST=$(grep -E '^IPS_MANAGEMENT_ALLOWLIST=' .env.production | cut -d= -f2- || true)
+fi
+
+JWT_SECRET=${EXISTING_JWT_SECRET:-$(openssl rand -hex 32)}
+POSTGRES_PASSWORD=${EXISTING_POSTGRES_PASSWORD:-$(openssl rand -hex 16)}
+REDIS_PASSWORD=${EXISTING_REDIS_PASSWORD:-$(openssl rand -hex 16)}
+GRAFANA_PASSWORD=${EXISTING_GRAFANA_PASSWORD:-$(openssl rand -hex 16)}
+IPS_MANAGEMENT_ALLOWLIST=${IPS_MANAGEMENT_ALLOWLIST:-${EXISTING_ALLOWLIST:-}}
 
 # Generate .env.production file
 cat > .env.production << EOF
@@ -135,7 +150,9 @@ OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-Apex@Sent
 EOF
 
 chmod 600 .env.production
-echo "Created secured .env.production."
+cp .env.production .env
+chmod 600 .env
+echo "Created secured .env.production and .env."
 
 # Step 4: Configure Nginx & Self-Signed Bootstrap SSL
 echo -e "${CYAN}[4/6] Bootstrapping Nginx SSL Reverse Proxy...${NC}"
