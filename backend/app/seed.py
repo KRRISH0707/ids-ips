@@ -14,6 +14,13 @@ settings = get_settings()
 
 def seed():
     try:
+        from .seed_full_suite import run_full_seed
+        run_full_seed()
+        return
+    except Exception as full_err:
+        logger.warning(f"Full suite notice ({full_err}), falling back to baseline...")
+
+    try:
         conn = get_sync_connection()
         with conn.cursor() as cur:
             admin_email = settings.admin_email
