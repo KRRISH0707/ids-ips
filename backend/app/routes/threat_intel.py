@@ -34,6 +34,17 @@ def list_threat_intel(
     """List Threat Intelligence Indicators of Compromise (IOCs)."""
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
+            # Self-healing check: if threat_intel has fewer than 200 items, auto-seed immediately!
+            cur.execute("SELECT COUNT(*) as count FROM threat_intel")
+            cnt_row = cur.fetchone()
+            cnt = (cnt_row.get("count") if isinstance(cnt_row, dict) else cnt_row[0]) or 0
+            if cnt < 200:
+                try:
+                    from ..seed_iocs_data import seed_threat_intel_iocs
+                    seed_threat_intel_iocs(conn)
+                except Exception:
+                    pass
+
             query = "SELECT id, ioc_type, value, threat_type, confidence, source, tags, created_at FROM threat_intel WHERE 1=1"
             params = []
 
@@ -71,6 +82,17 @@ def lookup_threat_indicator(
     clean_val = body.value.strip().lower()
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
+            # Self-healing check if database needs baseline seeding
+            cur.execute("SELECT COUNT(*) as count FROM threat_intel")
+            cnt_row = cur.fetchone()
+            cnt = (cnt_row.get("count") if isinstance(cnt_row, dict) else cnt_row[0]) or 0
+            if cnt < 200:
+                try:
+                    from ..seed_iocs_data import seed_threat_intel_iocs
+                    seed_threat_intel_iocs(conn)
+                except Exception:
+                    pass
+
             query = """
                 SELECT id, ioc_type, value, threat_type, confidence, source, tags, created_at
                 FROM threat_intel

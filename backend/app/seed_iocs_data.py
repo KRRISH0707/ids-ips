@@ -300,12 +300,22 @@ IOCS_DATA_225 = [
 
 
 def seed_threat_intel_iocs(conn=None):
-    """Seed or update all 225+ threat intelligence indicators idempotently."""
+    """Seed or update all 236+ threat intelligence indicators idempotently."""
     should_close = False
     if conn is None:
-        db_url = os.getenv("DATABASE_URL", "postgresql://idsips:change-me-in-development@localhost:5432/idsips")
-        conn = psycopg.connect(db_url, row_factory=psycopg.rows.dict_row)
-        should_close = True
+        try:
+            from .core.database import get_sync_connection
+            conn = get_sync_connection()
+            should_close = True
+        except Exception:
+            try:
+                from app.core.database import get_sync_connection
+                conn = get_sync_connection()
+                should_close = True
+            except Exception:
+                db_url = os.getenv("DATABASE_URL", "postgresql://idsips:change-me-in-development@localhost:5432/idsips")
+                conn = psycopg.connect(db_url, row_factory=psycopg.rows.dict_row)
+                should_close = True
 
     try:
         with conn.cursor() as cur:
@@ -335,21 +345,28 @@ def seed_threat_intel_iocs(conn=None):
                     )
                 )
                 row = cur.fetchone()
-                if row and row.get("is_insert"):
-                    inserted += 1
-                else:
-                    updated += 1
+                if row:
+                    is_ins = row.get("is_insert") if isinstance(row, dict) else row[0]
+                    if is_ins:
+                        inserted += 1
+                    else:
+                        updated += 1
 
             conn.commit()
             logger.info(f"✓ Threat intelligence synchronized: {inserted} newly inserted, {updated} updated.")
 
             # Summary counts by ioc_type
             cur.execute("SELECT ioc_type, COUNT(*) as count FROM threat_intel GROUP BY ioc_type ORDER BY ioc_type")
-            breakdown = {r["ioc_type"]: r["count"] for r in cur.fetchall()}
+            breakdown = {}
+            for r in cur.fetchall():
+                t = r.get("ioc_type") if isinstance(r, dict) else r[0]
+                c = r.get("count") if isinstance(r, dict) else r[1]
+                breakdown[t] = c
             logger.info(f"✓ Threat Intel Breakdown: {breakdown}")
 
             cur.execute("SELECT COUNT(*) as total FROM threat_intel")
-            total = cur.fetchone()["total"]
+            tot_row = cur.fetchone()
+            total = (tot_row.get("total") if isinstance(tot_row, dict) else tot_row[0]) if tot_row else 0
             logger.info(f"✓ Total Threat Indicators in database: {total}")
 
     finally:

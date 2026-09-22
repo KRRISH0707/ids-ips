@@ -126,6 +126,14 @@ async def lifespan(app: FastAPI):
             logger.info("✅  Admin user and baseline assets initialized")
         except Exception as seed_err:
             logger.warning("Auto-seed notice: %s", seed_err)
+
+        # Ensure threat intel indicators are actively populated
+        try:
+            from .seed_iocs_data import seed_threat_intel_iocs
+            seed_threat_intel_iocs()
+            logger.info("✅  236+ Threat Intelligence IOCs active (IPs, Domains, Hashes)")
+        except Exception as ti_err:
+            logger.warning("Threat intel startup sync notice: %s", ti_err)
     except Exception as exc:
         logger.critical("❌  PostgreSQL unreachable: %s", exc)
         raise

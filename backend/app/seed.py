@@ -161,6 +161,13 @@ def seed():
                 logger.warning(f"Alerts seed notice: {a_err}")
                 conn.rollback()
 
+            # 5. Threat Intelligence Baseline
+            try:
+                from .seed_iocs_data import seed_threat_intel_iocs
+                seed_threat_intel_iocs(conn)
+            except Exception as ti_err:
+                logger.warning(f"Threat intel seed notice: {ti_err}")
+
             logger.info("Database seeding completed successfully.")
 
     except Exception as e:
