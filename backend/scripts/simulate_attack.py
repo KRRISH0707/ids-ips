@@ -8,6 +8,7 @@ Simulates realistic cyber attacks against the platform to test:
 4. Automated IPS IP blocking enforcement
 """
 
+import os
 import sys
 import time
 import json
