@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Sidebar from '@/components/Sidebar';
 import PCAPViewerModal from '@/components/PCAPViewerModal';
-import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState } from '@/components/ui';
+import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState, Pagination } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useLiveFeed } from '@/lib/useLiveFeed';
 import { exportToCSV, formatRelativeTime } from '@/lib/utils';
@@ -99,8 +99,14 @@ export default function AlertsPage() {
   const [selectedAlertForPCAP, setSelectedAlertForPCAP] = useState(null);
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [skip, setSkip] = useState(0);
-  const limit = 50;
+  const [pageSize, setPageSize] = useState(25);
+  const limit = pageSize;
   const tableWrapperRef = useRef(null);
+
+  // Reset pagination to page 1 whenever filters or time range change
+  useEffect(() => {
+    setSkip(0);
+  }, [severity, alertStatus, days, pageSize]);
 
   const scrollTable = (direction) => {
     if (tableWrapperRef.current) {
@@ -128,7 +134,7 @@ export default function AlertsPage() {
     } finally {
       if (showSpinner) setLoading(false);
     }
-  }, [severity, alertStatus, skip, days]);
+  }, [severity, alertStatus, skip, days, limit]);
 
   useEffect(() => { load(true); }, [load]);
 
@@ -686,14 +692,18 @@ export default function AlertsPage() {
         )}
 
         {/* Pagination */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 18 }}>
-          <button className="btn btn-ghost btn-sm" disabled={skip === 0} onClick={() => setSkip(Math.max(0, skip - limit))}>
-            ← Prev
-          </button>
-          <button className="btn btn-ghost btn-sm" disabled={skip + limit >= total} onClick={() => setSkip(skip + limit)}>
-            Next →
-          </button>
-        </div>
+        <Pagination
+          currentPage={Math.floor(skip / pageSize) + 1}
+          pageSize={pageSize}
+          totalItems={total}
+          label="threat alerts"
+          loading={loading}
+          onPageChange={(page) => setSkip((page - 1) * pageSize)}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setSkip(0);
+          }}
+        />
       </div>
 
       {/* PCAP / DPI Forensics Modal */}

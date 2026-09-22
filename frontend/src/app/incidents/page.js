@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState } from '@/components/ui';
+import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState, Pagination } from '@/components/ui';
 import { api, getUser } from '@/lib/api';
 import { useLiveFeed } from '@/lib/useLiveFeed';
 import { exportToCSV, formatRelativeTime } from '@/lib/utils';
@@ -96,13 +96,20 @@ export default function IncidentsPage() {
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAnalytics, setShowAnalytics] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const { messages: liveMessages } = useLiveFeed(20);
+
+  // Reset pagination to page 1 whenever filters or time range change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, severityFilter, searchQuery, days, pageSize]);
 
   const fetchIncidents = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await api.getIncidents({ days: days || undefined, limit: 300 });
+      const res = await api.getIncidents({ days: days || undefined, limit: 1000 });
       setIncidents(res?.items || res?.data || (Array.isArray(res) ? res : []));
       setError(null);
     } catch (err) {
@@ -150,6 +157,12 @@ export default function IncidentsPage() {
       return true;
     });
   }, [incidents, statusFilter, severityFilter, searchQuery]);
+
+  // Paginated slice
+  const paginatedIncidents = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredIncidents.slice(start, start + pageSize);
+  }, [filteredIncidents, currentPage, pageSize]);
 
   // Telemetry metrics
   const totalCount = incidents.length;
@@ -550,7 +563,7 @@ export default function IncidentsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredIncidents.map((inc) => (
+                  {paginatedIncidents.map((inc) => (
                     <tr
                       key={inc.id}
                       style={{ cursor: 'pointer', transition: 'background var(--transition-fast)' }}
@@ -639,6 +652,20 @@ export default function IncidentsPage() {
             </div>
           </div>
         )}
+
+        {/* Pagination Controls */}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={filteredIncidents.length}
+          label="security incidents"
+          loading={loading}
+          onPageChange={(page) => setCurrentPage(page)}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+        />
       </div>
 
       {/* Centered Modal Drawer for Incident Details */}

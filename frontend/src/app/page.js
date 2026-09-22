@@ -12,7 +12,7 @@ import GeoThreatRadar from '@/components/GeoThreatRadar';
 import AttackLabPanel from '@/components/AttackLabPanel';
 import AttackTaxonomyPanel from '@/components/AttackTaxonomyPanel';
 import AttackDossierModal from '@/components/AttackDossierModal';
-import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState } from '@/components/ui';
+import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState, Pagination } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useLiveFeed } from '@/lib/useLiveFeed';
 import { ATTACK_SCENARIOS } from '@/lib/attackScenarios';
@@ -126,6 +126,13 @@ export default function DashboardPage() {
   const [alertSearchTerm, setAlertSearchTerm] = useState('');
   const [copiedIp, setCopiedIp] = useState(null);
   const [quickSimulating, setQuickSimulating] = useState(false);
+  const [alertPage, setAlertPage] = useState(1);
+  const [alertPageSize, setAlertPageSize] = useState(10);
+
+  // Reset alert page on filter change
+  useEffect(() => {
+    setAlertPage(1);
+  }, [alertFilterSeverity, alertSearchTerm, days, alertPageSize]);
 
   // Core Real-Time Telemetry Fetcher: Re-queries all database sources
   const refreshTelemetry = useCallback(async (isInitial = false) => {
@@ -136,7 +143,7 @@ export default function DashboardPage() {
         api.getAlertsSummary({ days: days || undefined }),
         api.getIncidentsSummary({ days: days || undefined }),
         api.getIPSStats({ days: days || undefined }),
-        api.getAlerts({ days: days || undefined, limit: 16 }),
+        api.getAlerts({ days: days || undefined, limit: 100 }),
         api.getAlertsTimeline({ days: days || 1 }),
         api.getKillChainStats({ days: days || undefined }),
         api.getGeoRadarStats({ days: days || undefined }),
@@ -340,6 +347,12 @@ export default function DashboardPage() {
       return matchSev && matchText;
     });
   }, [recentAlerts, alertFilterSeverity, alertSearchTerm]);
+
+  // Paginated alerts slice for dashboard table
+  const paginatedRecentAlerts = useMemo(() => {
+    const start = (alertPage - 1) * alertPageSize;
+    return filteredRecentAlerts.slice(start, start + alertPageSize);
+  }, [filteredRecentAlerts, alertPage, alertPageSize]);
 
   if (!authChecked) {
     return (
@@ -921,7 +934,7 @@ export default function DashboardPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredRecentAlerts.map((a) => (
+                        {paginatedRecentAlerts.map((a) => (
                           <tr key={a.id}>
                             <td style={{ maxWidth: 320 }}>
                               <div
@@ -994,6 +1007,21 @@ export default function DashboardPage() {
                     </table>
                   </div>
                 )}
+
+                {/* Pagination Controls */}
+                <Pagination
+                  currentPage={alertPage}
+                  pageSize={alertPageSize}
+                  totalItems={filteredRecentAlerts.length}
+                  label="threat detections"
+                  loading={loading}
+                  pageSizeOptions={[5, 10, 15, 25]}
+                  onPageChange={(p) => setAlertPage(p)}
+                  onPageSizeChange={(newSize) => {
+                    setAlertPageSize(newSize);
+                    setAlertPage(1);
+                  }}
+                />
               </div>
             )}
           </>

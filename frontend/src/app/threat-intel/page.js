@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { PageLayout, Spinner, EmptyState } from '@/components/ui';
+import { PageLayout, Spinner, EmptyState, Pagination } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useOnLiveEvent } from '@/lib/useLiveFeed';
 import {
@@ -77,11 +77,18 @@ export default function ThreatIntelPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [lookupResult, setLookupResult] = useState(null);
   const [lookingUp, setLookingUp] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [newIOC, setNewIOC] = useState({ ioc_type: 'IP', value: '', threat_type: '', confidence: 90, source: 'SOC Analyst' });
+
+  // Reset pagination to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [typeFilter, searchQuery, pageSize]);
 
   const fetchIntel = useCallback(async (showSpinner = true) => {
     try {
@@ -169,6 +176,12 @@ export default function ThreatIntelPage() {
       return true;
     });
   }, [intel, typeFilter, searchQuery, lookupResult]);
+
+  // Paginated slice
+  const paginatedIntel = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredIntel.slice(start, start + pageSize);
+  }, [filteredIntel, currentPage, pageSize]);
 
   // Chart Data: Type Distribution Donut
   const typeChartData = useMemo(() => {
@@ -510,7 +523,7 @@ export default function ThreatIntelPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredIntel.map((row) => (
+                  {paginatedIntel.map((row) => (
                     <tr key={row.id}>
                       <td>
                         <span
@@ -608,6 +621,20 @@ export default function ThreatIntelPage() {
             </div>
           </div>
         )}
+
+        {/* Pagination Controls */}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={filteredIntel.length}
+          label="threat indicators"
+          loading={loading}
+          onPageChange={(page) => setCurrentPage(page)}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+        />
       </div>
 
       {/* Centered Add IOC Modal */}

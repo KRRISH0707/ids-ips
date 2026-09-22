@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Sidebar from '@/components/Sidebar';
 import BrandLogo from '@/components/BrandLogo';
-import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState } from '@/components/ui';
+import { PageLayout, SeverityBadge, StatusBadge, Spinner, EmptyState, Pagination } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useOnLiveEvent } from '@/lib/useLiveFeed';
 import { exportToCSV, formatRelativeTime } from '@/lib/utils';
@@ -39,17 +39,24 @@ export default function PlaybooksPage() {
   const [targetHost, setTargetHost] = useState('');
   const [executing, setExecuting] = useState(false);
   const [execResult, setExecResult] = useState(null);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize, setHistoryPageSize] = useState(25);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Reset pagination to page 1 on timeframe or tab change
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [days, activeTab, historyPageSize]);
 
   const fetchData = useCallback(async (showSpinner = true) => {
     try {
       if (showSpinner) setLoading(true);
       const [pbRes, execRes] = await Promise.all([
         api.getPlaybooks(),
-        api.getPlaybookExecutions({ days: days || undefined, limit: 150 }),
+        api.getPlaybookExecutions({ days: days || undefined, limit: 500 }),
       ]);
       setPlaybooks(pbRes?.items || []);
       setExecutions(execRes?.items || []);
@@ -63,6 +70,12 @@ export default function PlaybooksPage() {
   useEffect(() => {
     fetchData(true);
   }, [fetchData]);
+
+  // Paginated execution history
+  const paginatedExecutions = executions.slice(
+    (historyPage - 1) * historyPageSize,
+    historyPage * historyPageSize
+  );
 
   // Real-time synchronization: refresh SOAR playbook execution history on any threat mitigation or playbook trigger
   useOnLiveEvent(() => {
@@ -403,7 +416,7 @@ export default function PlaybooksPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {executions.map((ex) => (
+                    {paginatedExecutions.map((ex) => (
                       <tr key={ex.id}>
                         <td>
                           <div style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={ex.playbook_name}>
@@ -436,6 +449,20 @@ export default function PlaybooksPage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination Controls */}
+              <Pagination
+                currentPage={historyPage}
+                pageSize={historyPageSize}
+                totalItems={executions.length}
+                label="playbook executions"
+                loading={loading}
+                onPageChange={(p) => setHistoryPage(p)}
+                onPageSizeChange={(newSize) => {
+                  setHistoryPageSize(newSize);
+                  setHistoryPage(1);
+                }}
+              />
             </>)}
           </div>
         )}

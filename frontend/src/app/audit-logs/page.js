@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { PageLayout, Spinner, EmptyState } from '@/components/ui';
+import { PageLayout, Spinner, EmptyState, Pagination } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useOnLiveEvent } from '@/lib/useLiveFeed';
 import { exportToCSV, formatRelativeTime } from '@/lib/utils';
@@ -119,11 +119,23 @@ export default function AuditLogsPage() {
   const [error, setError] = useState(null);
   const [searchActor, setSearchActor] = useState('');
   const [searchAction, setSearchAction] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  // Reset pagination to page 1 whenever filters or timeframe change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [days, searchActor, searchAction, pageSize]);
 
   const fetchLogs = useCallback(async (showSpinner = true) => {
     try {
       if (showSpinner) setLoading(true);
-      const res = await api.getAuditLogs({ days: days || undefined, limit: 300, actor: searchActor || undefined, action: searchAction || undefined });
+      const res = await api.getAuditLogs({
+        days: days || undefined,
+        limit: 1000,
+        actor: searchActor || undefined,
+        action: searchAction || undefined
+      });
       setLogs(res?.items || res?.data || (Array.isArray(res) ? res : []));
       setError(null);
     } catch (err) {
@@ -132,6 +144,9 @@ export default function AuditLogsPage() {
       if (showSpinner) setLoading(false);
     }
   }, [days, searchActor, searchAction]);
+
+  // Paginated slice
+  const paginatedLogs = logs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => {
     fetchLogs(true);
@@ -231,7 +246,7 @@ export default function AuditLogsPage() {
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log) => (
+                {paginatedLogs.map((log) => (
                   <tr key={log.id}>
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                       {(() => { const { relative, absolute } = formatRelativeTime(log.created_at); return <span className="rel-time" title={absolute}>{relative}</span>; })()}
@@ -268,6 +283,20 @@ export default function AuditLogsPage() {
             </table>
           </div>
         )}
+
+        {/* Pagination Controls */}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={logs.length}
+          label="audit log records"
+          loading={loading}
+          onPageChange={(page) => setCurrentPage(page)}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+        />
       </div>
     </PageLayout>
   );

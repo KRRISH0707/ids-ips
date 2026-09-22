@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { PageLayout, Spinner, EmptyState } from '@/components/ui';
+import { PageLayout, Spinner, EmptyState, Pagination } from '@/components/ui';
 import { api, getUser } from '@/lib/api';
 import { useLiveFeed } from '@/lib/useLiveFeed';
 import {
@@ -102,9 +102,16 @@ export default function IPSActionsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedIp, setCopiedIp] = useState(null);
   const [showAnalytics, setShowAnalytics] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const { messages: liveMessages } = useLiveFeed(20);
   const isFirstLoad = useRef(true);
+
+  // Reset pagination on filter or timeframe change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchQuery, days, pageSize]);
 
   const fetchBlockedIPs = useCallback(async (isSilent = false) => {
     if (isViewer) return;
@@ -113,7 +120,7 @@ export default function IPSActionsPage() {
         setLoading(true);
       }
       const [res, tl] = await Promise.allSettled([
-        api.getBlockedIPs({ days: days || undefined, limit: 300 }),
+        api.getBlockedIPs({ days: days || undefined, limit: 1000 }),
         api.getIPSTimeline({ days: days || 45 }),
       ]);
       if (res.status === 'fulfilled') {
@@ -236,6 +243,12 @@ export default function IPSActionsPage() {
       return true;
     });
   }, [blockedIPs, statusFilter, searchQuery]);
+
+  // Paginated slice
+  const paginatedList = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredList.slice(start, start + pageSize);
+  }, [filteredList, currentPage, pageSize]);
 
   return (
     <PageLayout sidebar={<Sidebar />}>
@@ -532,7 +545,7 @@ export default function IPSActionsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredList.map((entry) => {
+                      {paginatedList.map((entry) => {
                         const isActive = entry.is_active !== false && entry.status !== 'LIFTED';
                         const displayStatus = entry.status || (isActive ? 'APPLIED' : 'LIFTED');
                         const displayAction = entry.action || (isActive ? 'DROP' : 'UNBLOCK');
@@ -651,6 +664,20 @@ export default function IPSActionsPage() {
                 </div>
               </div>
             )}
+
+            {/* Pagination Controls */}
+            <Pagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalItems={filteredList.length}
+              label="blocked IPs & mitigations"
+              loading={loading}
+              onPageChange={(page) => setCurrentPage(page)}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
+            />
           </>
         )}
       </div>

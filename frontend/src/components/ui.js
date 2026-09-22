@@ -173,3 +173,123 @@ function PageLayoutContent({ children, sidebar }) {
 export function PageLayout(props) {
   return <PageLayoutContent {...props} />;
 }
+
+export function Pagination({
+  currentPage = 1,
+  pageSize = 25,
+  totalItems = 0,
+  onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = [15, 25, 50, 100],
+  loading = false,
+  label = 'records',
+  alwaysShow = true,
+}) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if (totalItems === 0) return null;
+  if (!alwaysShow && totalPages <= 1) return null;
+
+  const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const end = Math.min(currentPage * pageSize, totalItems);
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: 12,
+      padding: '12px 18px',
+      background: 'rgba(6, 13, 24, 0.88)',
+      border: '1px solid var(--border-subtle)',
+      borderRadius: 10,
+      marginTop: 16,
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace' }}>
+          Showing <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>{start}–{end}</span> of{' '}
+          <span style={{ color: '#f8fafc', fontWeight: 700 }}>{totalItems}</span> {label}
+          {totalPages > 1 && (
+            <span style={{ color: 'var(--text-muted)' }}> • Page {currentPage} of {totalPages}</span>
+          )}
+        </div>
+
+        {onPageSizeChange && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            <span>Per page:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              className="select"
+              style={{
+                padding: '2px 8px',
+                fontSize: '0.76rem',
+                width: 'auto',
+                fontFamily: 'JetBrains Mono, monospace'
+              }}
+            >
+              {pageSizeOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button
+          onClick={() => onPageChange && onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1 || loading}
+          className="btn"
+          style={{
+            padding: '6px 14px',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            opacity: currentPage <= 1 ? 0.35 : 1,
+            cursor: currentPage <= 1 ? 'not-allowed' : 'pointer'
+          }}
+          title={currentPage <= 1 ? 'First page reached' : 'Go to previous page'}
+        >
+          ← Previous
+        </button>
+
+        <span style={{
+          padding: '4px 12px',
+          background: 'rgba(0, 212, 255, 0.1)',
+          border: '1px solid rgba(0, 212, 255, 0.3)',
+          borderRadius: 6,
+          color: 'var(--accent-cyan)',
+          fontSize: '0.8rem',
+          fontWeight: 700,
+          fontFamily: 'JetBrains Mono, monospace'
+        }}>
+          {currentPage} / {totalPages}
+        </span>
+
+        <button
+          onClick={() => onPageChange && onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages || loading}
+          className="btn"
+          style={{
+            padding: '6px 14px',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            opacity: currentPage >= totalPages ? 0.35 : 1,
+            cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer'
+          }}
+          title={currentPage >= totalPages ? 'Last page reached' : 'Go to next page'}
+        >
+          Next →
+        </button>
+      </div>
+    </div>
+  );
+}
+
