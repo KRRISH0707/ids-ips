@@ -118,6 +118,14 @@ async def lifespan(app: FastAPI):
             with conn.cursor() as cur:
                 cur.execute("SELECT 1")
         logger.info("✅  PostgreSQL connection OK")
+
+        # Auto-seed admin user and default datasets if not already present
+        try:
+            from .seed import seed
+            seed()
+            logger.info("✅  Admin user and baseline assets initialized")
+        except Exception as seed_err:
+            logger.warning("Auto-seed notice: %s", seed_err)
     except Exception as exc:
         logger.critical("❌  PostgreSQL unreachable: %s", exc)
         raise
