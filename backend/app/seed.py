@@ -70,71 +70,90 @@ def seed():
                     )
                     logger.info(f"Synchronized user credentials: {u['email']} ({u['role']})")
 
+            conn.commit()
+            logger.info("Successfully committed all system users.")
+
             # 2. Create Default Sensor
-            sensor_name = "Primary Edge Probe"
-            cur.execute("SELECT id FROM sensors WHERE name = %s", (sensor_name,))
-            if not cur.fetchone():
-                cur.execute(
-                    """
-                    INSERT INTO sensors (name, hostname, ip_address, location, status)
-                    VALUES (%s, 'sensor-edge-01.internal', '192.168.1.100', 'US-East Gateway', 'ONLINE')
-                    """,
-                    (sensor_name,)
-                )
-                logger.info("Created default sensor node.")
+            try:
+                sensor_name = "Primary Edge Probe"
+                cur.execute("SELECT id FROM sensors WHERE name = %s", (sensor_name,))
+                if not cur.fetchone():
+                    cur.execute(
+                        """
+                        INSERT INTO sensors (name, hostname, ip_address, location, status)
+                        VALUES (%s, 'sensor-edge-01.internal', '192.168.1.100', 'US-East Gateway', 'ONLINE')
+                        """,
+                        (sensor_name,)
+                    )
+                    logger.info("Created default sensor node.")
+                conn.commit()
+            except Exception as s_err:
+                logger.warning(f"Sensor seed notice: {s_err}")
+                conn.rollback()
 
             # 3. Create Sample Detection Rules across all 6 attack categories
-            cur.execute("SELECT id FROM rules LIMIT 1")
-            if not cur.fetchone():
-                cur.execute(
-                    """
-                    INSERT INTO rules (name, description, condition, action, severity, category, enabled)
-                    VALUES 
-                    ('Malware C2 & Trojan Beacon Detection', 'Intercepts Trojan & Cobalt Strike C2 beacon channels', '{"type": "suricata", "sid": 1000001}', 'BLOCK', 'CRITICAL', 'malware', TRUE),
-                    ('Ransomware Shadow Copy Deletion Prevention', 'Intercepts vssadmin & mass encryption commands', '{"type": "suricata", "sid": 1000002}', 'BLOCK', 'CRITICAL', 'malware', TRUE),
-                    ('Volumetric DDoS & SYN Flood Protection', 'Rate limits TCP SYN bursts and UDP reflection floods', '{"type": "suricata", "sid": 1000003}', 'BLOCK', 'CRITICAL', 'network', TRUE),
-                    ('ARP & DNS Spoofing Poisoning Guard', 'Detects gratuitous ARP claims and forged DNS A-records', '{"type": "suricata", "sid": 1000004}', 'BLOCK', 'HIGH', 'network', TRUE),
-                    ('Authentication Brute Force & Password Spraying', 'Detects rapid login failures & multi-user password sprays', '{"type": "suricata", "sid": 1000005}', 'BLOCK', 'HIGH', 'credential', TRUE),
-                    ('Active Directory Kerberoasting Protection', 'Intercepts RC4-HMAC downgraded TGS ticket requests', '{"type": "suricata", "sid": 1000006}', 'BLOCK', 'HIGH', 'credential', TRUE),
-                    ('SQL Injection & Web Exploit Interception', 'Inspects HTTP URI & payload for SQLi & XSS patterns', '{"type": "suricata", "sid": 1000007}', 'BLOCK', 'CRITICAL', 'web_api', TRUE),
-                    ('Server-Side Request Forgery (SSRF) Guard', 'Blocks cloud metadata (169.254.169.254) extraction', '{"type": "suricata", "sid": 1000008}', 'BLOCK', 'CRITICAL', 'web_api', TRUE),
-                    ('Zero-Day & Remote Code Execution (RCE) Interceptor', 'Unsupervised mathematical ML anomaly & Log4j/Spring4Shell drop', '{"type": "suricata", "sid": 1000009}', 'BLOCK', 'CRITICAL', 'exploitation', TRUE),
-                    ('Buffer Overflow & Memory Corruption Shield', 'Detects NOP sleds & stack pointer overwrites', '{"type": "suricata", "sid": 1000010}', 'BLOCK', 'CRITICAL', 'exploitation', TRUE),
-                    ('Lateral Movement & PsExec Sweep Sever', 'Blocks unauthorized SMB/WMI remote execution sweeps', '{"type": "suricata", "sid": 1000011}', 'BLOCK', 'HIGH', 'post_compromise', TRUE),
-                    ('Data Exfiltration DNS Tunneling Guard', 'Blocks Base64 chunked DNS exfiltration tunnels', '{"type": "suricata", "sid": 1000012}', 'BLOCK', 'CRITICAL', 'post_compromise', TRUE)
-                    """
-                )
-                logger.info("Created default enterprise detection rules across all attack categories.")
+            try:
+                cur.execute("SELECT id FROM rules LIMIT 1")
+                if not cur.fetchone():
+                    cur.execute(
+                        """
+                        INSERT INTO rules (name, description, condition, action, severity, category, enabled)
+                        VALUES 
+                        ('Malware C2 & Trojan Beacon Detection', 'Intercepts Trojan & Cobalt Strike C2 beacon channels', '{"type": "suricata", "sid": 1000001}', 'BLOCK', 'CRITICAL', 'malware', TRUE),
+                        ('Ransomware Shadow Copy Deletion Prevention', 'Intercepts vssadmin & mass encryption commands', '{"type": "suricata", "sid": 1000002}', 'BLOCK', 'CRITICAL', 'malware', TRUE),
+                        ('Volumetric DDoS & SYN Flood Protection', 'Rate limits TCP SYN bursts and UDP reflection floods', '{"type": "suricata", "sid": 1000003}', 'BLOCK', 'CRITICAL', 'network', TRUE),
+                        ('ARP & DNS Spoofing Poisoning Guard', 'Detects gratuitous ARP claims and forged DNS A-records', '{"type": "suricata", "sid": 1000004}', 'BLOCK', 'HIGH', 'network', TRUE),
+                        ('Authentication Brute Force & Password Spraying', 'Detects rapid login failures & multi-user password sprays', '{"type": "suricata", "sid": 1000005}', 'BLOCK', 'HIGH', 'credential', TRUE),
+                        ('Active Directory Kerberoasting Protection', 'Intercepts RC4-HMAC downgraded TGS ticket requests', '{"type": "suricata", "sid": 1000006}', 'BLOCK', 'HIGH', 'credential', TRUE),
+                        ('SQL Injection & Web Exploit Interception', 'Inspects HTTP URI & payload for SQLi & XSS patterns', '{"type": "suricata", "sid": 1000007}', 'BLOCK', 'CRITICAL', 'web_api', TRUE),
+                        ('Server-Side Request Forgery (SSRF) Guard', 'Blocks cloud metadata (169.254.169.254) extraction', '{"type": "suricata", "sid": 1000008}', 'BLOCK', 'CRITICAL', 'web_api', TRUE),
+                        ('Zero-Day & Remote Code Execution (RCE) Interceptor', 'Unsupervised mathematical ML anomaly & Log4j/Spring4Shell drop', '{"type": "suricata", "sid": 1000009}', 'BLOCK', 'CRITICAL', 'exploitation', TRUE),
+                        ('Buffer Overflow & Memory Corruption Shield', 'Detects NOP sleds & stack pointer overwrites', '{"type": "suricata", "sid": 1000010}', 'BLOCK', 'CRITICAL', 'exploitation', TRUE),
+                        ('Lateral Movement & PsExec Sweep Sever', 'Blocks unauthorized SMB/WMI remote execution sweeps', '{"type": "suricata", "sid": 1000011}', 'BLOCK', 'HIGH', 'post_compromise', TRUE),
+                        ('Data Exfiltration DNS Tunneling Guard', 'Blocks Base64 chunked DNS exfiltration tunnels', '{"type": "suricata", "sid": 1000012}', 'BLOCK', 'CRITICAL', 'post_compromise', TRUE)
+                        """
+                    )
+                    logger.info("Created default enterprise detection rules across all attack categories.")
+                conn.commit()
+            except Exception as r_err:
+                logger.warning(f"Rules seed notice: {r_err}")
+                conn.rollback()
 
             # 4. Create Sample Incident & Alerts
-            cur.execute("SELECT id FROM alerts LIMIT 1")
-            if not cur.fetchone():
-                cur.execute(
-                    """
-                    INSERT INTO incidents (title, description, severity, risk_score, status)
-                    VALUES ('Multi-Vector Advanced Adversary Campaign', 'Correlated multi-stage attack detected across network perimeter and AD domain', 'CRITICAL', 95, 'INVESTIGATING')
-                    RETURNING id
-                    """
-                )
-                inc_res = cur.fetchone()
-                inc_id = inc_res["id"]
+            try:
+                cur.execute("ALTER TABLE alerts DROP CONSTRAINT IF EXISTS alerts_status_check;")
+                cur.execute("ALTER TABLE alerts ADD CONSTRAINT alerts_status_check CHECK (status IN ('OPEN','INVESTIGATING','RESOLVED','FALSE_POSITIVE','AUTO_BLOCKED'));")
+                cur.execute("SELECT id FROM alerts LIMIT 1")
+                if not cur.fetchone():
+                    cur.execute(
+                        """
+                        INSERT INTO incidents (title, description, severity, risk_score, status)
+                        VALUES ('Multi-Vector Advanced Adversary Campaign', 'Correlated multi-stage attack detected across network perimeter and AD domain', 'CRITICAL', 95, 'INVESTIGATING')
+                        RETURNING id
+                        """
+                    )
+                    inc_res = cur.fetchone()
+                    inc_id = inc_res["id"]
 
-                cur.execute(
-                    """
-                    INSERT INTO alerts (src_ip, src_port, dst_ip, dst_port, protocol, signature, category, severity, risk_score, status, incident_id)
-                    VALUES
-                    ('185.220.101.5', 49152, '10.240.10.12', 443, 'HTTPS', 'ET EXPLOIT Apache Log4j JNDI RCE (CVE-2021-44228)', 'exploitation', 'CRITICAL', 98, 'AUTO_BLOCKED', %s),
-                    ('198.51.100.22', 54100, '10.240.20.88', 445, 'TCP', 'Win32.Ransomware.LockBit3.0 Volume Shadow Deletion via vssadmin', 'malware', 'CRITICAL', 99, 'AUTO_BLOCKED', %s),
-                    ('194.26.29.112', 38910, '10.240.0.1', 80, 'TCP', 'Mirai IoT SYN Flood Distributed Denial of Service (> 1.2M pps)', 'network', 'CRITICAL', 94, 'AUTO_BLOCKED', %s),
-                    ('10.240.15.44', 51102, '10.240.10.4', 88, 'Kerberos', 'Kerberoasting Active Directory Ticket Request (RC4-HMAC downgrade)', 'credential', 'HIGH', 94, 'AUTO_BLOCKED', %s),
-                    ('198.51.100.99', 49182, '10.240.10.12', 443, 'HTTPS', 'ET WEB_SPECIFIC_APPS SQL Injection in URI parameter UNION SELECT', 'web_api', 'CRITICAL', 98, 'AUTO_BLOCKED', %s),
-                    ('10.240.20.88', 53000, '45.33.32.10', 53, 'DNS', 'ET POST_COMPROMISE Data Exfiltration Over DNS Tunnel (Base64 Chunked)', 'post_compromise', 'CRITICAL', 97, 'AUTO_BLOCKED', %s)
-                    """,
-                    (inc_id, inc_id, inc_id, inc_id, inc_id, inc_id)
-                )
-                logger.info("Created sample incidents and alerts across all categories.")
+                    cur.execute(
+                        """
+                        INSERT INTO alerts (src_ip, src_port, dst_ip, dst_port, protocol, signature, category, severity, risk_score, status, incident_id)
+                        VALUES
+                        ('185.220.101.5', 49152, '10.240.10.12', 443, 'HTTPS', 'ET EXPLOIT Apache Log4j JNDI RCE (CVE-2021-44228)', 'exploitation', 'CRITICAL', 98, 'OPEN', %s),
+                        ('198.51.100.22', 54100, '10.240.20.88', 445, 'TCP', 'Win32.Ransomware.LockBit3.0 Volume Shadow Deletion via vssadmin', 'malware', 'CRITICAL', 99, 'OPEN', %s),
+                        ('194.26.29.112', 38910, '10.240.0.1', 80, 'TCP', 'Mirai IoT SYN Flood Distributed Denial of Service (> 1.2M pps)', 'network', 'CRITICAL', 94, 'OPEN', %s),
+                        ('10.240.15.44', 51102, '10.240.10.4', 88, 'Kerberos', 'Kerberoasting Active Directory Ticket Request (RC4-HMAC downgrade)', 'credential', 'HIGH', 94, 'OPEN', %s),
+                        ('198.51.100.99', 49182, '10.240.10.12', 443, 'HTTPS', 'ET WEB_SPECIFIC_APPS SQL Injection in URI parameter UNION SELECT', 'web_api', 'CRITICAL', 98, 'OPEN', %s),
+                        ('10.240.20.88', 53000, '45.33.32.10', 53, 'DNS', 'ET POST_COMPROMISE Data Exfiltration Over DNS Tunnel (Base64 Chunked)', 'post_compromise', 'CRITICAL', 97, 'OPEN', %s)
+                        """,
+                        (inc_id, inc_id, inc_id, inc_id, inc_id, inc_id)
+                    )
+                    logger.info("Created sample incidents and alerts across all categories.")
+                conn.commit()
+            except Exception as a_err:
+                logger.warning(f"Alerts seed notice: {a_err}")
+                conn.rollback()
 
-            conn.commit()
             logger.info("Database seeding completed successfully.")
 
     except Exception as e:
