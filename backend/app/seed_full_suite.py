@@ -118,24 +118,16 @@ def run_full_seed():
                 seed_55_playbooks(conn)
             logger.info("  ✓ 55 Enterprise SOAR Playbooks active & mapped to MITRE ATT&CK.")
 
-            # 5. THREAT INTELLIGENCE IOCs (Import from scripts/seed_100_plus_iocs.py)
-            logger.info("[5/7] Seeding 127 Verified Threat Intelligence IOCs...")
+            # 5. THREAT INTELLIGENCE IOCs (236+ Indicators: IPs, Domains, Hashes)
+            logger.info("[5/7] Seeding 236+ Verified Threat Intelligence Indicators (IPs, Domains, Hashes)...")
             try:
-                from scripts.seed_100_plus_iocs import CURATED_IOCS
-                cur.execute("SELECT COUNT(*) as c FROM threat_intel")
-                count = cur.fetchone()["c"] or 0
-                if count < 100:
-                    for ioc in CURATED_IOCS:
-                        cur.execute(
-                            """
-                            INSERT INTO threat_intel (ioc_type, value, threat_type, confidence, source, tags)
-                            VALUES (%s, %s, %s, %s, %s, %s)
-                            ON CONFLICT (value) DO NOTHING
-                            """,
-                            (ioc["ioc_type"], ioc["value"], ioc["threat_type"], ioc["confidence"], ioc["source"], Jsonb(ioc["tags"]))
-                        )
-                    conn.commit()
-                logger.info("  ✓ 127 Threat Intelligence indicators verified in database.")
+                try:
+                    from .seed_iocs_data import seed_threat_intel_iocs
+                    seed_threat_intel_iocs(conn)
+                except ImportError:
+                    from app.seed_iocs_data import seed_threat_intel_iocs
+                    seed_threat_intel_iocs(conn)
+                logger.info("  ✓ 236+ Threat Intelligence indicators synchronized in database.")
             except Exception as e:
                 logger.warning(f"  Threat intel note: {e}")
 

@@ -28,7 +28,7 @@ class IOCLookupRequest(BaseModel):
 def list_threat_intel(
     ioc_type: Optional[str] = None,
     q: Optional[str] = None,
-    limit: int = Query(250, ge=1, le=1000),
+    limit: int = Query(500, ge=1, le=2000),
     current_user: dict = Depends(get_current_user)
 ):
     """List Threat Intelligence Indicators of Compromise (IOCs)."""
@@ -71,15 +71,19 @@ def lookup_threat_indicator(
     clean_val = body.value.strip().lower()
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
+            query = """
                 SELECT id, ioc_type, value, threat_type, confidence, source, tags, created_at
                 FROM threat_intel
-                WHERE LOWER(value) = %s OR value LIKE %s
-                LIMIT 1
-                """,
-                (clean_val, f"%{clean_val}%")
-            )
+                WHERE (LOWER(value) = %s OR LOWER(value) LIKE %s)
+            """
+            params = [clean_val, f"%{clean_val}%"]
+            if body.ioc_type:
+                query += " AND ioc_type = %s"
+                params.append(body.ioc_type.upper())
+            query += " ORDER BY (LOWER(value) = %s) DESC, confidence DESC LIMIT 1"
+            params.append(clean_val)
+
+            cur.execute(query, params)
             matched = cur.fetchone()
 
     if matched:

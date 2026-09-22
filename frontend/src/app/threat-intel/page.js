@@ -84,6 +84,15 @@ export default function ThreatIntelPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [newIOC, setNewIOC] = useState({ ioc_type: 'IP', value: '', threat_type: '', confidence: 90, source: 'SOC Analyst' });
+  const [copiedValue, setCopiedValue] = useState(null);
+
+  const handleCopy = (val) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(val);
+      setCopiedValue(val);
+      setTimeout(() => setCopiedValue(null), 2000);
+    }
+  };
 
   // Reset pagination to page 1 whenever filters change
   useEffect(() => {
@@ -93,7 +102,7 @@ export default function ThreatIntelPage() {
   const fetchIntel = useCallback(async (showSpinner = true) => {
     try {
       if (showSpinner) setLoading(true);
-      const res = await api.getThreatIntel({ limit: 250 });
+      const res = await api.getThreatIntel({ limit: 500 });
       setIntel(res?.items || []);
       setBreakdown(res?.breakdown || {});
     } catch (err) {
@@ -418,7 +427,7 @@ export default function ThreatIntelPage() {
             type="text"
             className="input"
             style={{ flex: 1, fontSize: '0.86rem' }}
-            placeholder="Search or lookup reputation for any IP, Domain, or File Hash (e.g. 45.33.32.156, update-service-cdn-telemetry.org)..."
+            placeholder="Search or lookup reputation for any IP, Domain, or File Hash (e.g. 45.33.32.156, update-service-cdn-telemetry.org, bc276d47cf6e6d1c...)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -542,19 +551,39 @@ export default function ThreatIntelPage() {
                         </span>
                       </td>
                       <td>
-                        <div
-                          style={{
-                            fontFamily: 'monospace',
-                            fontWeight: 600,
-                            color: 'var(--text-primary)',
-                            fontSize: '0.82rem',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}
-                          title={row.value}
-                        >
-                          {row.value}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, maxWidth: '100%' }}>
+                          <div
+                            style={{
+                              fontFamily: 'monospace',
+                              fontWeight: 600,
+                              color: 'var(--text-primary)',
+                              fontSize: '0.82rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              flex: 1
+                            }}
+                            title={row.value}
+                          >
+                            {row.value}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(row.value)}
+                            title={`Copy indicator: ${row.value}`}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '2px 4px',
+                              fontSize: '0.72rem',
+                              color: copiedValue === row.value ? '#10b981' : 'var(--text-muted)',
+                              lineHeight: 1,
+                              flexShrink: 0
+                            }}
+                          >
+                            {copiedValue === row.value ? '✓' : '📋'}
+                          </button>
                         </div>
                       </td>
                       <td>
