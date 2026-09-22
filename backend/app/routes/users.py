@@ -29,18 +29,31 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
+class PasswordReset(BaseModel):
+    password: Optional[str] = Field(default=None, min_length=8)
+
+
 @router.get("")
 def list_users(current_user: dict = Depends(require_role("ADMIN"))):
+    """List all registered users along with their provisioned credentials (ADMIN only)."""
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, email, full_name, role, is_active, last_login, created_at
+                SELECT id, email, full_name, role, is_active, last_login, created_at, managed_password, substring(hashed_password from 1 for 22) as hash_preview
                 FROM users
                 ORDER BY created_at DESC
                 """
             )
             users = cur.fetchall()
+            for u in users:
+                u["credentials"] = {
+                    "password": u.get("managed_password") or "••••••••••••",
+                    "has_plaintext": bool(u.get("managed_password")),
+                    "hash_preview": (u.get("hash_preview") + "...") if u.get("hash_preview") else None,
+                    "algorithm": "bcrypt-blowfish-2b (12 rounds)",
+                    "status": "Active / Verified" if u.get("is_active") else "Disabled / Revoked"
+                }
     return {"items": users, "total": len(users)}
 
 
@@ -55,18 +68,25 @@ def create_user(
             try:
                 cur.execute(
                     """
-                    INSERT INTO users (email, hashed_password, full_name, role)
-                    VALUES (%s, %s, %s, %s)
-                    RETURNING id, email, full_name, role, is_active, created_at
+                    INSERT INTO users (email, hashed_password, managed_password, full_name, role)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id, email, full_name, role, is_active, created_at, managed_password
                     """,
                     (
                         body.email,
                         hash_password(body.password),
+                        body.password,
                         body.full_name,
                         body.role,
                     ),
                 )
                 user = cur.fetchone()
+                user["credentials"] = {
+                    "password": body.password,
+                    "has_plaintext": True,
+                    "algorithm": "bcrypt-blowfish-2b (12 rounds)",
+                    "status": "Active / Verified"
+                }
                 conn.commit()
             except psycopg.errors.UniqueViolation:
                 conn.rollback()
@@ -87,6 +107,65 @@ def create_user(
     return user
 
 
+@router.post("/{user_id}/reset-password")
+def reset_user_password(
+    user_id: UUID,
+    body: PasswordReset,
+    request: Request,
+    current_user: dict = Depends(require_role("ADMIN")),
+):
+    """Rotate or assign a new password to any user (ADMIN only)."""
+    import secrets
+    import string
+    new_password = body.password
+    if not new_password:
+        alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+        new_password = "".join(secrets.choice(alphabet) for _ in range(12))
+
+    new_hash = hash_password(new_password)
+
+    with get_sync_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE users
+                SET hashed_password = %s, managed_password = %s, updated_at = now()
+                WHERE id = %s
+                RETURNING id, email, full_name, role, is_active, managed_password
+                """,
+                (new_hash, new_password, str(user_id)),
+            )
+            user = cur.fetchone()
+            conn.commit()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user["credentials"] = {
+        "password": new_password,
+        "has_plaintext": True,
+        "algorithm": "bcrypt-blowfish-2b (12 rounds)",
+        "status": "Active / Verified" if user.get("is_active") else "Disabled / Revoked"
+    }
+
+    write_audit_log(
+        actor_id=current_user["id"],
+        actor=current_user["email"],
+        action="USER_PASSWORD_RESET",
+        resource="users",
+        resource_id=str(user_id),
+        details={"target_email": user["email"], "rotated_by": current_user["email"]},
+        source_ip=request.client.host if request.client else None,
+    )
+
+    return {
+        "status": "success",
+        "message": f"Password reset successfully for {user['email']}",
+        "user": user,
+        "new_password": new_password,
+    }
+
+
 @router.get("/{user_id}")
 def get_user(
     user_id: UUID,
@@ -96,7 +175,7 @@ def get_user(
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, email, full_name, role, is_active, last_login, created_at
+                SELECT id, email, full_name, role, is_active, last_login, created_at, managed_password, substring(hashed_password from 1 for 22) as hash_preview
                 FROM users WHERE id = %s
                 """,
                 (str(user_id),),
@@ -104,6 +183,13 @@ def get_user(
             user = cur.fetchone()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    user["credentials"] = {
+        "password": user.get("managed_password") or "••••••••••••",
+        "has_plaintext": bool(user.get("managed_password")),
+        "hash_preview": (user.get("hash_preview") + "...") if user.get("hash_preview") else None,
+        "algorithm": "bcrypt-blowfish-2b (12 rounds)",
+        "status": "Active / Verified" if user.get("is_active") else "Disabled / Revoked"
+    }
     return user
 
 
@@ -143,7 +229,7 @@ def update_user(
         action="USER_UPDATED",
         resource="users",
         resource_id=str(user_id),
-        details=updates,
+        details={"email": user["email"], **updates},
         source_ip=request.client.host if request.client else None,
     )
     return user
@@ -160,7 +246,7 @@ def delete_user(
 
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("DELETE FROM users WHERE id = %s RETURNING id", (str(user_id),))
+            cur.execute("DELETE FROM users WHERE id = %s RETURNING id, email, role", (str(user_id),))
             deleted = cur.fetchone()
             conn.commit()
 
@@ -173,5 +259,6 @@ def delete_user(
         action="USER_DELETED",
         resource="users",
         resource_id=str(user_id),
+        details={"deleted_user_email": deleted["email"], "deleted_user_role": deleted["role"]},
         source_ip=request.client.host if request.client else None,
     )

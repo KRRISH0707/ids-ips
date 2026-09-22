@@ -1,7 +1,11 @@
 import './globals.css';
+import { TimeRangeProvider } from '@/context/TimeRangeContext';
+import { ToastContainer } from '@/components/ToastContainer';
+import { GlobalSearch } from '@/components/GlobalSearch';
+import HorizontalScrollHelper from '@/components/HorizontalScrollHelper';
 
 export const metadata = {
-  title: 'Apex Sentinel // Autonomous Neural Threat Interceptor',
+  title: 'Apex Sentinel // Autonomous Threat Defense Platform',
   description: 'Enterprise IDS/IPS & Next-Gen Autonomous Threat Defense Platform',
 };
 
@@ -17,7 +21,15 @@ export default function RootLayout({ children }) {
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className="bg-grid">{children}</body>
+      <body className="bg-grid">
+        <TimeRangeProvider>
+          <HorizontalScrollHelper />
+          {children}
+          <ToastContainer />
+          <GlobalSearch />
+        </TimeRangeProvider>
+      </body>
     </html>
   );
 }
+

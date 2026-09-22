@@ -136,6 +136,7 @@ def sensor_heartbeat(sensor_id: UUID, request: Request):
 def update_sensor(
     sensor_id: UUID,
     body: SensorUpdate,
+    request: Request,
     current_user: dict = Depends(require_role("ADMIN")),
 ):
     updates = body.model_dump(exclude_none=True)
@@ -159,18 +160,29 @@ def update_sensor(
 
     if not updated:
         raise HTTPException(status_code=404, detail="Sensor not found")
+
+    write_audit_log(
+        actor_id=current_user["id"],
+        actor=current_user["email"],
+        action="SENSOR_UPDATED",
+        resource="sensors",
+        resource_id=str(sensor_id),
+        details={"name": updated["name"], **updates},
+        source_ip=request.client.host if request.client else None,
+    )
     return updated
 
 
 @router.delete("/{sensor_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_sensor(
     sensor_id: UUID,
+    request: Request,
     current_user: dict = Depends(require_role("ADMIN")),
 ):
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "DELETE FROM sensors WHERE id = %s RETURNING id",
+                "DELETE FROM sensors WHERE id = %s RETURNING id, name",
                 (str(sensor_id),),
             )
             deleted = cur.fetchone()
@@ -184,6 +196,8 @@ def delete_sensor(
         action="SENSOR_DELETED",
         resource="sensors",
         resource_id=str(sensor_id),
+        details={"name": deleted["name"]},
+        source_ip=request.client.host if request.client else None,
     )
 
 

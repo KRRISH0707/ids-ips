@@ -25,7 +25,10 @@ router = APIRouter(prefix="/ips-actions", tags=["ips-actions"])
 
 _SELECT_COLS = """
     id, ip_address::text AS ip_address, reason, blocked_by,
-    blocked_at, expires_at, is_active, alert_id
+    blocked_at, expires_at, is_active, alert_id,
+    blocked_at AS created_at,
+    CASE WHEN is_active THEN 'APPLIED' ELSE 'LIFTED' END AS status,
+    'DROP' AS action
 """
 
 
@@ -47,6 +50,7 @@ class UnblockRequest(BaseModel):
 @router.get("")
 def list_blocked_ips(
     is_active: Optional[bool] = Query(None),
+    days: Optional[int] = Query(None, ge=1, le=365),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
@@ -55,6 +59,10 @@ def list_blocked_ips(
     if is_active is not None:
         conditions.append("is_active = %s")
         params.append(is_active)
+    if days is not None:
+        conditions.append("blocked_at >= now() - interval '1 day' * %s")
+        params.append(days)
+
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     params += [limit, skip]
 
@@ -79,20 +87,73 @@ def list_blocked_ips(
 
 
 @router.get("/stats/summary")
-def ips_stats(current_user: dict = Depends(get_current_user)):
+def ips_stats(
+    days: Optional[int] = Query(None, ge=1, le=365),
+    current_user: dict = Depends(get_current_user),
+):
+    time_filter = ""
+    params = []
+    if days is not None:
+        time_filter = "WHERE blocked_at >= now() - interval '1 day' * %s"
+        params.append(days)
+
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
                     COUNT(*) FILTER (WHERE is_active)               AS active_blocks,
                     COUNT(*) FILTER (WHERE NOT is_active)           AS lifted_blocks,
                     COUNT(*) FILTER (WHERE blocked_at > now() - interval '24 hours') AS last_24h,
-                    COUNT(*) FILTER (WHERE expires_at IS NULL AND is_active) AS permanent_blocks
+                    COUNT(*) FILTER (WHERE expires_at IS NULL AND is_active) AS permanent_blocks,
+                    COUNT(*)                                        AS total_blocks
                 FROM blocked_ips
-                """
+                {time_filter}
+                """,
+                params,
             )
             return cur.fetchone()
+
+
+@router.get("/stats/timeline")
+def ips_timeline(
+    days: int = Query(45, ge=1, le=365),
+    current_user: dict = Depends(get_current_user),
+):
+    """Return daily aggregated mitigation velocity for the given number of days."""
+    with get_sync_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                WITH date_series AS (
+                    SELECT generate_series(
+                        date_trunc('day', now() - (interval '1 day' * (%s - 1))),
+                        date_trunc('day', now()),
+                        interval '1 day'
+                    )::date AS day
+                ),
+                daily_drops AS (
+                    SELECT
+                        date_trunc('day', blocked_at)::date AS day,
+                        COUNT(*) AS total_quarantines,
+                        COUNT(*) FILTER (WHERE is_active) AS active_drops
+                    FROM blocked_ips
+                    WHERE blocked_at >= date_trunc('day', now() - (interval '1 day' * (%s - 1)))
+                    GROUP BY 1
+                )
+                SELECT
+                    to_char(ds.day, 'Mon DD') AS time,
+                    ds.day::text AS full_date,
+                    COALESCE(dd.total_quarantines, 0)::int AS "totalQuarantines",
+                    COALESCE(dd.active_drops, 0)::int AS "activeDrops"
+                FROM date_series ds
+                LEFT JOIN daily_drops dd ON ds.day = dd.day
+                ORDER BY ds.day ASC
+                """,
+                (days, days),
+            )
+            items = cur.fetchall()
+    return {"items": items, "days": days}
 
 
 @router.get("/{block_id}")

@@ -32,7 +32,7 @@ settings = get_settings()
 
 router = APIRouter(prefix="/ws", tags=["websocket"])
 
-CHANNELS = ["ids.live.alerts", "ids.live.incidents"]
+CHANNELS = ["ids.live.alerts", "ids.live.incidents", "ids.ips.actions", "ids.audit.logs"]
 
 
 async def _authenticate(token: str) -> dict | None:

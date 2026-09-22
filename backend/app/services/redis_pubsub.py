@@ -38,6 +38,7 @@ def _get_sync_client() -> sync_redis.Redis:
 LIVE_ALERTS_CHANNEL = "ids.live.alerts"
 LIVE_INCIDENTS_CHANNEL = "ids.live.incidents"
 IPS_ACTIONS_CHANNEL = "ids.ips.actions"
+AUDIT_LOGS_CHANNEL = "ids.audit.logs"
 
 
 # ── Publishers ────────────────────────────────────────────────────────────────
@@ -64,3 +65,19 @@ def publish_ips_action(action: dict[str, Any]) -> None:
         IPS_ACTIONS_CHANNEL,
         json.dumps(action, default=str),
     )
+
+
+def publish_audit_log(entry: dict[str, Any]) -> None:
+    """Publish a serialised audit trail entry to the live audit logs channel."""
+    try:
+        payload = {
+            "type": "AUDIT_LOG",
+            **entry,
+        }
+        _get_sync_client().publish(
+            AUDIT_LOGS_CHANNEL,
+            json.dumps(payload, default=str),
+        )
+    except Exception:
+        pass
+

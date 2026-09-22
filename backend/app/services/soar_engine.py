@@ -57,7 +57,7 @@ class SOAREngine:
             action_status = "EXECUTED"
             detail = ""
 
-            if action == "ISOLATE_HOST":
+            if action in ("ISOLATE_HOST", "ISOLATE_COMPROMISED_HOST", "ISOLATE_EXFILTRATING_HOST"):
                 detail = f"Dispatched host quarantine order for {target_str} to IPS controller"
                 if r:
                     r.publish("ips:host_isolation", json.dumps({
@@ -66,15 +66,19 @@ class SOAREngine:
                         "ip_address": target_str,
                         "timestamp": datetime.now(timezone.utc).isoformat()
                     }))
-            elif action in ("BLOCK_SOURCE_IP_24H", "FIREWALL_DROP_EGRESS"):
-                detail = f"Injected drop rule for IP {target_str} across edge firewalls"
+            elif action in ("BLOCK_SOURCE_IP_24H", "FIREWALL_DROP_EGRESS", "DYNAMIC_IPTABLES_DROP", "INJECT_KERNEL_EBPF_DISCARD", "SINKHOLE_MALICIOUS_NAMESERVER"):
+                detail = f"Injected drop rule for IP/host {target_str} across edge firewalls & eBPF filters"
                 if r:
                     r.publish("ids.ips.actions", json.dumps({
                         "action": "BLOCK",
                         "ip_address": target_str,
-                        "reason": f"SOAR Playbook {pb['name']} Enforcement",
+                        "reason": f"SOAR Playbook {pb['name']} Enforcement ({action})",
                         "timestamp": datetime.now(timezone.utc).isoformat()
                     }))
+            elif action == "ACTIVATE_BGP_FLOWSPEC_SCRUBBING":
+                detail = f"Dispatched BGP Flowspec drop route advertisement to upstream edge transit routers for {target_str}"
+            elif action == "RATE_LIMIT_SYN_COOKIES":
+                detail = f"Enabled hardware SYN proxy and kernel TCP SYN-cookie flood damping on edge gateways"
             elif action == "LOCK_SHADOW_COPIES":
                 detail = f"Shadow volume protection activated on host {target_str}; read-only snapshot locked"
             elif action == "BLOCK_LATERAL_SMB":
@@ -83,8 +87,38 @@ class SOAREngine:
                 detail = f"Acquired volatile memory triage package for forensic investigation on {target_str}"
             elif action == "TARPIT_ATTACKER_TCP":
                 detail = f"Redirected scanning traffic from {target_str} into TCP tarpit honey-queue"
-            elif action in ("DISPATCH_PAGERDUTY_ALERT", "SOC_HIGH_PRIORITY_INCIDENT", "NOTIFY_NETWORK_ADMIN"):
-                detail = f"High-priority SOC notification dispatched to active on-call responders"
+            elif action == "TERMINATE_WEB_WORKER_PROCESS":
+                detail = f"Sent SIGKILL to compromised worker process handling {target_str}; isolated sandbox container"
+            elif action == "INVALIDATE_SESSION_COOKIES":
+                detail = f"Flushed active Redis session tokens and revoked authentication cookies across cluster"
+            elif action in ("CAPTURE_FORENSIC_PCAP_STREAM", "START_PROMISCUOUS_PCAP_CAPTURE"):
+                detail = f"Spawned promiscuous eBPF ring buffer capture, saving PCAP forensic artifact for {target_str}"
+            elif action == "SUSPEND_COMPROMISED_AD_ACCOUNT":
+                detail = f"Locked target account object in Active Directory / LDAP directory and revoked Kerberos tickets"
+            elif action == "SEVER_SMB_RPC_TUNNELS":
+                detail = f"Severed active DCE/RPC and SMB Named Pipe connections to Domain Controllers from {target_str}"
+            elif action == "TRIGGER_KRBTGT_PASSWORD_RESET":
+                detail = f"Queued emergency KRBTGT double-hop password rollover on Primary Domain Controller"
+            elif action == "INJECT_TCP_RESET_STREAM":
+                detail = f"Injected bidirectional TCP RST packets with matching sequence numbers to break active session"
+            elif action == "DUMP_ENDPOINT_NETWORK_SOCKETS":
+                detail = f"Acquired active socket table, open listening ports, and PID mappings for {target_str}"
+            elif action == "FREEZE_CONTAINER_RUNTIME_CGROUP":
+                detail = f"Injected cgroup freeze state 'FROZEN' to immediately suspend container processes on {target_str}"
+            elif action == "REVOKE_CLOUD_IAM_ROLE_TOKENS":
+                detail = f"Revoked ephemeral cloud IAM metadata credentials and terminated STS token sessions"
+            elif action == "TERMINATE_KUBERNETES_POD":
+                detail = f"Issued immediate eviction order for compromised pod {target_str} from Kubernetes cluster"
+            elif action == "ENFORCE_MICROSEGMENTATION_ISOLATION":
+                detail = f"Applied zero-trust network tag; restricted east-west traffic to gateway inspection only"
+            elif action == "REVOKE_KERBEROS_TGT_TOKENS":
+                detail = f"Purged all active Kerberos TGT tickets for target identity from KDC authentication cache"
+            elif action == "ENABLE_EXTENDED_SECURITY_AUDIT":
+                detail = f"Activated high-fidelity Windows Security Event Log (Event IDs 4624/4672) monitoring"
+            elif action == "GENERATE_SURICATA_SNORT_SIGNATURE":
+                detail = f"Synthesized custom Snort/Suricata bytecode signature and hot-reloaded DPI detection engine"
+            elif action in ("DISPATCH_PAGERDUTY_ALERT", "SOC_HIGH_PRIORITY_INCIDENT", "NOTIFY_NETWORK_ADMIN", "BROADCAST_INCIDENT_WAR_ROOM", "DISPATCH_SOC_URGENT_PAGE", "NOTIFY_DEVSECOPS_LEAD", "SOC_TIER2_ESCALATION"):
+                detail = f"High-priority SOC notification dispatched to active responders ({action})"
             else:
                 detail = f"Action {action} dispatched successfully"
 

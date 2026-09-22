@@ -1,3 +1,4 @@
 kafka-python-ng
 psycopg[binary]
 requests
+redis>=5.0.0

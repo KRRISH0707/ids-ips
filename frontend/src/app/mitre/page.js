@@ -1,30 +1,37 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import { PageLayout, Spinner, EmptyState } from '@/components/ui';
 import { api } from '@/lib/api';
+import { useOnLiveEvent } from '@/lib/useLiveFeed';
 
 export default function MitrePage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedTechnique, setSelectedTechnique] = useState(null);
 
-  const fetchMatrix = useCallback(async () => {
+  const fetchMatrix = useCallback(async (showSpinner = true) => {
     try {
-      setLoading(true);
+      if (showSpinner) setLoading(true);
       const res = await api.getMitreMatrix();
       setData(res);
     } catch (err) {
       console.error('Failed to load MITRE ATT&CK matrix:', err);
     } finally {
-      setLoading(false);
+      if (showSpinner) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchMatrix();
+    fetchMatrix(true);
   }, [fetchMatrix]);
+
+  // Real-time synchronization: automatically re-score MITRE tactic & technique heatmaps upon any threat detection
+  useOnLiveEvent(() => {
+    fetchMatrix(false);
+  });
 
   const tactics = data?.tactics || [];
 
@@ -83,8 +90,9 @@ export default function MitrePage() {
           </span>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {data.top_techniques.map((t) => (
-              <span
+              <Link
                 key={t.id}
+                href={`/mitre/${t.id}`}
                 style={{
                   fontSize: '0.75rem',
                   fontWeight: 600,
@@ -93,10 +101,17 @@ export default function MitrePage() {
                   background: 'rgba(239, 68, 68, 0.15)',
                   border: '1px solid rgba(239, 68, 68, 0.4)',
                   color: '#fca5a5',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all 0.15s ease',
                 }}
+                title={`Open descriptive dossier for ${t.id}`}
               >
-                {t.id} ({t.hits} hits)
-              </span>
+                <span>{t.id} ({t.hits} hits)</span>
+                <span>↗</span>
+              </Link>
             ))}
           </div>
         </div>
@@ -158,20 +173,43 @@ export default function MitrePage() {
                             <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', fontWeight: 700, color: style.color }}>
                               {tech.id}
                             </span>
-                            {tech.hit_count > 0 && (
-                              <span
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              {tech.hit_count > 0 && (
+                                <span
+                                  style={{
+                                    fontSize: '0.65rem',
+                                    fontWeight: 800,
+                                    background: tech.hit_count > 2 ? '#ef4444' : '#3b82f6',
+                                    color: '#fff',
+                                    padding: '1px 5px',
+                                    borderRadius: 8,
+                                  }}
+                                >
+                                  {tech.hit_count}
+                                </span>
+                              )}
+                              <Link
+                                href={`/mitre/${tech.id}`}
+                                onClick={(e) => e.stopPropagation()}
                                 style={{
                                   fontSize: '0.65rem',
-                                  fontWeight: 800,
-                                  background: tech.hit_count > 2 ? '#ef4444' : '#3b82f6',
-                                  color: '#fff',
-                                  padding: '1px 5px',
-                                  borderRadius: 8,
+                                  fontWeight: 700,
+                                  color: 'var(--accent-cyan)',
+                                  background: 'rgba(0, 212, 255, 0.08)',
+                                  border: '1px solid rgba(0, 212, 255, 0.3)',
+                                  borderRadius: 4,
+                                  padding: '1px 6px',
+                                  textDecoration: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 2,
+                                  transition: 'all 0.15s ease',
                                 }}
+                                title={`Open full descriptive details for ${tech.id}`}
                               >
-                                {tech.hit_count}
-                              </span>
-                            )}
+                                Dossier ↗
+                              </Link>
+                            </div>
                           </div>
                           <div style={{ fontSize: '0.75rem', fontWeight: 600, marginTop: 4, color: 'var(--text-secondary)' }}>
                             {tech.name}
@@ -203,6 +241,28 @@ export default function MitrePage() {
                     ✕
                   </button>
                 </div>
+
+                {/* Prominent Deep Technical Dossier Button */}
+                <Link
+                  href={`/mitre/${selectedTechnique.id}`}
+                  className="btn btn-primary"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    textDecoration: 'none',
+                    marginBottom: 14,
+                    padding: '10px 14px',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    boxShadow: '0 0 16px rgba(0, 212, 255, 0.25)',
+                  }}
+                >
+                  <span>🔍 Open Full Descriptive Dossier</span>
+                  <span>→</span>
+                </Link>
 
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 16 }}>
                   Total Correlated Hits: <b style={{ color: '#fff' }}>{selectedTechnique.hit_count}</b>

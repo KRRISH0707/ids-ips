@@ -200,7 +200,7 @@ def update_rule(
         action="RULE_UPDATED",
         resource="rules",
         resource_id=str(rule_id),
-        details=updates,
+        details={"rule_name": rule["name"], **updates},
         source_ip=request.client.host if request.client else None,
     )
     return rule
@@ -215,7 +215,7 @@ def delete_rule(
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "DELETE FROM rules WHERE id = %s RETURNING id",
+                "DELETE FROM rules WHERE id = %s RETURNING id, name",
                 (str(rule_id),),
             )
             deleted = cur.fetchone()
@@ -230,6 +230,7 @@ def delete_rule(
         action="RULE_DELETED",
         resource="rules",
         resource_id=str(rule_id),
+        details={"rule_name": deleted["name"]},
         source_ip=request.client.host if request.client else None,
     )
 
@@ -264,7 +265,7 @@ def toggle_rule(
         action="RULE_TOGGLED",
         resource="rules",
         resource_id=str(rule_id),
-        details={"enabled": rule["enabled"]},
+        details={"rule_name": rule["name"], "enabled": rule["enabled"]},
         source_ip=request.client.host if request.client else None,
     )
     return rule

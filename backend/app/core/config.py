@@ -7,11 +7,11 @@ class Settings(BaseSettings):
 
     # ── Database ──────────────────────────────────────────────────────────────
     database_url: str = (
-        "postgresql://idsips:change-me-in-development@postgres:5432/idsips"
+        "postgresql://idsips:change-me-in-development@localhost:5432/idsips"
     )
 
     # ── Redis ─────────────────────────────────────────────────────────────────
-    redis_url: str = "redis://redis:6379/0"
+    redis_url: str = "redis://localhost:6379/0"
 
     # ── Kafka ─────────────────────────────────────────────────────────────────
     kafka_bootstrap_servers: str = "kafka:9092"

@@ -5,9 +5,7 @@
 
 export function getApiBase() {
   if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    const protocol = window.location.protocol;
-    return `${protocol}//${host}:8000`;
+    return '';
   }
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 }
@@ -67,41 +65,12 @@ export async function ensureAuth() {
   let token = getToken();
   if (token) {
     const payload = parseJwt(token);
-    if (payload && payload.exp && payload.exp * 1000 > Date.now() + 30000) {
+    if (payload && payload.exp && payload.exp * 1000 > Date.now() + 10000) {
       return token;
     }
   }
-
-  // Auto-authenticate with available admin credentials across primary & proxy routes
-  const endpoints = [
-    `${getApiBase()}/api/auth/login`,
-    '/api/auth/login',
-  ];
-
-  const credentials = [
-    { username: 'krrish183224@gmail.com', password: '183@Krrish' },
-    { username: 'admin@ids.local', password: 'AdminPassword1!' },
-  ];
-
-  for (const cred of credentials) {
-    for (const url of endpoints) {
-      try {
-        const body = new URLSearchParams(cred);
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body,
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setToken(data.access_token);
-          setUser(data.user);
-          return data.access_token;
-        }
-      } catch {}
-    }
-  }
-
+  // Clear any expired or invalid token
+  clearToken();
   return null;
 }
 
@@ -111,14 +80,26 @@ async function request(path, options = {}) {
     token = await ensureAuth();
   }
 
+  const isPublicAuth = path.startsWith('/auth/login') || path.startsWith('/auth/refresh');
+
+  if (!token && !isPublicAuth && typeof window !== 'undefined') {
+    const p = window.location.pathname;
+    if (p !== '/login' && p !== '/demo' && p !== '/landing') {
+      window.location.href = '/login';
+      throw new Error('Authentication required');
+    }
+  }
+
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
 
-  const primaryUrl = `${getApiBase()}/api${path}`;
-  const fallbackUrl = `/api${path}`;
+  const primaryUrl = `/api${path}`;
+  const fallbackUrl = (typeof window !== 'undefined' && window.location.hostname)
+    ? `${window.location.protocol}//${window.location.hostname}:8000/api${path}`
+    : `/api${path}`;
 
   let res;
   try {
@@ -175,21 +156,56 @@ export const api = {
   ensureAuth,
   async login(email, password) {
     const body = new URLSearchParams({ username: email, password });
-    const res = await fetch(`${getApiBase()}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
-    });
+    let res;
+    try {
+      res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+      });
+    } catch (e) {
+      const fallback = (typeof window !== 'undefined' && window.location.hostname)
+        ? `${window.location.protocol}//${window.location.hostname}:8000/api/auth/login`
+        : '/api/auth/login';
+      res = await fetch(fallback, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+      });
+    }
+
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Login failed');
+      throw new Error(err.detail || 'Login failed: Invalid email or password');
     }
     return res.json();
   },
 
   // ── Alerts ────────────────────────────────────────────────────────────────
-  getAlerts: (params = {}) => request('/alerts?' + new URLSearchParams(params)),
-  getAlertsSummary: () => request('/alerts/stats/summary'),
+  getAlerts: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    return request('/alerts?' + new URLSearchParams(cleanParams));
+  },
+  getAlertsSummary: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    const qs = new URLSearchParams(cleanParams).toString();
+    return request('/alerts/stats/summary' + (qs ? '?' + qs : ''));
+  },
+  getAlertsTimeline: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    const qs = new URLSearchParams(cleanParams).toString();
+    return request('/alerts/stats/timeline' + (qs ? '?' + qs : ''));
+  },
+  getKillChainStats: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    const qs = new URLSearchParams(cleanParams).toString();
+    return request('/alerts/stats/kill-chain' + (qs ? '?' + qs : ''));
+  },
+  getGeoRadarStats: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    const qs = new URLSearchParams(cleanParams).toString();
+    return request('/alerts/stats/geo-radar' + (qs ? '?' + qs : ''));
+  },
   createAlert: (data) => request('/alerts', { method: 'POST', body: JSON.stringify(data) }),
   simulateAttack: (data) => request('/alerts/simulate', { method: 'POST', body: JSON.stringify(data) }),
   updateAlertStatus: (id, status_) =>
@@ -197,8 +213,15 @@ export const api = {
   batchResolveAlerts: (data) => request('/alerts/batch-resolve', { method: 'POST', body: JSON.stringify(data) }),
 
   // ── Incidents ─────────────────────────────────────────────────────────────
-  getIncidents: (params = {}) => request('/incidents?' + new URLSearchParams(params)),
-  getIncidentsSummary: () => request('/incidents/stats/summary'),
+  getIncidents: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    return request('/incidents?' + new URLSearchParams(cleanParams));
+  },
+  getIncidentsSummary: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    const qs = new URLSearchParams(cleanParams).toString();
+    return request('/incidents/stats/summary' + (qs ? '?' + qs : ''));
+  },
   createIncident: (data) => request('/incidents', { method: 'POST', body: JSON.stringify(data) }),
   updateIncidentStatus: (id, data) =>
     request(`/incidents/${id}/status`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -224,10 +247,14 @@ export const api = {
   createPlaybook: (data) => request('/soar/playbooks', { method: 'POST', body: JSON.stringify(data) }),
   executePlaybook: (id, data = {}) =>
     request(`/soar/playbooks/${id}/execute`, { method: 'POST', body: JSON.stringify(data) }),
-  getPlaybookExecutions: (params = {}) => request('/soar/executions?' + new URLSearchParams(params)),
+  getPlaybookExecutions: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    return request('/soar/executions?' + new URLSearchParams(cleanParams));
+  },
 
   // ── MITRE ATT&CK ──────────────────────────────────────────────────────────
   getMitreMatrix: () => request('/mitre/matrix'),
+  getMitreTechnique: (id) => request(`/mitre/techniques/${id}`),
 
   // ── Network Topology ──────────────────────────────────────────────────────
   getNetworkTopology: () => request('/network/topology'),
@@ -243,14 +270,29 @@ export const api = {
   getPacketTrace: (alertId) => request(`/alerts/${alertId}/packet-trace`),
 
   // ── IPS Actions ───────────────────────────────────────────────────────────
-  getBlockedIPs: (params = {}) => request('/ips-actions?' + new URLSearchParams(params)),
-  getIPSStats: () => request('/ips-actions/stats/summary'),
+  getBlockedIPs: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    return request('/ips-actions?' + new URLSearchParams(cleanParams));
+  },
+  getIPSStats: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    const qs = new URLSearchParams(cleanParams).toString();
+    return request('/ips-actions/stats/summary' + (qs ? '?' + qs : ''));
+  },
+  getIPSTimeline: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    const qs = new URLSearchParams(cleanParams).toString();
+    return request('/ips-actions/stats/timeline' + (qs ? '?' + qs : ''));
+  },
   blockIP: (data) => request('/ips-actions', { method: 'POST', body: JSON.stringify(data) }),
   unblockIP: (id, reason) =>
     request(`/ips-actions/${id}`, { method: 'DELETE', body: JSON.stringify({ reason }) }),
 
   // ── Audit Logs ────────────────────────────────────────────────────────────
-  getAuditLogs: (params = {}) => request('/audit-logs?' + new URLSearchParams(params)),
+  getAuditLogs: (params = {}) => {
+    const cleanParams = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+    return request('/audit-logs?' + new URLSearchParams(cleanParams));
+  },
 
   // ── Users ─────────────────────────────────────────────────────────────────
   getUsers: () => request('/users'),
@@ -258,4 +300,10 @@ export const api = {
   updateUser: (id, data) =>
     request(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteUser: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+  resetUserPassword: (id, data = {}) =>
+    request(`/users/${id}/reset-password`, { method: 'POST', body: JSON.stringify(data) }),
+
+  // ── System Settings ───────────────────────────────────────────────────────
+  getSettings: () => request('/settings'),
+  updateSettings: (data) => request('/settings', { method: 'POST', body: JSON.stringify(data) }),
 };

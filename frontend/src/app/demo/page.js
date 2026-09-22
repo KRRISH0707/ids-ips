@@ -2,29 +2,69 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import BrandLogo from '@/components/BrandLogo';
 import ThreatPostureGauge from '@/components/ThreatPostureGauge';
 import CyberKillChain from '@/components/CyberKillChain';
 import GeoThreatRadar from '@/components/GeoThreatRadar';
 import AttackLabPanel from '@/components/AttackLabPanel';
 import { StatCard, SeverityBadge, StatusBadge } from '@/components/ui';
+import { api, getUser, getToken, setToken, setUser, clearToken } from '@/lib/api';
+import { useOnLiveEvent } from '@/lib/useLiveFeed';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
 
 function DemoDashboardContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const companyName = searchParams.get('company') || 'Cyber Corp Global';
   const userName = searchParams.get('name') || 'Alex Mercer';
   const endpointCount = searchParams.get('endpoints') || '50 - 250 Endpoints';
 
+  // Demo Authentication & RBAC Viewer State
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [demoEmail, setDemoEmail] = useState('');
+  const [demoPassword, setDemoPassword] = useState('');
+
+  useEffect(() => {
+    const user = getUser();
+    const token = getToken();
+    if (user && token) {
+      setCurrentUser(user);
+    } else {
+      setCurrentUser(null);
+    }
+    setAuthChecked(true);
+  }, []);
+
+  const handleDemoAuthenticate = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthLoading(true);
+    try {
+      const data = await api.login(demoEmail, demoPassword);
+      setToken(data.access_token);
+      setUser(data.user);
+      setCurrentUser(data.user);
+    } catch (err) {
+      setAuthError(err.message || 'Demo authentication failed. Please check credentials.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   // State for simulated scenario
   const [activeScenario, setActiveScenario] = useState('NORMAL');
-  const [threatScore, setThreatScore] = useState(64);
-  const [threatLevel, setThreatLevel] = useState('GUARDED / ELEVATED');
-  const [mttc, setMttc] = useState('1.2s');
+  const [threatScore, setThreatScore] = useState(38);
+  const [threatLevel, setThreatLevel] = useState('GUARDED DEFENSE');
+  const [mttc, setMttc] = useState('0.92s');
+  const [accuracy, setAccuracy] = useState('99.94%');
+  const [killChainBreakRate, setKillChainBreakRate] = useState('100%');
   const [blockedCount, setBlockedCount] = useState(3842);
   const [activeKillChainStage, setActiveKillChainStage] = useState(null);
 
@@ -99,8 +139,10 @@ function DemoDashboardContent() {
   const handleAttackTriggered = (attack) => {
     setActiveScenario(attack.key);
     setThreatScore(attack.threatScore);
-    setThreatLevel(`${attack.badge} // ${attack.name}`);
-    setMttc(attack.mttc);
+    setThreatLevel(`${attack.badge} // ${attack.shortName}`);
+    setMttc(attack.mttc || '0.48s');
+    setAccuracy(`${(99.92 + Math.random() * 0.07).toFixed(2)}%`);
+    setKillChainBreakRate('100%');
     setBlockedCount((prev) => prev + 1);
     setActiveKillChainStage(attack.killChainStage);
 
@@ -121,11 +163,146 @@ function DemoDashboardContent() {
 
   const handleResetBaseline = () => {
     setActiveScenario('NORMAL');
-    setThreatScore(64);
-    setThreatLevel('GUARDED / ELEVATED');
-    setMttc('1.2s');
+    setThreatScore(38);
+    setThreatLevel('GUARDED DEFENSE');
+    setMttc('0.92s');
+    setAccuracy('99.94%');
+    setKillChainBreakRate('100%');
     setActiveKillChainStage(null);
   };
+
+  // Real-time synchronization: automatically reflect incoming live cyber attacks in the demo sandbox
+  useOnLiveEvent((event) => {
+    if (event.signature) {
+      setThreatScore(event.risk_score || 88);
+      setThreatLevel(`${event.severity || 'CRITICAL'} // LIVE TELEMETRY INTERCEPT`);
+      setMttc(event.autonomous_mitigation?.mttc || '0.38s');
+      setBlockedCount((prev) => prev + (event.autonomous_mitigation?.prevented ? 1 : 0));
+      setEvents((prev) => [
+        {
+          id: `EVT-${event.id ? String(event.id).slice(0, 4).toUpperCase() : Math.floor(Math.random() * 9000 + 1000)}`,
+          time: 'Just now (Live)',
+          signature: event.signature,
+          src_ip: event.src_ip ? `${event.src_ip}` : 'External Attacker',
+          dst_ip: event.dst_ip || '10.240.0.1 (Perimeter Gateway)',
+          severity: event.severity || 'CRITICAL',
+          status: event.autonomous_mitigation?.prevented ? 'AUTO_CONTAINED' : 'DETECTED',
+          action: event.autonomous_mitigation?.action || 'Autonomous IPS Quarantine',
+        },
+        ...prev.slice(0, 19),
+      ]);
+    }
+  });
+
+  if (!authChecked) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-void)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="loading-dot" style={{ width: 12, height: 12 }} />
+      </div>
+    );
+  }
+
+  // If user is not signed in, enforce Demo Sign-In Gate
+  if (!currentUser) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-void)',
+        padding: 24,
+      }}>
+        {/* Ambient glow */}
+        <div style={{
+          position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
+          width: 600, height: 300,
+          background: 'radial-gradient(ellipse, rgba(0,212,255,0.06) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }}/>
+
+        <div className="hud-card fade-in" style={{ width: '100%', maxWidth: 480, padding: '40px 36px', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 212, 255, 0.15)' }}>
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <BrandLogo size={56} style={{ margin: '0 auto 14px' }} />
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 20, background: 'rgba(0, 212, 255, 0.08)', border: '1px solid rgba(0, 212, 255, 0.25)', marginBottom: 8 }}>
+              <span className="live-dot" style={{ width: 6, height: 6 }} />
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-cyan)', letterSpacing: '0.06em' }}>
+                DEMO ACCESS GATEWAY
+              </span>
+            </div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, letterSpacing: '0.04em' }}>
+              <span className="glow-gradient">DEMO SIGN-IN REQUIRED</span>
+            </h1>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>
+              To evaluate the Apex Sentinel Autonomous Detection Sandbox, you must authenticate using demo viewer credentials.
+            </p>
+          </div>
+
+          <form onSubmit={handleDemoAuthenticate}>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                EMAIL ADDRESS
+              </label>
+              <input
+                type="email"
+                className="input"
+                value={demoEmail}
+                onChange={(e) => setDemoEmail(e.target.value)}
+                placeholder="name@company.com"
+                required
+              />
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                PASSWORD
+              </label>
+              <input
+                type="password"
+                className="input"
+                value={demoPassword}
+                onChange={(e) => setDemoPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {authError && (
+              <div style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.25)',
+                borderRadius: 8,
+                padding: '10px 14px',
+                fontSize: '0.8rem',
+                color: 'var(--sev-critical)',
+                marginBottom: 16,
+              }}>
+                {authError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center', padding: '11px 18px', fontSize: '0.88rem', fontWeight: 700 }}
+            >
+              {authLoading ? 'Authenticating Demo Session...' : '⚡ Launch Demo Dashboard (Viewer)'}
+            </button>
+          </form>
+
+          <div style={{ textAlign: 'center', marginTop: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Link href="/login" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', textDecoration: 'none' }}>
+              Have an Analyst or Admin account? Full Login ➔
+            </Link>
+            <Link href="/landing" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none' }}>
+              ← Return to Product Overview
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-void)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
@@ -139,43 +316,46 @@ function DemoDashboardContent() {
         justifyContent: 'space-between',
         fontSize: '0.82rem',
         zIndex: 50,
+        flexWrap: 'wrap',
+        gap: 12,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ padding: '3px 8px', borderRadius: 4, background: '#7c3aed', color: '#fff', fontWeight: 800, fontSize: '0.7rem' }}>
             DEMO SANDBOX
           </span>
           <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-            Commercial Evaluation for <b style={{ color: 'var(--accent-cyan)' }}>{companyName}</b> ({endpointCount})
+            Commercial Evaluation for <b style={{ color: 'var(--accent-cyan)' }}>{companyName}</b>
           </span>
           <span style={{ color: 'var(--text-muted)' }}>·</span>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-            Operator: {userName} · Isolated Synthetic SOC Environment (Zero Admin Credentials Exposed)
+          <span style={{ color: '#10b981', fontWeight: 600, background: 'rgba(16,185,129,0.15)', padding: '2px 8px', borderRadius: 4, fontSize: '0.74rem' }}>
+            👁️ Role: {currentUser?.role || 'VIEWER'} ({currentUser?.email})
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Link
-            href="/landing"
-            className="btn btn-ghost btn-sm"
-            style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}
-          >
-            ← Exit Demo
-          </Link>
-          <a
-            href="mailto:sales@ids-ips.enterprise?subject=Commercial%20POC%20Inquiry%20-%20"
+            href="/"
+            className="btn btn-sm"
             style={{
-              padding: '6px 14px',
-              borderRadius: 6,
-              background: 'linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%)',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              textDecoration: 'none',
-              boxShadow: '0 0 16px rgba(0, 212, 255, 0.3)',
+              fontSize: '0.74rem',
+              fontWeight: 600,
+              background: 'rgba(0,212,255,0.12)',
+              border: '1px solid rgba(0,212,255,0.3)',
+              color: '#00d4ff'
             }}
           >
-            Deploy Production Appliance
-          </a>
+            Go to Production Console ➔
+          </Link>
+          <button
+            onClick={() => {
+              clearToken();
+              setCurrentUser(null);
+            }}
+            className="btn btn-ghost btn-sm"
+            style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}
+          >
+            Sign Out
+          </button>
         </div>
       </div>
 
@@ -245,6 +425,8 @@ function DemoDashboardContent() {
             threatLevel={threatLevel}
             mttc={mttc}
             blockedCount={blockedCount}
+            accuracy={accuracy}
+            killChainBreakRate={killChainBreakRate}
           />
         </div>
 
@@ -317,7 +499,7 @@ function DemoDashboardContent() {
             </span>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
+          <div className="table-wrapper" data-horizontal-scroll="true">
             <table className="data-table" style={{ fontSize: '0.82rem' }}>
               <thead>
                 <tr>

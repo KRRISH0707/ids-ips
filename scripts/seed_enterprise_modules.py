@@ -55,6 +55,62 @@ PLAYBOOKS = [
         "severity_threshold": "CRITICAL",
         "actions": ["ISOLATE_HOST", "START_PROMISCUOUS_PCAP_CAPTURE", "ESCALATE_TO_TIER2_ANALYST"],
         "is_active": True
+    },
+    {
+        "name": "PB-06: Distributed Denial-of-Service (DDoS) Volumetric Shield",
+        "description": "Mitigates multi-gigabit volumetric SYN, UDP, and ICMP saturation attacks by activating BGP Flowspec filtering and dynamic drop rules.",
+        "trigger_event": "SYN_FLOOD",
+        "severity_threshold": "CRITICAL",
+        "actions": ["ACTIVATE_BGP_FLOWSPEC_SCRUBBING", "DYNAMIC_IPTABLES_DROP", "RATE_LIMIT_SYN_COOKIES", "BROADCAST_INCIDENT_WAR_ROOM"],
+        "is_active": True
+    },
+    {
+        "name": "PB-07: Remote Code Execution & Web Exploit Lockdown",
+        "description": "Intercepts active Log4Shell, SQL injection, and zero-day web shell uploads, terminating worker threads and capturing forensic packet evidence.",
+        "trigger_event": "RCE_EXPLOIT",
+        "severity_threshold": "CRITICAL",
+        "actions": ["TERMINATE_WEB_WORKER_PROCESS", "BLOCK_SOURCE_IP_24H", "INVALIDATE_SESSION_COOKIES", "CAPTURE_FORENSIC_PCAP_STREAM"],
+        "is_active": True
+    },
+    {
+        "name": "PB-08: Active Directory Domain Controller Breach Containment",
+        "description": "Halts Active Directory domain credential harvesting, Kerberoasting ticket extraction, and unauthorized RPC replication across Domain Controllers.",
+        "trigger_event": "KERBEROASTING",
+        "severity_threshold": "CRITICAL",
+        "actions": ["SUSPEND_COMPROMISED_AD_ACCOUNT", "SEVER_SMB_RPC_TUNNELS", "TRIGGER_KRBTGT_PASSWORD_RESET", "DISPATCH_SOC_URGENT_PAGE"],
+        "is_active": True
+    },
+    {
+        "name": "PB-09: Covert DNS Tunneling & Data Exfiltration Interception",
+        "description": "Detects high-entropy outbound DNS tunneling and covert exfiltration channels, sinkholing attacker domains and severing socket connections.",
+        "trigger_event": "DNS_TUNNELING",
+        "severity_threshold": "HIGH",
+        "actions": ["SINKHOLE_MALICIOUS_NAMESERVER", "INJECT_TCP_RESET_STREAM", "ISOLATE_EXFILTRATING_HOST", "DUMP_ENDPOINT_NETWORK_SOCKETS"],
+        "is_active": True
+    },
+    {
+        "name": "PB-10: Cloud Container Escape & Supply Chain Tamper Quarantine",
+        "description": "Enforces kernel-level container cgroup freezing upon detecting namespace breakouts, revoking ephemeral cloud IAM metadata credentials immediately.",
+        "trigger_event": "CONTAINER_ESCAPE",
+        "severity_threshold": "CRITICAL",
+        "actions": ["FREEZE_CONTAINER_RUNTIME_CGROUP", "REVOKE_CLOUD_IAM_ROLE_TOKENS", "TERMINATE_KUBERNETES_POD", "NOTIFY_DEVSECOPS_LEAD"],
+        "is_active": True
+    },
+    {
+        "name": "PB-11: Unauthorized Lateral Movement & Pass-The-Hash Quarantine",
+        "description": "Contains internal lateral pivoting via Pass-The-Hash, WMI, or WinRM by enforcing microsegmentation boundaries around infected nodes.",
+        "trigger_event": "LATERAL_MOVEMENT",
+        "severity_threshold": "HIGH",
+        "actions": ["ENFORCE_MICROSEGMENTATION_ISOLATION", "REVOKE_KERBEROS_TGT_TOKENS", "ENABLE_EXTENDED_SECURITY_AUDIT", "SOC_TIER2_ESCALATION"],
+        "is_active": True
+    },
+    {
+        "name": "PB-12: Zero-Day Protocol Anomaly & Packet Replay Neutralization",
+        "description": "Autonomously synthesizes dynamic eBPF drop filters and Snort/Suricata bytecode rules upon identifying malformed packet payloads or zero-day zero-byte exploits.",
+        "trigger_event": "PROTOCOL_VIOLATION",
+        "severity_threshold": "CRITICAL",
+        "actions": ["INJECT_KERNEL_EBPF_DISCARD", "BLOCK_SOURCE_IP_24H", "GENERATE_SURICATA_SNORT_SIGNATURE", "DISPATCH_PAGERDUTY_ALERT"],
+        "is_active": True
     }
 ]
 
@@ -118,12 +174,27 @@ def main():
                 print("Seeding SOAR Playbooks...")
                 for pb in PLAYBOOKS:
                     cur.execute(
-                        """
-                        INSERT INTO playbooks (name, description, trigger_event, severity_threshold, actions, is_active)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                        """,
-                        (pb["name"], pb["description"], pb["trigger_event"], pb["severity_threshold"], Jsonb(pb["actions"]), pb["is_active"])
+                        "SELECT id FROM playbooks WHERE name = %s",
+                        (pb["name"],)
                     )
+                    existing = cur.fetchone()
+                    if existing:
+                        cur.execute(
+                            """
+                            UPDATE playbooks
+                            SET description = %s, trigger_event = %s, severity_threshold = %s, actions = %s, is_active = %s
+                            WHERE id = %s
+                            """,
+                            (pb["description"], pb["trigger_event"], pb["severity_threshold"], Jsonb(pb["actions"]), pb["is_active"], existing[0])
+                        )
+                    else:
+                        cur.execute(
+                            """
+                            INSERT INTO playbooks (name, description, trigger_event, severity_threshold, actions, is_active)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                            """,
+                            (pb["name"], pb["description"], pb["trigger_event"], pb["severity_threshold"], Jsonb(pb["actions"]), pb["is_active"])
+                        )
 
                 # 2. Seed Threat Intel
                 print("Seeding Threat Intelligence IOCs...")

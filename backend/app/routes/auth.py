@@ -36,19 +36,22 @@ def login(
     """Authenticate with email + password, receive JWT tokens."""
     source_ip = request.client.host if request.client else None
 
+    clean_username = form_data.username.strip().lower()
+    clean_password = form_data.password.strip()
+
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT id, email, full_name, role, hashed_password, is_active
                 FROM users
-                WHERE email = %s
+                WHERE LOWER(email) = %s
                 """,
-                (form_data.username,),
+                (clean_username,),
             )
             user = cur.fetchone()
 
-    if user is None or not verify_password(form_data.password, user["hashed_password"]):
+    if user is None or not verify_password(clean_password, user["hashed_password"]):
         auth_attempts_total.labels(result="failure").inc()
         write_audit_log(
             actor_id=None,
@@ -87,6 +90,7 @@ def login(
         actor_id=user["id"],
         actor=user["email"],
         action="LOGIN_SUCCESS",
+        details={"email": user["email"], "role": user["role"], "auth_type": "password"},
         source_ip=source_ip,
     )
 

@@ -126,6 +126,7 @@ def write_audit_log(
     details: dict | None = None,
     source_ip: str | None = None,
 ) -> None:
+    inserted_log = None
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -133,6 +134,7 @@ def write_audit_log(
                 INSERT INTO audit_logs
                     (actor_id, actor, action, resource, resource_id, details, source_ip)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id, actor_id, actor, action, resource, resource_id, details, source_ip, created_at
                 """,
                 (
                     str(actor_id) if actor_id else None,
@@ -144,4 +146,13 @@ def write_audit_log(
                     source_ip,
                 ),
             )
+            inserted_log = cur.fetchone()
             conn.commit()
+
+    if inserted_log:
+        try:
+            from ..services.redis_pubsub import publish_audit_log
+            publish_audit_log(dict(inserted_log))
+        except Exception:
+            pass
+

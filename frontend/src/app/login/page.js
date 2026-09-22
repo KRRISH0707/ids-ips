@@ -1,17 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api, setToken, setUser } from '@/lib/api';
+import { api, setToken, setUser, getToken, getUser } from '@/lib/api';
 import BrandLogo from '@/components/BrandLogo';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('krrish183224@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const token = getToken();
+    const user = getUser();
+    if (token && user) {
+      router.replace('/');
+    }
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,7 +81,7 @@ export default function LoginPage() {
               className="input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@ids.local"
+              placeholder="name@company.com"
               required
             />
           </div>
@@ -128,10 +136,10 @@ export default function LoginPage() {
           <Link
             href="/demo"
             style={{
-              padding: '8px 14px',
+              padding: '10px 16px',
               borderRadius: 8,
-              background: 'rgba(0, 212, 255, 0.08)',
-              border: '1px solid rgba(0, 212, 255, 0.25)',
+              background: 'rgba(0, 212, 255, 0.06)',
+              border: '1px solid rgba(0, 212, 255, 0.2)',
               fontSize: '0.82rem',
               color: 'var(--accent-cyan)',
               textDecoration: 'none',
@@ -142,7 +150,7 @@ export default function LoginPage() {
               gap: 6
             }}
           >
-            <span>🎮</span> Testing or Evaluating? Launch Demo Sandbox ➔
+            <span>🎮</span> Access Interactive Demo Dashboard ➔
           </Link>
           <Link
             href="/landing"

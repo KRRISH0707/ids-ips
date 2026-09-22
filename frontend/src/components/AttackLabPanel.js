@@ -1,32 +1,34 @@
 'use client';
 
 import { useState } from 'react';
-import { ATTACK_SCENARIOS } from '@/lib/attackScenarios';
+import { ATTACK_SCENARIOS, ATTACK_CATEGORIES } from '@/lib/attackScenarios';
 import AttackResolutionPipeline from './AttackResolutionPipeline';
 import AttackDossierModal from './AttackDossierModal';
 
 /**
  * AttackLabPanel Component
- * Provides 6 cyber attack scenario buttons with real-time autonomous resolution
- * and detailed forensic threat dossier inspection.
+ * Provides interactive cyber attack simulation tabs for all 6 attack categories:
+ * MALWARE, NETWORK, CREDENTIAL, WEB/API, EXPLOITATION, POST-COMPROMISE.
  */
 export default function AttackLabPanel({
   onAttackTriggered = () => {},
   onResetBaseline = () => {},
   activeAttackId = null,
 }) {
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [activeAttack, setActiveAttack] = useState(ATTACK_SCENARIOS[0]);
   const [selectedDossierAttack, setSelectedDossierAttack] = useState(null);
   const [isResolving, setIsResolving] = useState(false);
 
+  const filteredScenarios = selectedCategory === 'ALL'
+    ? ATTACK_SCENARIOS
+    : ATTACK_SCENARIOS.filter(a => a.categoryGroup === selectedCategory);
+
   const handleTriggerAttack = (attack) => {
     setActiveAttack(attack);
     setIsResolving(true);
-
-    // Notify parent dashboard / demo state to update posture score, kill chain, and live events
     onAttackTriggered(attack);
 
-    // End resolving animation after 900ms
     setTimeout(() => {
       setIsResolving(false);
     }, 900);
@@ -58,11 +60,11 @@ export default function AttackLabPanel({
               border: '1px solid rgba(0, 212, 255, 0.4)',
               fontFamily: 'JetBrains Mono',
             }}>
-              REAL-TIME SIMULATOR
+              TAXONOMY AUDIT LAB
             </span>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            Trigger authentic enterprise attack vectors. Witness sub-second neural anomaly detection, MITRE ATT&CK correlation, and autonomous kernel host quarantine.
+            Filter & trigger authentic attack vectors across all 6 attack categories. Witness sub-second neural anomaly detection, MITRE ATT&CK correlation, and autonomous kernel host quarantine.
           </p>
         </div>
 
@@ -80,14 +82,45 @@ export default function AttackLabPanel({
         </button>
       </div>
 
-      {/* 6 Tactical Attack Scenario Buttons */}
+      {/* Attack Category Filter Tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 6 }}>
+        {ATTACK_CATEGORIES.map(cat => {
+          const isActive = selectedCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                fontSize: '0.75rem',
+                fontWeight: isActive ? 800 : 500,
+                background: isActive
+                  ? 'linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%)'
+                  : 'rgba(255, 255, 255, 0.04)',
+                border: isActive
+                  ? '1px solid transparent'
+                  : '1px solid rgba(255, 255, 255, 0.1)',
+                color: isActive ? '#fff' : 'var(--text-muted)',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {cat.name}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tactical Attack Scenario Cards */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
         gap: 12,
         marginBottom: 20,
       }}>
-        {ATTACK_SCENARIOS.map((atk) => {
+        {filteredScenarios.map((atk) => {
           const isSelected = activeAttack?.id === atk.id;
           const isCritical = atk.badge === 'CRITICAL';
 

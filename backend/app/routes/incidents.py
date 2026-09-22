@@ -37,6 +37,7 @@ class IncidentStatusUpdate(BaseModel):
 def list_incidents(
     inc_status: Optional[str] = Query(None, alias="status"),
     severity: Optional[str] = Query(None),
+    days: Optional[int] = Query(None, ge=1, le=365),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
     current_user: dict = Depends(get_current_user),
@@ -48,6 +49,9 @@ def list_incidents(
     if severity:
         conditions.append("severity = %s")
         params.append(severity.upper())
+    if days is not None:
+        conditions.append("created_at >= now() - interval '1 day' * %s")
+        params.append(days)
 
     where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     params += [limit, skip]
@@ -172,18 +176,33 @@ def update_incident_status(
 
 
 @router.get("/stats/summary")
-def incidents_summary(current_user: dict = Depends(get_current_user)):
+def incidents_summary(
+    days: Optional[int] = Query(None, ge=1, le=365),
+    current_user: dict = Depends(get_current_user),
+):
+    time_filter = ""
+    params = []
+    if days is not None:
+        time_filter = "WHERE created_at >= now() - interval '1 day' * %s"
+        params.append(days)
+
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
                     COUNT(*) FILTER (WHERE status = 'NEW')             AS new_count,
                     COUNT(*) FILTER (WHERE status = 'INVESTIGATING')   AS investigating_count,
+                    COUNT(*) FILTER (WHERE status = 'CONTAINED')       AS contained_count,
                     COUNT(*) FILTER (WHERE status = 'RESOLVED')        AS resolved_count,
+                    COUNT(*) FILTER (WHERE status = 'FALSE_POSITIVE')  AS false_positive_count,
                     COUNT(*) FILTER (WHERE severity = 'CRITICAL')      AS critical_count,
-                    COUNT(*) FILTER (WHERE created_at > now() - interval '24 hours') AS last_24h
+                    COUNT(*) FILTER (WHERE severity = 'HIGH')          AS high_count,
+                    COUNT(*) FILTER (WHERE created_at > now() - interval '24 hours') AS last_24h,
+                    COUNT(*)                                           AS total_count
                 FROM incidents
-                """
+                {time_filter}
+                """,
+                params,
             )
             return cur.fetchone()

@@ -26,11 +26,12 @@ def list_audit_logs(
     actor: Optional[str] = Query(None),
     action: Optional[str] = Query(None),
     resource: Optional[str] = Query(None),
+    days: Optional[int] = Query(None, ge=1, le=365),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     current_user: dict = Depends(require_role("ADMIN")),
 ):
-    """Paginated, filterable audit trail."""
+    """Paginated, filterable audit trail with time window support."""
     conditions, params = [], []
     if actor:
         conditions.append("actor ILIKE %s")
@@ -41,6 +42,9 @@ def list_audit_logs(
     if resource:
         conditions.append("resource = %s")
         params.append(resource)
+    if days is not None:
+        conditions.append("created_at >= now() - interval '1 day' * %s")
+        params.append(days)
 
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     params += [limit, skip]

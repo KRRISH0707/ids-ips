@@ -1,0 +1,101 @@
+%YAML 1.1
+---
+
+# Suricata 7 Configuration for Enterprise IDS/IPS Real-Time Pipeline
+
+vars:
+  address-groups:
+    HOME_NET: "[192.168.0.0/16,10.0.0.0/8,172.16.0.0/12]"
+    EXTERNAL_NET: "!$HOME_NET"
+    HTTP_SERVERS: "$HOME_NET"
+    SQL_SERVERS: "$HOME_NET"
+
+  port-groups:
+    HTTP_PORTS: "80,8080,3000,8000"
+    SHELLCODE_PORTS: "!80"
+    SSH_PORTS: "22"
+
+default-log-dir: /var/log/suricata
+
+# Unified EVE JSON Output for Vector & Kafka
+outputs:
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      pcap-file: false
+      community-id: true
+      types:
+        - alert:
+            payload: yes
+            payload-buffer: yes
+            payload-printable: yes
+            packet: yes
+            metadata: yes
+            tagged-packets: yes
+        - http:
+            extended: yes
+        - dns:
+            version: 2
+        - tls:
+            extended: yes
+        - anomaly:
+            enabled: yes
+            types:
+              decode: yes
+              stream: yes
+              applayer: yes
+
+# AF_PACKET High-Performance Ingress Sniffing
+af-packet:
+  - interface: eth0
+    threads: auto
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
+    use-mmsg: yes
+    ring-size: 2048
+    buffer-size: 64535
+
+# Detection Engine Settings
+detect:
+  profile: medium
+  custom-values:
+    toclient-groups: 16
+    toserver-groups: 16
+  sgh-mpm-context: auto
+  inspection-recursion-limit: 3000
+
+# Rule Files
+default-rule-path: /var/lib/suricata/rules
+rule-files:
+  - local.rules
+
+
+# Application Layer Parsers
+app-layer:
+  protocols:
+    tls:
+      enabled: yes
+      detection-ports:
+        dp: 443
+    http:
+      enabled: yes
+      libhtp:
+        default-config:
+          personality: IDS
+          request-body-limit: 100kb
+          response-body-limit: 100kb
+    dns:
+      global-memcap: 16mb
+      state-memcap: 512kb
+      tcp:
+        enabled: yes
+        detection-ports:
+          dp: 53
+      udp:
+        enabled: yes
+        detection-ports:
+          dp: 53
+    ssh:
+      enabled: yes

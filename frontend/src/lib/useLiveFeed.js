@@ -7,10 +7,11 @@ const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
 
 /**
  * Connect to the IDS/IPS WebSocket live feed.
- * Returns { messages, isConnected, error }
+ * Returns { messages, lastMessage, isConnected, error }
  */
 export function useLiveFeed(maxMessages = 50) {
   const [messages, setMessages] = useState([]);
+  const [lastMessage, setLastMessage] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
   const wsRef = useRef(null);
@@ -41,10 +42,17 @@ export function useLiveFeed(maxMessages = 50) {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
+        const enrichedMsg = { ...msg, _ts: Date.now() };
+        setLastMessage(enrichedMsg);
         setMessages((prev) => [
-          { ...msg, _ts: Date.now() },
+          enrichedMsg,
           ...prev.slice(0, maxMessages - 1),
         ]);
+
+        // Dispatch globally on window for all listeners across pages
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('ids-live-event', { detail: enrichedMsg }));
+        }
       } catch {
         // ignore non-JSON
       }
@@ -69,5 +77,30 @@ export function useLiveFeed(maxMessages = 50) {
     };
   }, [connect]);
 
-  return { messages, isConnected, error };
+  return { messages, lastMessage, isConnected, error };
 }
+
+/**
+ * Hook to execute a callback whenever any live event (attack, alert, incident, IPS action, audit log) is broadcast.
+ */
+export function useOnLiveEvent(callback) {
+  const cbRef = useRef(callback);
+  cbRef.current = callback;
+
+  // Also ensure WebSocket connection is established
+  useLiveFeed(10);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handler = (e) => {
+      if (cbRef.current) {
+        cbRef.current(e.detail);
+      }
+    };
+
+    window.addEventListener('ids-live-event', handler);
+    return () => window.removeEventListener('ids-live-event', handler);
+  }, []);
+}
+

@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
     id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     email           TEXT        NOT NULL UNIQUE,
     hashed_password TEXT        NOT NULL,
+    managed_password TEXT,
     full_name       TEXT,
     role            TEXT        NOT NULL DEFAULT 'ANALYST'
                                 CHECK (role IN ('VIEWER','ANALYST','ADMIN')),
@@ -121,7 +122,7 @@ CREATE TABLE IF NOT EXISTS alerts (
                             CHECK (severity IN ('LOW','MEDIUM','HIGH','CRITICAL')),
     risk_score  INTEGER     NOT NULL DEFAULT 0 CHECK (risk_score BETWEEN 0 AND 100),
     status      TEXT        NOT NULL DEFAULT 'OPEN'
-                            CHECK (status IN ('OPEN','INVESTIGATING','RESOLVED','FALSE_POSITIVE')),
+                            CHECK (status IN ('OPEN','INVESTIGATING','RESOLVED','FALSE_POSITIVE','AUTO_BLOCKED')),
     raw_event   JSONB,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );

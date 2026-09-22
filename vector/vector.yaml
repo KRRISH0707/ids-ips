@@ -1,0 +1,40 @@
+# Vector Configuration: Suricata EVE JSON to Kafka Pipeline
+
+data_dir: /var/lib/vector
+
+sources:
+  suricata_eve:
+    type: file
+    include:
+      - /var/log/suricata/eve.json
+    read_from: beginning
+    ignore_older_secs: 86400
+
+transforms:
+  parse_eve_json:
+    type: remap
+    inputs:
+      - suricata_eve
+    source: |
+      parsed, err = parse_json(.message)
+      if err == null {
+        . = parsed
+        .ingest_source = "suricata"
+        .vector_timestamp = now()
+      }
+
+  filter_alerts:
+    type: filter
+    inputs:
+      - parse_eve_json
+    condition: '.event_type == "alert" || .event_type == "anomaly"'
+
+sinks:
+  kafka_alerts:
+    type: kafka
+    inputs:
+      - filter_alerts
+    bootstrap_servers: "kafka:9092"
+    topic: "ids.alerts"
+    encoding:
+      codec: json

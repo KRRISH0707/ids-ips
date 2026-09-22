@@ -164,6 +164,37 @@ services:
     depends_on:
       - prometheus
 
+  # ── Network Sensors & Real Telemetry Ingestion ─────────────────────────────
+  suricata:
+    image: jasonish/suricata:7.0.6
+    container_name: idsips-suricata
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+      - NET_RAW
+    command: -i eth0 -v
+    volumes:
+      - suricata_logs:/var/log/suricata
+      - ./suricata/suricata.yaml:/etc/suricata/suricata.yaml
+      - ./suricata/rules:/var/lib/suricata/rules
+    depends_on:
+      kafka:
+        condition: service_started
+
+  vector:
+    image: timberio/vector:0.38.0-alpine
+    container_name: idsips-vector
+    restart: unless-stopped
+    volumes:
+      - ./vector/vector.yaml:/etc/vector/vector.yaml:ro
+      - suricata_logs:/var/log/suricata:ro
+    depends_on:
+      kafka:
+        condition: service_started
+      suricata:
+        condition: service_started
+
 volumes:
   postgres_data:
   redis_data:
@@ -171,3 +202,4 @@ volumes:
   opensearch_data:
   prometheus_data:
   grafana_data:
+  suricata_logs:
