@@ -98,15 +98,15 @@ export default function AlertsPage() {
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedAlertForPCAP, setSelectedAlertForPCAP] = useState(null);
   const [showAnalytics, setShowAnalytics] = useState(true);
-  const [skip, setSkip] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const limit = pageSize;
   const tableWrapperRef = useRef(null);
+  const lastProcessedLiveIdRef = useRef(null);
 
   // Reset pagination to page 1 whenever filters or time range change
   useEffect(() => {
-    setSkip(0);
-  }, [severity, alertStatus, days, pageSize]);
+    setCurrentPage(1);
+  }, [severity, alertStatus, days, searchFilter, pageSize]);
 
   const scrollTable = (direction) => {
     if (tableWrapperRef.current) {
@@ -122,36 +122,36 @@ export default function AlertsPage() {
   const load = useCallback(async (showSpinner = true) => {
     if (showSpinner) setLoading(true);
     try {
-      const params = { limit, skip };
+      const params = { limit: 1000 };
       if (severity) params.severity = severity;
       if (alertStatus) params.status = alertStatus;
       if (days) params.days = days;
       const data = await api.getAlerts(params);
       setAlerts(data?.items || []);
-      setTotal(data?.total || 0);
+      setTotal(data?.total || (data?.items?.length || 0));
     } catch (e) {
       console.error('Failed to load alerts:', e);
     } finally {
       if (showSpinner) setLoading(false);
     }
-  }, [severity, alertStatus, skip, days, limit]);
+  }, [severity, alertStatus, days]);
 
   useEffect(() => { load(true); }, [load]);
 
-  // Real-time WebSocket Auto-Update Handler: Instantly prepend new alert to table
+  // Real-time WebSocket Auto-Update Handler: Instantly prepend new alert to table without breaking active page
   useEffect(() => {
     if (!liveMessages || liveMessages.length === 0) return;
     const latest = liveMessages[0];
-    if (!latest || !latest.signature) return;
+    if (!latest || !latest.signature || !latest.id) return;
+    if (lastProcessedLiveIdRef.current === latest.id) return;
+    lastProcessedLiveIdRef.current = latest.id;
 
     setAlerts((prev) => {
-      if (latest.id && prev.some((a) => a.id === latest.id)) return prev;
-      return [latest, ...prev.slice(0, limit - 1)];
+      if (prev.some((a) => a.id === latest.id)) return prev;
+      return [latest, ...prev];
     });
     setTotal((prev) => prev + 1);
-
-    load(false);
-  }, [liveMessages, limit, load]);
+  }, [liveMessages]);
 
   const handleStatusChange = async (id, newStatus) => {
     try {
@@ -175,16 +175,23 @@ export default function AlertsPage() {
     }
   };
 
-  // Filtered slice
+  // Filtered slice across all loaded alerts in the timeframe
   const displayedAlerts = useMemo(() => {
     if (!searchFilter.trim()) return alerts;
     const q = searchFilter.toLowerCase();
     return alerts.filter(a =>
       (a.signature || '').toLowerCase().includes(q) ||
       (a.src_ip || '').toLowerCase().includes(q) ||
-      (a.dst_ip || '').toLowerCase().includes(q)
+      (a.dst_ip || '').toLowerCase().includes(q) ||
+      (a.category || '').toLowerCase().includes(q)
     );
   }, [alerts, searchFilter]);
+
+  // Paginated slice for current page
+  const paginatedAlerts = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return displayedAlerts.slice(start, start + pageSize);
+  }, [displayedAlerts, currentPage, pageSize]);
 
   // Metrics
   const criticalCount = alerts.filter(a => a.severity === 'CRITICAL').length;
@@ -516,7 +523,7 @@ export default function AlertsPage() {
             🛡️ Resolve All Quarantined
           </button>
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: 8, whiteSpace: 'nowrap' }}>
-            Showing {total === 0 ? 0 : skip + 1}–{Math.min(skip + limit, total)} of {total}
+            Showing {displayedAlerts.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, displayedAlerts.length)} of {displayedAlerts.length}
           </span>
         </div>
       </div>
@@ -556,7 +563,7 @@ export default function AlertsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {displayedAlerts.map(a => (
+                  {paginatedAlerts.map(a => (
                     <tr key={a.id}>
                       <td>
                         <div
@@ -693,15 +700,20 @@ export default function AlertsPage() {
 
         {/* Pagination */}
         <Pagination
-          currentPage={Math.floor(skip / pageSize) + 1}
+          currentPage={currentPage}
           pageSize={pageSize}
-          totalItems={total}
+          totalItems={displayedAlerts.length}
           label="threat alerts"
           loading={loading}
-          onPageChange={(page) => setSkip((page - 1) * pageSize)}
+          onPageChange={(page) => {
+            setCurrentPage(page);
+            if (tableWrapperRef.current) {
+              tableWrapperRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
           onPageSizeChange={(newSize) => {
             setPageSize(newSize);
-            setSkip(0);
+            setCurrentPage(1);
           }}
         />
       </div>
