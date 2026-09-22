@@ -107,54 +107,16 @@ def run_full_seed():
                 conn.commit()
             logger.info("  ✓ Detection rules synchronized.")
 
-            # 4. SOAR PLAYBOOKS
-            logger.info("[4/7] Seeding Autonomous SOAR Playbooks...")
-            playbooks = [
-                {
-                    "name": "PB-01: Rapid Ransomware Containment",
-                    "description": "Instantly stops ransomware propagation by quarantining endpoint, killing lateral SMB ports, and locking shadow storage.",
-                    "trigger_event": "RANSOMWARE",
-                    "severity_threshold": "CRITICAL",
-                    "actions": ["ISOLATE_HOST", "LOCK_SHADOW_COPIES", "BLOCK_LATERAL_SMB", "DISPATCH_PAGERDUTY_ALERT"],
-                },
-                {
-                    "name": "PB-02: Cobalt Strike & C2 Neutralization",
-                    "description": "Sever active Command & Control communication, ban external C2 IP, and isolate infected beaconing host.",
-                    "trigger_event": "C2_BEACON",
-                    "severity_threshold": "CRITICAL",
-                    "actions": ["FIREWALL_DROP_EGRESS", "ISOLATE_COMPROMISED_HOST", "DUMP_PROCESS_MEMORY_ARTIFACTS", "SOC_HIGH_PRIORITY_INCIDENT"],
-                },
-                {
-                    "name": "PB-03: Credential Stuffing & SSH Brute Force Mitigation",
-                    "description": "Imposes 24-hour firewall ban on attacking botnet IP, invalidates active tokens, and prompts MFA challenge.",
-                    "trigger_event": "BRUTE_FORCE",
-                    "severity_threshold": "HIGH",
-                    "actions": ["BLOCK_SOURCE_IP_24H", "FORCE_USER_SESSION_TERMINATION", "ENABLE_MFA_STEPUP", "WRITE_FORENSIC_AUDIT_LOG"],
-                },
-                {
-                    "name": "PB-04: Automated Data Exfiltration Severance",
-                    "description": "Terminates suspicious high-volume outbound data streams, resets compromised credentials, and triggers SOC forensics.",
-                    "trigger_event": "DATA_EXFIL",
-                    "severity_threshold": "CRITICAL",
-                    "actions": ["DROP_OUTBOUND_TUNNEL", "REVOKE_API_KEYS", "FREEZE_S3_EXFIL_TARGET", "PAGE_INCIDENT_COMMANDER"],
-                },
-                {
-                    "name": "PB-05: Zero-Day & RCE Patch Shielding",
-                    "description": "Applies real-time virtual WAF patch, terminates vulnerable parent worker processes, and captures packet PCAP.",
-                    "trigger_event": "ZERO_DAY_RCE",
-                    "severity_threshold": "CRITICAL",
-                    "actions": ["ENABLE_VIRTUAL_WAF_RULE", "RESTART_VULNERABLE_CONTAINER", "SAVE_PCAP_BUFFER", "NOTIFY_DEVSECOPS"],
-                },
-            ]
-            for pb in playbooks:
-                cur.execute("SELECT id FROM playbooks WHERE name = %s", (pb["name"],))
-                if not cur.fetchone():
-                    cur.execute(
-                        "INSERT INTO playbooks (name, description, trigger_event, severity_threshold, actions, is_active) VALUES (%s, %s, %s, %s, %s, TRUE)",
-                        (pb["name"], pb["description"], pb["trigger_event"], pb["severity_threshold"], Jsonb(pb["actions"]))
-                    )
-            conn.commit()
-            logger.info("  ✓ SOAR Playbooks synchronized.")
+            # 4. SOAR PLAYBOOKS (All 55 Autonomous Playbooks)
+            logger.info("[4/7] Seeding 55 Autonomous Enterprise SOAR Playbooks (PB-01 to PB-55)...")
+            try:
+                from scripts.seed_55_playbooks import seed_55_playbooks
+                seed_55_playbooks(conn)
+            except Exception as pb_err:
+                logger.warning(f"  Playbooks seed warning ({pb_err}), falling back to internal import...")
+                from ..scripts.seed_55_playbooks import seed_55_playbooks
+                seed_55_playbooks(conn)
+            logger.info("  ✓ 55 Enterprise SOAR Playbooks active & mapped to MITRE ATT&CK.")
 
             # 5. THREAT INTELLIGENCE IOCs (Import from scripts/seed_100_plus_iocs.py)
             logger.info("[5/7] Seeding 127 Verified Threat Intelligence IOCs...")

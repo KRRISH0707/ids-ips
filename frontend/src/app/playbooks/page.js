@@ -10,18 +10,61 @@ import { useOnLiveEvent } from '@/lib/useLiveFeed';
 import { exportToCSV, formatRelativeTime } from '@/lib/utils';
 
 const MITRE_MAPPINGS = {
-  'PB-01': { code: 'T1486', name: 'Data Encrypted for Impact', tactic: 'Impact' },
-  'PB-02': { code: 'T1071', name: 'Application Layer Protocol / C2', tactic: 'Command & Control' },
-  'PB-03': { code: 'T1110', name: 'Brute Force & Credential Stuffing', tactic: 'Credential Access' },
-  'PB-04': { code: 'T1046', name: 'Network Service Discovery', tactic: 'Reconnaissance' },
-  'PB-05': { code: 'T1059', name: 'Behavioral Anomaly Execution', tactic: 'Execution' },
-  'PB-06': { code: 'T1498', name: 'Network Denial of Service (SYN/UDP Flood)', tactic: 'Impact' },
+  'PB-01': { code: 'T1486', name: 'Data Encrypted for Impact (VSS Shadow Lock)', tactic: 'Impact' },
+  'PB-02': { code: 'T1071', name: 'Application Layer Protocol / C2 Severance', tactic: 'Command & Control' },
+  'PB-03': { code: 'T1110', name: 'Brute Force & Credential Stuffing Mitigation', tactic: 'Credential Access' },
+  'PB-04': { code: 'T1046', name: 'Network Service Discovery & Port Tarpit', tactic: 'Reconnaissance' },
+  'PB-05': { code: 'T1059', name: 'Command & Scripting Interpreter / High Entropy', tactic: 'Execution' },
+  'PB-06': { code: 'T1498', name: 'Network Denial of Service (BGP Flowspec)', tactic: 'Impact' },
   'PB-07': { code: 'T1190', name: 'Exploit Public-Facing Application (RCE)', tactic: 'Initial Access' },
   'PB-08': { code: 'T1558', name: 'Kerberoasting & DCSync Privilege Escalation', tactic: 'Privilege Escalation' },
   'PB-09': { code: 'T1048', name: 'Exfiltration Over Alternative Protocol (DNS)', tactic: 'Exfiltration' },
-  'PB-10': { code: 'T1611', name: 'Escape to Host / Container Escape', tactic: 'Privilege Escalation' },
-  'PB-11': { code: 'T1550', name: 'Pass the Hash & Lateral Movement', tactic: 'Lateral Movement' },
-  'PB-12': { code: 'T1200', name: 'Protocol Anomaly & Zero-Day Injection', tactic: 'Defense Evasion' },
+  'PB-10': { code: 'T1611', name: 'Escape to Host / Container Cgroup Freeze', tactic: 'Privilege Escalation' },
+  'PB-11': { code: 'T1550', name: 'Pass the Hash & Lateral Microsegmentation', tactic: 'Lateral Movement' },
+  'PB-12': { code: 'T1200', name: 'Protocol Anomaly & Dynamic eBPF Discard', tactic: 'Defense Evasion' },
+  'PB-13': { code: 'T1558.001', name: 'Golden Ticket Kerberos Forgery Purge', tactic: 'Privilege Escalation' },
+  'PB-14': { code: 'T1003.001', name: 'OS Credential Dumping: LSASS Memory Kill', tactic: 'Credential Access' },
+  'PB-15': { code: 'T1210', name: 'Exploitation of Remote Services (ZeroLogon)', tactic: 'Lateral Movement' },
+  'PB-16': { code: 'T1552.001', name: 'Credentials In Files / Cloud IAM Key Leak', tactic: 'Credential Access' },
+  'PB-17': { code: 'T1530', name: 'Data from Cloud Storage S3 Bucket Leak', tactic: 'Collection' },
+  'PB-18': { code: 'T1078.004', name: 'Cloud Accounts: AWS STS AssumeRole Abuse', tactic: 'Defense Evasion' },
+  'PB-19': { code: 'T1078', name: 'Valid Accounts / Azure AD Impossible Travel', tactic: 'Initial Access' },
+  'PB-20': { code: 'T1098', name: 'Account Manipulation: GCP Service Account', tactic: 'Persistence' },
+  'PB-21': { code: 'T1610', name: 'Deploy Container: Privileged Pod Injection', tactic: 'Execution' },
+  'PB-22': { code: 'T1496', name: 'Resource Hijacking: Container Cryptomining', tactic: 'Impact' },
+  'PB-23': { code: 'T1098.003', name: 'Cluster Role Binding Backdoor Purge', tactic: 'Persistence' },
+  'PB-24': { code: 'T1499', name: 'Endpoint Denial of Service: API Abuse WAF', tactic: 'Impact' },
+  'PB-25': { code: 'T1557', name: 'Adversary-in-the-Middle: East-West Mesh', tactic: 'Credential Access' },
+  'PB-26': { code: 'T1190', name: 'SQL Injection / Web Application Exploit', tactic: 'Initial Access' },
+  'PB-27': { code: 'T1552.005', name: 'Cloud Instance Metadata API (SSRF IMDSv2)', tactic: 'Credential Access' },
+  'PB-28': { code: 'T1539', name: 'Steal Web Session Cookie / BOLA & IDOR', tactic: 'Collection' },
+  'PB-29': { code: 'T1499.004', name: 'Application Exhaustion: GraphQL Deep Flood', tactic: 'Impact' },
+  'PB-30': { code: 'T1505.003', name: 'Server Software Component: Web Shell Purge', tactic: 'Persistence' },
+  'PB-31': { code: 'T1567', name: 'Exfiltration Over Web Service / Cloud Sync', tactic: 'Exfiltration' },
+  'PB-32': { code: 'T1052.001', name: 'Exfiltration over Physical Removable USB', tactic: 'Exfiltration' },
+  'PB-33': { code: 'T1136.001', name: 'Create Account: Local Rogue Administrator', tactic: 'Persistence' },
+  'PB-34': { code: 'T1530', name: 'Off-Hours Bulk SQL Database Extraction', tactic: 'Collection' },
+  'PB-35': { code: 'T1213', name: 'Data from Information Repositories: Git Clone', tactic: 'Collection' },
+  'PB-36': { code: 'T1114.003', name: 'Email Forwarding Rule (BEC Compromise)', tactic: 'Collection' },
+  'PB-37': { code: 'T1566.002', name: 'Phishing: Spearphishing Link Domain Sinkhole', tactic: 'Initial Access' },
+  'PB-38': { code: 'T1566.001', name: 'Phishing: Macro Attachment Quarantine', tactic: 'Initial Access' },
+  'PB-39': { code: 'T1556', name: 'Modify Authentication Process (Evilginx AitM)', tactic: 'Credential Access' },
+  'PB-40': { code: 'T1584.001', name: 'Compromise Infrastructure: Typosquat Domain', tactic: 'Resource Development' },
+  'PB-41': { code: 'T1059.001', name: 'PowerShell / Encoded LotL Execution Kill', tactic: 'Execution' },
+  'PB-42': { code: 'T1070.001', name: 'Indicator Removal: Clear Windows Event Logs', tactic: 'Defense Evasion' },
+  'PB-43': { code: 'T1055.012', name: 'Process Injection: Process Hollowing', tactic: 'Defense Evasion' },
+  'PB-44': { code: 'T1053.005', name: 'Scheduled Task / Cron Backdoor Removal', tactic: 'Persistence' },
+  'PB-45': { code: 'T1014', name: 'Rootkit / Kernel Module Tamper eBPF Lock', tactic: 'Defense Evasion' },
+  'PB-46': { code: 'T1552', name: 'Unsecured Credentials in CI/CD Pipeline', tactic: 'Credential Access' },
+  'PB-47': { code: 'T1195.001', name: 'Compromise Dependencies: Dependency Confusion', tactic: 'Initial Access' },
+  'PB-48': { code: 'T1195.002', name: 'Compromise CI/CD Runner / Actions Tamper', tactic: 'Initial Access' },
+  'PB-49': { code: 'T1552.007', name: 'Credentials In Terraform State File Exposure', tactic: 'Credential Access' },
+  'PB-50': { code: 'T1525', name: 'Implant Internal Image: Poisoned Dockerfile', tactic: 'Persistence' },
+  'PB-51': { code: 'T0855', name: 'Unauthorized Command Message (SCADA/Modbus)', tactic: 'Impact' },
+  'PB-52': { code: 'T0831', name: 'Manipulation of Control (Siemens S7 / OT)', tactic: 'Impact' },
+  'PB-53': { code: 'T1584.005', name: 'Botnet Propagation: IoT Mirai/Mozi Sweep', tactic: 'Resource Development' },
+  'PB-54': { code: 'T1059', name: 'Command & Scripting: LLM Prompt Injection', tactic: 'Execution' },
+  'PB-55': { code: 'T1567.002', name: 'Exfiltration to Cloud: AI Model Weight Theft', tactic: 'Exfiltration' },
 };
 
 import { useTimeRange } from '@/context/TimeRangeContext';
@@ -39,6 +82,8 @@ export default function PlaybooksPage() {
   const [targetHost, setTargetHost] = useState('');
   const [executing, setExecuting] = useState(false);
   const [execResult, setExecResult] = useState(null);
+  const [playbookPage, setPlaybookPage] = useState(1);
+  const [playbookPageSize, setPlaybookPageSize] = useState(12);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPageSize, setHistoryPageSize] = useState(25);
 
@@ -50,6 +95,11 @@ export default function PlaybooksPage() {
   useEffect(() => {
     setHistoryPage(1);
   }, [days, activeTab, historyPageSize]);
+
+  // Reset playbook pagination to page 1 on filter or search change
+  useEffect(() => {
+    setPlaybookPage(1);
+  }, [severityFilter, searchQuery, playbookPageSize]);
 
   const fetchData = useCallback(async (showSpinner = true) => {
     try {
@@ -118,6 +168,12 @@ export default function PlaybooksPage() {
 
   const criticalCount = playbooks.filter((p) => p.severity_threshold === 'CRITICAL').length;
   const highCount = playbooks.filter((p) => p.severity_threshold === 'HIGH').length;
+  const mediumCount = playbooks.filter((p) => p.severity_threshold === 'MEDIUM').length;
+
+  const paginatedPlaybooks = filteredPlaybooks.slice(
+    (playbookPage - 1) * playbookPageSize,
+    playbookPage * playbookPageSize
+  );
 
   return (
     <PageLayout sidebar={<Sidebar />}>
@@ -222,15 +278,21 @@ export default function PlaybooksPage() {
             </div>
 
             {/* Severity filter pills */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              {['ALL', 'CRITICAL', 'HIGH'].map((sev) => (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM'].map((sev) => (
                 <button
                   key={sev}
                   onClick={() => setSeverityFilter(sev)}
                   className={`btn btn-sm ${severityFilter === sev ? 'btn-primary' : 'btn-ghost'}`}
                   style={{ fontSize: '0.75rem', padding: '6px 14px' }}
                 >
-                  {sev === 'ALL' ? `All Severity (${playbooks.length})` : sev === 'CRITICAL' ? `Critical (${criticalCount})` : `High (${highCount})`}
+                  {sev === 'ALL'
+                    ? `All Severity (${playbooks.length})`
+                    : sev === 'CRITICAL'
+                    ? `Critical (${criticalCount})`
+                    : sev === 'HIGH'
+                    ? `High (${highCount})`
+                    : `Medium (${mediumCount})`}
                 </button>
               ))}
             </div>
@@ -243,8 +305,9 @@ export default function PlaybooksPage() {
           filteredPlaybooks.length === 0 ? (
             <EmptyState message="No playbooks match your current filter criteria." />
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 18 }}>
-              {filteredPlaybooks.map((pb) => {
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 18 }}>
+                {paginatedPlaybooks.map((pb) => {
                 const pbPrefix = pb.name?.substring(0, 5);
                 const mitre = MITRE_MAPPINGS[pbPrefix] || { code: 'T1190', name: 'Exploit Public-Facing Application', tactic: 'Defense' };
 
@@ -368,14 +431,28 @@ export default function PlaybooksPage() {
                               ); })()}
                             </div>
                           )}
-                        </div>
                       );
                     })()}
                   </div>
                 );
               })}
             </div>
-          )
+            <div style={{ marginTop: 24 }}>
+              <Pagination
+                page={playbookPage}
+                totalPages={Math.ceil(filteredPlaybooks.length / playbookPageSize)}
+                onPageChange={setPlaybookPage}
+                totalItems={filteredPlaybooks.length}
+                pageSize={playbookPageSize}
+                onPageSizeChange={(newSize) => {
+                  setPlaybookPageSize(newSize);
+                  setPlaybookPage(1);
+                }}
+                pageSizeOptions={[12, 24, 48, 100]}
+              />
+            </div>
+          </>
+        )
         ) : (
           <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
             {executions.length === 0 ? (

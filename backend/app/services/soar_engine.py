@@ -117,8 +117,40 @@ class SOAREngine:
                 detail = f"Activated high-fidelity Windows Security Event Log (Event IDs 4624/4672) monitoring"
             elif action == "GENERATE_SURICATA_SNORT_SIGNATURE":
                 detail = f"Synthesized custom Snort/Suricata bytecode signature and hot-reloaded DPI detection engine"
-            elif action in ("DISPATCH_PAGERDUTY_ALERT", "SOC_HIGH_PRIORITY_INCIDENT", "NOTIFY_NETWORK_ADMIN", "BROADCAST_INCIDENT_WAR_ROOM", "DISPATCH_SOC_URGENT_PAGE", "NOTIFY_DEVSECOPS_LEAD", "SOC_TIER2_ESCALATION"):
-                detail = f"High-priority SOC notification dispatched to active responders ({action})"
+            elif action in ("KILL_LSASS_DUMP_PROCESS", "KILL_PROCESS_TREE", "SUSPEND_HOLLOWED_THREAD"):
+                detail = f"Terminated hostile memory injection / dump process tree targeting {target_str}"
+            elif action in ("ENABLE_VIRTUAL_WAF_RULE", "BLOCK_METADATA_IP_ACCESS", "ENABLE_IMDSV2_STRICT"):
+                detail = f"Applied Layer-7 virtual WAF filter & IMDSv2 metadata protection against {target_str}"
+            elif action in ("DROP_OUTBOUND_TUNNEL", "FREEZE_S3_EXFIL_TARGET", "FREEZE_MODEL_STORAGE_VOLUME"):
+                detail = f"Severed active outbound data transfer tunnel and locked storage volume for {target_str}"
+            elif action in ("REVOKE_API_KEYS", "REVOKE_REFRESH_TOKENS", "FORCE_GLOBAL_SIGNOUT", "FORCE_USER_SESSION_TERMINATION"):
+                detail = f"Revoked active API credentials, OAuth tokens, and terminated all authenticated sessions for {target_str}"
+            elif action in ("ENABLE_MFA_STEPUP", "ENABLE_CREDENTIAL_GUARD", "SEVER_NETLOGON_SECURE_CHANNEL", "FORCE_DC_COMPUTER_PW_SYNC"):
+                detail = f"Enforced strict hardware MFA challenge and Active Directory credential guard verification"
+            elif action in ("PURGE_DOMAIN_KDC_CACHE", "LOCK_COMPROMISED_SPN_ACCOUNTS"):
+                detail = f"Flushed Kerberos Ticket Granting Service ticket cache and locked compromised service accounts"
+            elif action in ("DEACTIVATE_COMPROMISED_ACCESS_KEY", "ATTACH_QUARANTINE_DENY_POLICY", "DISABLE_GCP_SERVICE_ACCOUNT"):
+                detail = f"Deactivated cloud access keys and attached explicit DenyAll quarantine IAM policy"
+            elif action in ("ENFORCE_S3_BLOCK_PUBLIC_ACCESS", "REVOKE_PUBLIC_ACL_POLICIES", "AUDIT_BUCKET_ACCESS_LOGS", "LOCK_S3_TFSTATE_ENCRYPTION_KMS"):
+                detail = f"Enforced S3 Public Access Block, purged wildcard ACLs, and locked KMS bucket key"
+            elif action in ("TERMINATE_ACTIVE_STS_SESSIONS", "DELETE_MALICIOUS_CLUSTER_ROLE_BINDING", "APPLY_RESTRICTED_POD_SECURITY_POLICY"):
+                detail = f"Revoked STS role sessions and purged unauthorized Kubernetes cluster-admin bindings"
+            elif action in ("BLOCK_MINING_POOL_IPS", "ENFORCE_INGRESS_RATE_LIMIT", "ENFORCE_MUTUAL_TLS_STRICT"):
+                detail = f"Throttled malicious API ingress traffic and enforced strict mutual TLS service-mesh policies"
+            elif action in ("SUSPEND_USER_ACCOUNT", "DELETE_UPLOADED_PAYLOAD", "DISABLE_USB_STORAGE_PORTS", "DELETE_ROGUE_ADMIN_USER"):
+                detail = f"Enacted endpoint access lockdown: removed unauthorized accounts/payloads on {target_str}"
+            elif action in ("KILL_RUNNING_DB_QUERY", "DELETE_MALICIOUS_INBOX_RULES", "BLOCK_EDGE_PROXY_URL", "QUARANTINE_EMAIL_MESSAGE"):
+                detail = f"Killed active malicious query and purged phishing email artifacts across mail gateways"
+            elif action in ("DELETE_MALICIOUS_SCHEDULED_TASK", "UNLOAD_SUSPICIOUS_KERNEL_MODULE"):
+                detail = f"Removed persistence backdoor hooks and unloaded rogue kernel modules on {target_str}"
+            elif action in ("CANCEL_RUNNING_CI_PIPELINE", "BLOCK_PACKAGE_HASH_IN_ARTIFACTORY", "TERMINATE_EPHEMERAL_RUNNER_VM", "QUARANTINE_REGISTRY_IMAGE_TAG"):
+                detail = f"Halted untrusted CI/CD build execution, revoked runner tokens, and quarantined artifact package"
+            elif action in ("DROP_MODBUS_TCP_PACKETS", "ISOLATE_PLC_NETWORK_SEGMENT", "ENFORCE_AIR_GAP_FIREWALL_RULE", "DISABLE_TELNET_PORTS_GLOBAL"):
+                detail = f"ICS/SCADA air-gap containment: dropped unauthorized Modbus/S7 commands and isolated PLC gateway {target_str}"
+            elif action in ("TERMINATE_LLM_SESSION", "FLAG_PROMPT_FORENSIC_STORE"):
+                detail = f"Terminated adversarial AI session, quarantined prompt injection vectors, and banned API token"
+            elif action in ("DISPATCH_PAGERDUTY_ALERT", "SOC_HIGH_PRIORITY_INCIDENT", "NOTIFY_NETWORK_ADMIN", "BROADCAST_INCIDENT_WAR_ROOM", "DISPATCH_SOC_URGENT_PAGE", "NOTIFY_DEVSECOPS_LEAD", "SOC_TIER2_ESCALATION", "NOTIFY_CISO_EXECUTIVE", "PAGE_CLOUD_ARCHITECT", "PAGE_INCIDENT_COMMANDER", "NOTIFY_SECURITY_OPS", "NOTIFY_COMPLIANCE_OFFICER", "WRITE_FORENSIC_AUDIT_LOG"):
+                detail = f"High-priority SOC notification and immutable audit entry dispatched ({action})"
             else:
                 detail = f"Action {action} dispatched successfully"
 
