@@ -52,8 +52,14 @@ services:
     restart: unless-stopped
     environment:
       discovery.type: single-node
+      # Disable the security plugin entirely (dev/demo mode)
+      # DISABLE_SECURITY_PLUGIN sets plugins.security.disabled internally;
+      # do NOT also set plugins.security.disabled – it causes a duplicate-setting crash.
       DISABLE_SECURITY_PLUGIN: "true"
-      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      # Required since OpenSearch 2.12.0 – prevents crash-loop even when security is disabled
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-Apex@Sentinel1!}"
+      OPENSEARCH_JAVA_OPTS: "-Xms384m -Xmx384m"
     ports:
       - "9200:9200"
     volumes:

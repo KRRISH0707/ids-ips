@@ -257,6 +257,11 @@ export default function AlertsPage() {
           </div>
           <p className="page-subtitle" style={{ margin: '4px 0 0' }}>
             Real-time correlated telemetry stream from DPI heuristics and autonomous IPS kernel enforcement
+            {dateSpanText && (
+              <span style={{ marginLeft: 10, fontSize: '0.72rem', color: 'var(--accent-cyan)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
+                · {dateSpanText}
+              </span>
+            )}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>

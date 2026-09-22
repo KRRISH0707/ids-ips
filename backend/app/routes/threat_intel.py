@@ -28,10 +28,11 @@ class IOCLookupRequest(BaseModel):
 def list_threat_intel(
     ioc_type: Optional[str] = None,
     q: Optional[str] = None,
+    days: Optional[int] = Query(None, ge=1, le=365),
     limit: int = Query(500, ge=1, le=2000),
     current_user: dict = Depends(get_current_user)
 ):
-    """List Threat Intelligence Indicators of Compromise (IOCs)."""
+    """List Threat Intelligence Indicators of Compromise (IOCs) with optional time-window filtering."""
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
             # Self-healing check: if threat_intel has fewer than 200 items, auto-seed immediately!
@@ -54,6 +55,9 @@ def list_threat_intel(
             if q:
                 query += " AND (value ILIKE %s OR threat_type ILIKE %s OR source ILIKE %s)"
                 params.extend([f"%{q}%", f"%{q}%", f"%{q}%"])
+            if days is not None:
+                query += " AND created_at >= now() - interval '1 day' * %s"
+                params.append(days)
 
             query += " ORDER BY confidence DESC, created_at DESC LIMIT %s"
             params.append(limit)
@@ -61,8 +65,14 @@ def list_threat_intel(
             cur.execute(query, params)
             items = cur.fetchall()
 
-            # Feed summary statistics
-            cur.execute("SELECT ioc_type, COUNT(*) as count FROM threat_intel GROUP BY ioc_type")
+            # Feed summary statistics (scoped to same time window)
+            breakdown_query = "SELECT ioc_type, COUNT(*) as count FROM threat_intel WHERE 1=1"
+            breakdown_params = []
+            if days is not None:
+                breakdown_query += " AND created_at >= now() - interval '1 day' * %s"
+                breakdown_params.append(days)
+            breakdown_query += " GROUP BY ioc_type"
+            cur.execute(breakdown_query, breakdown_params)
             breakdown = {row["ioc_type"]: row["count"] for row in cur.fetchall()}
 
             return {

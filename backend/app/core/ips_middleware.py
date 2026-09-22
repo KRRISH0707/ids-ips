@@ -37,13 +37,32 @@ _cache_last_synced: float = 0.0
 CACHE_TTL = 2.0  # sync from DB every 2 seconds
 
 # Rate limit threshold: max requests within window
-BURST_WINDOW_SECONDS = 5.0
+# Raised from 25→80 to accommodate the dashboard's 7 parallel API calls + WebSocket
+# polling every 8s without triggering a self-block on legitimate operator traffic.
+BURST_WINDOW_SECONDS = 10.0
+BURST_MAX_REQUESTS = 80
 
-BURST_MAX_REQUESTS = 25
+# Cached management allowlist to avoid re-parsing env var on every request
+_allowlist_cache: tuple | None = None
+_allowlist_cache_ts: float = 0.0
+ALLOWLIST_CACHE_TTL = 30.0  # re-read env every 30 seconds
 
 
-def _management_allowlist():
-    """Return explicitly configured operator networks which bypass IPS checks."""
+def _management_allowlist() -> tuple:
+    """Return explicitly configured operator networks which bypass IPS checks.
+
+    Cached for ALLOWLIST_CACHE_TTL seconds to avoid re-parsing the env var on
+    every single request. Re-reads automatically when the TTL expires so that a
+    running instance picks up `.env` changes without a full restart.
+
+    This is intentionally opt-in: it is for an administrator's fixed management
+    address only, not a broad private-network exception.
+    """
+    global _allowlist_cache, _allowlist_cache_ts
+    now = time.time()
+    if _allowlist_cache is not None and now - _allowlist_cache_ts < ALLOWLIST_CACHE_TTL:
+        return _allowlist_cache
+
     networks = []
     for value in os.getenv("IPS_MANAGEMENT_ALLOWLIST", "").split(","):
         value = value.strip()
@@ -53,10 +72,14 @@ def _management_allowlist():
             networks.append(ipaddress.ip_network(value, strict=False))
         except ValueError:
             logger.warning("Ignoring invalid IPS_MANAGEMENT_ALLOWLIST entry: %r", value)
-    return tuple(networks)
+
+    _allowlist_cache = tuple(networks)
+    _allowlist_cache_ts = now
+    return _allowlist_cache
 
 
 def _is_management_allowlisted(ip_str: str) -> bool:
+    """Whether an explicit operator allowlist permits this source address."""
     try:
         ip = ipaddress.ip_address(ip_str)
     except ValueError:
@@ -227,6 +250,15 @@ def _execute_autonomous_block(
     reason: str,
 ) -> None:
     """Record alert, quarantine IP, and publish live event."""
+    # Safety net: never block an explicitly allowlisted management address.
+    # This guards against edge-cases where the middleware dispatch path is
+    # bypassed but this function is still called (e.g., internal tooling).
+    if _is_whitelisted(src_ip) or _is_management_allowlisted(src_ip):
+        logger.warning(
+            "[IPS SAFETY NET] Refusing to block allowlisted management IP %s (sig: %s)",
+            src_ip, signature,
+        )
+        return
     global _blocked_ips_cache
     _blocked_ips_cache.add(src_ip)
 
@@ -316,7 +348,12 @@ class IPSGatewayMiddleware(BaseHTTPMiddleware):
         forwarded = request.headers.get("x-forwarded-for")
         client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "127.0.0.1")
 
+<<<<<<< Updated upstream
         # Skip local whitelisted addresses from blocking
+=======
+        # Local infrastructure and explicitly configured operator addresses
+        # must remain reachable to recover from a false-positive quarantine.
+>>>>>>> Stashed changes
         if _is_whitelisted(client_ip) or _is_management_allowlisted(client_ip):
             return await call_next(request)
 
