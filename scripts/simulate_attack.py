@@ -108,19 +108,30 @@ ATTACK_SCENARIOS = [
     }
 ]
 
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "krrish183224@gmail.com")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Apex@Sentinel2024!")
+
 def login():
-    data = urllib.parse.urlencode({
-        "username": "krrish183224@gmail.com",
-        "password": "183@Krrish"
-    }).encode()
-    req = urllib.request.Request(
-        f"{API_BASE}/api/auth/login",
-        data=data,
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
-    )
-    with urllib.request.urlopen(req) as res:
-        token = json.loads(res.read().decode())["access_token"]
-        return token
+    passwords_to_try = [ADMIN_PASSWORD, "Apex@Sentinel2024!", "183@Krrish"]
+    last_err = None
+    for pw in passwords_to_try:
+        try:
+            data = urllib.parse.urlencode({
+                "username": ADMIN_EMAIL,
+                "password": pw
+            }).encode()
+            req = urllib.request.Request(
+                f"{API_BASE}/api/auth/login",
+                data=data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            with urllib.request.urlopen(req) as res:
+                token = json.loads(res.read().decode())["access_token"]
+                return token
+        except Exception as e:
+            last_err = e
+            continue
+    raise Exception(f"Authentication failed: {last_err}")
 
 def send_attack(token, attack):
     print(f"\n>> Launching: {attack['name']}")
