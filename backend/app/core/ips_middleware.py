@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
+import os
 import re
 import time
 import urllib.parse
@@ -37,7 +38,30 @@ CACHE_TTL = 2.0  # sync from DB every 2 seconds
 
 # Rate limit threshold: max requests within window
 BURST_WINDOW_SECONDS = 5.0
+
 BURST_MAX_REQUESTS = 25
+
+
+def _management_allowlist():
+    """Return explicitly configured operator networks which bypass IPS checks."""
+    networks = []
+    for value in os.getenv("IPS_MANAGEMENT_ALLOWLIST", "").split(","):
+        value = value.strip()
+        if not value:
+            continue
+        try:
+            networks.append(ipaddress.ip_network(value, strict=False))
+        except ValueError:
+            logger.warning("Ignoring invalid IPS_MANAGEMENT_ALLOWLIST entry: %r", value)
+    return tuple(networks)
+
+
+def _is_management_allowlisted(ip_str: str) -> bool:
+    try:
+        ip = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return False
+    return any(ip in network for network in _management_allowlist())
 
 # Malicious signatures for deep query, header & payload inspection across all attack categories
 ATTACK_SIGNATURES = [
@@ -293,7 +317,7 @@ class IPSGatewayMiddleware(BaseHTTPMiddleware):
         client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "127.0.0.1")
 
         # Skip local whitelisted addresses from blocking
-        if _is_whitelisted(client_ip):
+        if _is_whitelisted(client_ip) or _is_management_allowlisted(client_ip):
             return await call_next(request)
 
         # ── 1. Active Firewall Quarantine Check ───────────────────────

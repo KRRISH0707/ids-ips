@@ -78,6 +78,7 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-https://*}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-krrish183224@gmail.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-183@Krrish}
+      - IPS_MANAGEMENT_ALLOWLIST=${IPS_MANAGEMENT_ALLOWLIST:-}
     depends_on:
       postgres:
         condition: service_healthy
