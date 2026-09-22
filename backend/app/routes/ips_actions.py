@@ -52,7 +52,7 @@ def list_blocked_ips(
     is_active: Optional[bool] = Query(None),
     days: Optional[int] = Query(None, ge=1, le=365),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = Query(100, ge=1, le=1000),
     current_user: dict = Depends(require_role("ADMIN", "ANALYST")),
 ):
     conditions, params = [], []

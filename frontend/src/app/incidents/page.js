@@ -109,11 +109,11 @@ export default function IncidentsPage() {
   const fetchIncidents = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await api.getIncidents({ days: days || undefined, limit: 1000 });
+      const res = await api.getIncidents({ days: days || undefined, limit: 500 });
       setIncidents(res?.items || res?.data || (Array.isArray(res) ? res : []));
       setError(null);
     } catch (err) {
-      setError(err.message || 'Failed to fetch incidents');
+      setError(err?.message || 'Failed to fetch incidents');
     } finally {
       setLoading(false);
     }

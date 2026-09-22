@@ -39,7 +39,7 @@ def list_incidents(
     severity: Optional[str] = Query(None),
     days: Optional[int] = Query(None, ge=1, le=365),
     skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=500),
+    limit: int = Query(50, ge=1, le=1000),
     current_user: dict = Depends(get_current_user),
 ):
     conditions, params = [], []

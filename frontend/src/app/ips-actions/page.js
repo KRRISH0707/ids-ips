@@ -120,7 +120,7 @@ export default function IPSActionsPage() {
         setLoading(true);
       }
       const [res, tl] = await Promise.allSettled([
-        api.getBlockedIPs({ days: days || undefined, limit: 1000 }),
+        api.getBlockedIPs({ days: days || undefined, limit: 500 }),
         api.getIPSTimeline({ days: days || 45 }),
       ]);
       if (res.status === 'fulfilled') {

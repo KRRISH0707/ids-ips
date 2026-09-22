@@ -151,7 +151,15 @@ async function request(path, options = {}) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || 'API error');
+    let msg = 'API error';
+    if (typeof err.detail === 'string') {
+      msg = err.detail;
+    } else if (Array.isArray(err.detail)) {
+      msg = err.detail.map(d => (d.loc ? `${d.loc.join('.')}: ` : '') + (d.msg || JSON.stringify(d))).join(', ');
+    } else if (err.detail) {
+      msg = JSON.stringify(err.detail);
+    }
+    throw new Error(msg);
   }
 
   if (res.status === 204) return null;
