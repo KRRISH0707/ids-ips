@@ -28,8 +28,13 @@ export function useLiveFeed(maxMessages = 50) {
       return;
     }
 
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    const wsBase = process.env.NEXT_PUBLIC_WS_URL || `ws://${host}:8000`;
+    let wsBase = process.env.NEXT_PUBLIC_WS_URL;
+    if (!wsBase && typeof window !== 'undefined') {
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsBase = `${proto}//${window.location.host}`;
+    } else if (!wsBase) {
+      wsBase = 'ws://localhost:8000';
+    }
     const url = `${wsBase}/api/ws/live?token=${encodeURIComponent(token)}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
