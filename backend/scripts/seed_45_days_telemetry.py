@@ -18,10 +18,27 @@ import ipaddress
 import psycopg
 from psycopg.types.json import Jsonb
 
-DATABASE_URL = os.getenv(
+def _sanitize_db_url(raw_url: str) -> str:
+    url = raw_url.replace("postgresql+psycopg://", "postgresql://")
+    try:
+        from urllib.parse import quote_plus
+        if "://" in url:
+            prefix, rest = url.split("://", 1)
+            if "@" in rest:
+                user_info, host_part = rest.rsplit("@", 1)
+                if ":" in user_info:
+                    username, password = user_info.split(":", 1)
+                    if "%" not in password:
+                        password = quote_plus(password)
+                    return f"{prefix}://{username}:{password}@{host_part}"
+    except Exception:
+        pass
+    return url
+
+DATABASE_URL = _sanitize_db_url(os.getenv(
     "DATABASE_URL",
     "postgresql://idsips:change-me-in-development@localhost:5432/idsips"
-).replace("postgresql+psycopg://", "postgresql://")
+))
 
 # Realistic Attack Catalog
 ATTACK_SIGNATURES = [
@@ -198,14 +215,25 @@ INCIDENT_TITLES = [
     ("Automated SQL Injection Injection Probe on API Cluster", "MEDIUM", "T1190")
 ]
 
-def seed_45_days():
-    print(f"Connecting to database: {DATABASE_URL}...")
-    try:
-        conn = psycopg.connect(DATABASE_URL)
-        conn.autocommit = False
-    except Exception as e:
-        print(f"Failed to connect to database: {e}")
-        sys.exit(1)
+def seed_45_days(conn=None):
+    should_close = False
+    if conn is None:
+        try:
+            from app.core.database import get_sync_connection
+            conn = get_sync_connection()
+            should_close = True
+        except Exception:
+            pass
+
+    if conn is None:
+        print(f"Connecting to database: {DATABASE_URL}...")
+        try:
+            conn = psycopg.connect(DATABASE_URL)
+            conn.autocommit = False
+            should_close = True
+        except Exception as e:
+            print(f"Failed to connect to database: {e}")
+            raise e
 
     with conn.cursor() as cur:
         # Check current date / anchor date (using Sept 21, 2026 as reference base)
@@ -472,6 +500,12 @@ def seed_45_days():
 
         conn.commit()
         print("\n✅ Successfully seeded 45-day historical telemetry database!")
+
+    if should_close:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     seed_45_days()

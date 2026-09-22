@@ -11,11 +11,45 @@ import sys
 import ipaddress
 import psycopg
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://idsips:change-me-in-development@localhost:5432/idsips")
+def _sanitize_db_url(raw_url: str) -> str:
+    url = raw_url.replace("postgresql+psycopg://", "postgresql://")
+    try:
+        from urllib.parse import quote_plus
+        if "://" in url:
+            prefix, rest = url.split("://", 1)
+            if "@" in rest:
+                user_info, host_part = rest.rsplit("@", 1)
+                if ":" in user_info:
+                    username, password = user_info.split(":", 1)
+                    if "%" not in password:
+                        password = quote_plus(password)
+                    return f"{prefix}://{username}:{password}@{host_part}"
+    except Exception:
+        pass
+    return url
 
-def enforce_autoblock():
-    print(f"Connecting to database: {DATABASE_URL}...")
-    with psycopg.connect(DATABASE_URL) as conn:
+DATABASE_URL = _sanitize_db_url(os.getenv("DATABASE_URL", "postgresql://idsips:change-me-in-development@localhost:5432/idsips"))
+
+def enforce_autoblock(conn=None):
+    should_close = False
+    if conn is None:
+        try:
+            from app.core.database import get_sync_connection
+            conn = get_sync_connection()
+            should_close = True
+        except Exception:
+            pass
+
+    if conn is None:
+        print(f"Connecting to database: {DATABASE_URL}...")
+        try:
+            conn = psycopg.connect(DATABASE_URL)
+            should_close = True
+        except Exception as e:
+            print(f"Failed to connect to database: {e}")
+            raise e
+
+    try:
         with conn.cursor() as cur:
             # 1. Fetch all OPEN critical alerts
             cur.execute(
@@ -76,6 +110,12 @@ def enforce_autoblock():
             print(f"Remaining OPEN critical alerts: {remaining}")
             print(f"Critical alerts status breakdown: {breakdown}")
             print(f"Total attacker IPs quarantined: {blocked_ips_count}")
+    finally:
+        if should_close:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 if __name__ == "__main__":
     enforce_autoblock()

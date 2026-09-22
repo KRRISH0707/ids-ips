@@ -138,7 +138,7 @@ def run_full_seed():
                 total_alerts = cur.fetchone()["c"] or 0
                 if total_alerts < 200:
                     from scripts.seed_45_days_telemetry import seed_45_days
-                    seed_45_days()
+                    seed_45_days(conn)
                     logger.info("  ✓ 45-day telemetry history fully populated.")
                 else:
                     logger.info(f"  ✓ {total_alerts} telemetry alerts already active.")
@@ -149,7 +149,7 @@ def run_full_seed():
             logger.info("[7/7] Enforcing Autonomous Kernel Quarantine & Containment...")
             try:
                 from scripts.enforce_critical_autoblock import enforce_autoblock
-                enforce_autoblock()
+                enforce_autoblock(conn)
                 logger.info("  ✓ Autonomous IPS auto-blocking active.")
             except Exception as e:
                 logger.warning(f"  Autoblock note: {e}")

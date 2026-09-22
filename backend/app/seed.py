@@ -17,7 +17,7 @@ def seed():
         from .seed_full_suite import run_full_seed
         run_full_seed()
         return
-    except Exception as full_err:
+    except BaseException as full_err:
         logger.warning(f"Full suite notice ({full_err}), falling back to baseline...")
 
     try:
