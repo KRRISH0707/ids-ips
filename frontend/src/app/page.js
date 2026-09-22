@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { getToken, getUser } from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import BrandLogo from '@/components/BrandLogo';
 import AIPredictorCard from '@/components/AIPredictorCard';
@@ -85,6 +87,19 @@ function CustomBarTooltip({ active, payload, label }) {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    const token = getToken();
+    const user = getUser();
+    if (!token || !user) {
+      router.replace('/login');
+    } else {
+      setAuthChecked(true);
+    }
+  }, [router]);
+
   const { days, timeRange, dateSpanText } = useTimeRange();
   const [alertStats, setAlertStats] = useState(null);
   const [incidentStats, setIncidentStats] = useState(null);
@@ -325,6 +340,20 @@ export default function DashboardPage() {
       return matchSev && matchText;
     });
   }, [recentAlerts, alertFilterSeverity, alertSearchTerm]);
+
+  if (!authChecked) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-void)'
+      }}>
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <PageLayout sidebar={<Sidebar />}>

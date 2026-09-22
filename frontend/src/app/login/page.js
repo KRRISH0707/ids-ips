@@ -29,7 +29,9 @@ export default function LoginPage() {
       const data = await api.login(email, password);
       setToken(data.access_token);
       setUser(data.user);
-      router.push('/');
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const dest = (params && params.get('redirect')) || '/';
+      router.push(dest);
     } catch (err) {
       setError(err.message);
     } finally {

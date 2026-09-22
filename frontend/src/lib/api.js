@@ -19,6 +19,10 @@ export function setToken(token) {
   if (typeof window !== 'undefined') {
     try { localStorage.setItem('ids_token', token); } catch {}
     try { sessionStorage.setItem('ids_token', token); } catch {}
+    try {
+      const isHttps = window.location.protocol === 'https:';
+      document.cookie = `ids_token=${token}; path=/; max-age=604800; SameSite=Lax${isHttps ? '; Secure' : ''}`;
+    } catch {}
   }
 }
 
@@ -28,6 +32,9 @@ export function clearToken() {
     try { localStorage.removeItem('ids_user'); } catch {}
     try { sessionStorage.removeItem('ids_token'); } catch {}
     try { sessionStorage.removeItem('ids_user'); } catch {}
+    try {
+      document.cookie = 'ids_token=; path=/; max-age=0; SameSite=Lax';
+    } catch {}
   }
 }
 
