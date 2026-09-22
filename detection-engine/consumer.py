@@ -17,10 +17,27 @@ KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 ALERT_TOPIC = os.getenv("KAFKA_ALERT_TOPIC", "ids.alerts")
 CONSUMER_GROUP = os.getenv("KAFKA_CONSUMER_GROUP", "detection-engine")
 
-DATABASE_URL = os.getenv(
+def _sanitize_db_url(raw_url: str) -> str:
+    url = raw_url.replace("postgresql+psycopg://", "postgresql://")
+    try:
+        from urllib.parse import quote_plus
+        if "://" in url:
+            prefix, rest = url.split("://", 1)
+            if "@" in rest:
+                user_info, host_part = rest.rsplit("@", 1)
+                if ":" in user_info:
+                    username, password = user_info.split(":", 1)
+                    if "%" not in password:
+                        password = quote_plus(password)
+                    return f"{prefix}://{username}:{password}@{host_part}"
+    except Exception:
+        pass
+    return url
+
+DATABASE_URL = _sanitize_db_url(os.getenv(
     "DATABASE_URL",
     "postgresql://idsips:change-me-in-development@postgres:5432/idsips",
-).replace("postgresql+psycopg://", "postgresql://")
+))
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 OPENSEARCH_URL = os.getenv("OPENSEARCH_URL", "http://opensearch:9200")

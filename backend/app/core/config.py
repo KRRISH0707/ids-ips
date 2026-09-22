@@ -41,8 +41,22 @@ class Settings(BaseSettings):
 
     @property
     def db_url_psycopg(self) -> str:
-        """Normalise the URL for psycopg (no +psycopg dialect prefix)."""
-        return self.database_url.replace("postgresql+psycopg://", "postgresql://")
+        """Normalise the URL for psycopg (no +psycopg dialect prefix) and safely encode special characters in password."""
+        url = self.database_url.replace("postgresql+psycopg://", "postgresql://")
+        try:
+            from urllib.parse import quote_plus
+            if "://" in url:
+                prefix, rest = url.split("://", 1)
+                if "@" in rest:
+                    user_info, host_part = rest.rsplit("@", 1)
+                    if ":" in user_info:
+                        username, password = user_info.split(":", 1)
+                        if "%" not in password:
+                            password = quote_plus(password)
+                        return f"{prefix}://{username}:{password}@{host_part}"
+        except Exception:
+            pass
+        return url
 
     @property
     def cors_origins_list(self) -> list[str]:
