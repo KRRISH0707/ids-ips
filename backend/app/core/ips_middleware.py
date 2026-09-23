@@ -259,6 +259,7 @@ ATTACK_SIGNATURES = [
     (re.compile(r"(\bc99shell\b|\br57shell\b|\bb374k\b|\bwso_version\b|\balfa_team\b|eval\s*\(\s*\$_POST|eval\s*\(\s*\$_GET)", re.IGNORECASE), "Web/API: Web Shell Backdoor Controller Execution", "web_api", 99),
 
     # ── 12. MALWARE, TROJANS & RANSOMWARE ───────────────────────────────────
+    (re.compile(r"(EICAR-STANDARD-ANTIVIRUS-TEST-FILE|X5O!P%@AP\[4\\PZX54\(P\^\)7CC\)7\}\$EICAR)", re.IGNORECASE), "Malware: EICAR Standard Antivirus & Malware Test Vector", "malware", 100),
     (re.compile(r"(cobalt.*beacon|meterpreter|reverse_tcp|trojan\.win32|c2_heartbeat)", re.IGNORECASE), "Malware: Trojan / C2 Beacon Ingress Attempt", "malware", 98),
     (re.compile(r"(vssadmin\s+delete\s+shadows|wbadmin\s+delete|bcdedit.*recoveryenabled\s+no|lockbit|wannacry|cryptolocker)", re.IGNORECASE), "Malware: Ransomware Command & Shadow Copy Deletion", "malware", 99),
     (re.compile(r"(eternalblue|ms17-010|smbexec\.py|worm_propagation|autorun\.inf)", re.IGNORECASE), "Malware: Network Worm Propagation Attempt", "malware", 96),
