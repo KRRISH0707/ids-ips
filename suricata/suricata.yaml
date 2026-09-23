@@ -9,11 +9,25 @@ vars:
     EXTERNAL_NET: "!$HOME_NET"
     HTTP_SERVERS: "$HOME_NET"
     SQL_SERVERS: "$HOME_NET"
+    SMTP_SERVERS: "$HOME_NET"
+    DNS_SERVERS: "$HOME_NET"
+    TELNET_SERVERS: "$HOME_NET"
+    DNP3_SERVER: "$HOME_NET"
+    DNP3_CLIENT: "$HOME_NET"
+    MODBUS_CLIENT: "$HOME_NET"
+    MODBUS_SERVER: "$HOME_NET"
+    ENIP_CLIENT: "$HOME_NET"
+    ENIP_SERVER: "$HOME_NET"
+    AIM_SERVERS: "$EXTERNAL_NET"
+    DC_SERVERS: "$HOME_NET"
 
   port-groups:
     HTTP_PORTS: "80,8080,3000,8000"
     SHELLCODE_PORTS: "!80"
     SSH_PORTS: "22"
+    ORACLE_PORTS: "1521"
+    MODBUS_PORTS: "502"
+    DNP3_PORTS: "20000"
 
 default-log-dir: /var/log/suricata
 
@@ -69,7 +83,7 @@ detect:
 # Rule Files
 default-rule-path: /var/lib/suricata/rules
 rule-files:
-  - local.rules
+  - "*.rules"
 
 
 # Application Layer Parsers

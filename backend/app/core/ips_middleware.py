@@ -203,15 +203,12 @@ ATTACK_SIGNATURES = [
 
 
 def _is_whitelisted(ip_str: str) -> bool:
-    """Never block loopback or local management/Docker bridge host."""
+    """Never block loopback or unspecified addresses."""
     try:
         if ip_str in ("127.0.0.1", "::1", "localhost"):
             return True
         ip = ipaddress.ip_address(ip_str)
         if ip.is_loopback or ip.is_unspecified:
-            return True
-        # Whitelist Docker internal bridge networks (172.16.0.0/12) used for container management
-        if ip in ipaddress.ip_network("172.16.0.0/12"):
             return True
         return False
     except ValueError:
@@ -340,8 +337,8 @@ def _execute_autonomous_block(
 
 class IPSGatewayMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Preflight and API docs are allowed without rate limiting
-        if request.method == "OPTIONS":
+        # Preflight, health, metrics, and API documentation are allowed without rate limiting
+        if request.method == "OPTIONS" or request.url.path in ("/health", "/metrics", "/docs", "/openapi.json"):
             return await call_next(request)
 
         # Extract client IP

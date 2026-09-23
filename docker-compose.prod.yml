@@ -116,11 +116,15 @@ services:
     restart: always
     environment:
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redissecurepass}@redis:6379/0
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-idsips}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-idsips}
       - IPS_SIMULATION_MODE=${IPS_SIMULATION_MODE:-false}
+      - IPS_MANAGEMENT_ALLOWLIST=${IPS_MANAGEMENT_ALLOWLIST:-}
     cap_add:
       - NET_ADMIN
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     networks:
       - idsips-net
@@ -230,6 +234,39 @@ services:
     networks:
       - idsips-net
 
+  # ── Network Sensors & Ingress Traffic Sniffing (Suricata) ───────────────────
+  suricata:
+    image: jasonish/suricata:7.0.6
+    container_name: idsips-suricata
+    restart: always
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+      - NET_RAW
+    command: -i ${SURICATA_INTERFACE:-eth0} -v
+    volumes:
+      - suricata-logs:/var/log/suricata
+      - ./suricata/suricata.yaml:/etc/suricata/suricata.yaml
+      - ./suricata/rules:/var/lib/suricata/rules
+    depends_on:
+      - kafka
+    networks:
+      - idsips-net
+
+  # ── High-Throughput Log Aggregator (Vector) ──────────────────────────────────
+  vector:
+    image: timberio/vector:0.38.0-alpine
+    container_name: idsips-vector
+    restart: always
+    volumes:
+      - ./vector/vector.yaml:/etc/vector/vector.yaml:ro
+      - suricata-logs:/var/log/suricata:ro
+    depends_on:
+      - kafka
+      - suricata
+    networks:
+      - idsips-net
+
 networks:
   idsips-net:
     driver: bridge
@@ -242,3 +279,4 @@ volumes:
   grafana-data:
   certbot-etc:
   certbot-var:
+  suricata-logs:

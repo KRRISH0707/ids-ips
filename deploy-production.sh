@@ -30,9 +30,12 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# Detect Server Public IP
+# Detect Server Public IP & Primary Interface
 PUBLIC_IP=$(curl -s https://api.ipify.org || curl -s https://ifconfig.me || echo "SERVER_IP")
+PRIMARY_IFACE=$(ip route show default 2>/dev/null | awk '{print $5}' | head -n1 || echo "eth0")
+PRIMARY_IFACE=${PRIMARY_IFACE:-eth0}
 echo -e "${CYAN}Detected Public Server IP:${NC} ${BOLD}${PUBLIC_IP}${NC}"
+echo -e "${CYAN}Detected Primary Network Interface:${NC} ${BOLD}${PRIMARY_IFACE}${NC}"
 
 # Gather Configuration
 DOMAIN="${1:-}"
@@ -147,6 +150,7 @@ CORS_ORIGINS=https://${DOMAIN}
 IPS_MANAGEMENT_ALLOWLIST=${IPS_MANAGEMENT_ALLOWLIST:-}
 CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
 OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-Apex@Sentinel1!}
+SURICATA_INTERFACE=${PRIMARY_IFACE}
 EOF
 
 chmod 600 .env.production

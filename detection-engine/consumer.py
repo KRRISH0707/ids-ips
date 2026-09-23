@@ -367,9 +367,10 @@ def save_detection_result(alert: dict[str, Any], result: dict[str, Any]) -> dict
                     (incident_id, alert_id),
                 )
 
-            # If Critical severity, trigger IPS auto-block record and update status
+            # If Critical severity or high anomaly score, trigger autonomous IPS quarantine
             src_ip = alert.get("src_ip")
-            if severity == "CRITICAL" and src_ip:
+            should_block = (severity == "CRITICAL" or anomaly_score >= 0.85) and decision == "ESCALATE"
+            if should_block and src_ip:
                 clean_target = clean_ip(src_ip)
                 if clean_target and clean_target not in ("127.0.0.1", "0.0.0.0", "localhost"):
                     cur.execute(
@@ -381,14 +382,55 @@ def save_detection_result(alert: dict[str, Any], result: dict[str, Any]) -> dict
                         (alert_id,),
                     )
                     alert["status"] = "AUTO_BLOCKED"
+                    block_reason = f"Autonomous Detection Engine Quarantine: {signature} (Anomaly: {anomaly_score:.2f})"
+
                     cur.execute(
                         """
                         INSERT INTO ips_actions (target, target_type, action, status, reason)
                         VALUES (%s, 'IP', 'DROP', 'ACTIVE', %s)
                         ON CONFLICT DO NOTHING
                         """,
-                        (clean_target, f"Autonomous Kernel IPS Quarantine triggered by {signature}"),
+                        (clean_target, block_reason),
                     )
+
+                    # Persist into blocked_ips table so API gateway and dashboard sync immediately
+                    cur.execute(
+                        """
+                        INSERT INTO blocked_ips (ip_address, reason, blocked_by, alert_id)
+                        VALUES (%s::inet, %s, 'AUTONOMOUS_DETECTION_ENGINE', %s)
+                        ON CONFLICT (ip_address) DO UPDATE
+                            SET is_active = TRUE, blocked_at = NOW(), reason = EXCLUDED.reason
+                        """,
+                        (clean_target, block_reason, alert_id),
+                    )
+
+                    # Publish live command to Redis channel ids.ips.actions so IPS Controller drops packets immediately
+                    r = get_redis_client()
+                    if r:
+                        try:
+                            ips_event = {
+                                "action": "BLOCK",
+                                "ip_address": clean_target,
+                                "reason": block_reason,
+                                "alert_id": str(alert_id),
+                                "timestamp": datetime.now(timezone.utc).isoformat(),
+                            }
+                            r.publish("ids.ips.actions", json.dumps(ips_event))
+                            print(f"⚡ [AUTONOMOUS IPS] Dispatched DROP command for {clean_target} to Redis ids.ips.actions", flush=True)
+
+                            # If host isolation is warranted (e.g. ransomware, interactive reverse shell)
+                            sig_lower = signature.lower()
+                            if any(k in sig_lower for k in ("lockbit", "ransomware", "reverse shell", "c2", "trojan")):
+                                r.publish("ips:host_isolation", json.dumps({
+                                    "action": "ISOLATE",
+                                    "hostname": clean_target,
+                                    "ip_address": clean_target,
+                                    "reason": f"Active containment: {signature}",
+                                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                                }))
+                                print(f"🛡️ [AUTONOMOUS IPS] Dispatched HOST ISOLATION for {clean_target}", flush=True)
+                        except Exception as pub_err:
+                            print(f"Warning: Failed to publish IPS action to Redis ({pub_err})", flush=True)
 
             conn.commit()
 
@@ -488,16 +530,26 @@ def index_alert_in_opensearch(alert: dict[str, Any], result: dict[str, Any]):
 
 
 def create_consumer():
-    print("Connecting to Kafka...", flush=True)
-    consumer = KafkaConsumer(
-        ALERT_TOPIC,
-        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-        group_id=CONSUMER_GROUP,
-        auto_offset_reset="earliest",
-        enable_auto_commit=True,
-        value_deserializer=lambda value: json.loads(value.decode("utf-8")),
-    )
-    return consumer
+    print(f"Connecting to Kafka at {KAFKA_BOOTSTRAP_SERVERS}...", flush=True)
+    max_retries = 30
+    retry_delay = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            consumer = KafkaConsumer(
+                ALERT_TOPIC,
+                bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+                group_id=CONSUMER_GROUP,
+                auto_offset_reset="earliest",
+                enable_auto_commit=True,
+                value_deserializer=lambda value: json.loads(value.decode("utf-8")),
+            )
+            print(f"Connected to Kafka broker on attempt {attempt}.", flush=True)
+            return consumer
+        except Exception as exc:
+            if attempt == max_retries:
+                raise
+            print(f"Kafka not ready ({type(exc).__name__}: {exc}). Retrying {attempt}/{max_retries} in {retry_delay}s...", flush=True)
+            time.sleep(retry_delay)
 
 
 def main():

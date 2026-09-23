@@ -122,13 +122,15 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
       REDIS_URL: "redis://redis:6379/0"
-      IPS_SIMULATION_MODE: "${IPS_SIMULATION_MODE:-true}"
-    # Required for real iptables enforcement on Linux hosts (remove for simulation)
-    # cap_add:
-    #   - NET_ADMIN
-    # network_mode: host
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-idsips}:${POSTGRES_PASSWORD:-change-me-in-development}@postgres:5432/${POSTGRES_DB:-idsips}"
+      IPS_SIMULATION_MODE: "${IPS_SIMULATION_MODE:-false}"
+      IPS_MANAGEMENT_ALLOWLIST: "${IPS_MANAGEMENT_ALLOWLIST:-}"
+    cap_add:
+      - NET_ADMIN
 
   frontend:
     build:
@@ -180,7 +182,7 @@ services:
       - NET_ADMIN
       - SYS_NICE
       - NET_RAW
-    command: -i eth0 -v
+    command: -i ${SURICATA_INTERFACE:-eth0} -v
     volumes:
       - suricata_logs:/var/log/suricata
       - ./suricata/suricata.yaml:/etc/suricata/suricata.yaml
@@ -201,6 +203,10 @@ services:
         condition: service_started
       suricata:
         condition: service_started
+
+networks:
+  default:
+    name: idsips-net
 
 volumes:
   postgres_data:
