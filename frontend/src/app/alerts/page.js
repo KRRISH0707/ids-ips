@@ -304,7 +304,7 @@ export default function AlertsPage() {
 
         <div
           className="metric-card-enterprise"
-          onClick={() => { setSeverity(severity === 'CRITICAL' ? '' : 'CRITICAL'); setSkip(0); }}
+          onClick={() => { setSeverity(severity === 'CRITICAL' ? '' : 'CRITICAL'); setCurrentPage(1); }}
           style={{ cursor: 'pointer' }}
           title="Click to filter by Critical severity"
         >
@@ -317,7 +317,7 @@ export default function AlertsPage() {
 
         <div
           className="metric-card-enterprise"
-          onClick={() => { setAlertStatus(alertStatus === 'AUTO_BLOCKED' ? '' : 'AUTO_BLOCKED'); setSkip(0); }}
+          onClick={() => { setAlertStatus(alertStatus === 'AUTO_BLOCKED' ? '' : 'AUTO_BLOCKED'); setCurrentPage(1); }}
           style={{ cursor: 'pointer' }}
           title="Click to filter by auto-quarantined threats"
         >
@@ -370,7 +370,7 @@ export default function AlertsPage() {
                       outerRadius={74}
                       paddingAngle={4}
                       isAnimationActive={false}
-                      onClick={(entry) => { setSeverity(entry.name); setSkip(0); }}
+                      onClick={(entry) => { setSeverity(entry.name); setCurrentPage(1); }}
                       cursor="pointer"
                     >
                       {severityChartData.map((entry, index) => (
@@ -425,7 +425,7 @@ export default function AlertsPage() {
                     radius={[4, 4, 0, 0]}
                     isAnimationActive={false}
                     cursor="pointer"
-                    onClick={(entry) => { setAlertStatus(entry.rawKey); setSkip(0); }}
+                    onClick={(entry) => { setAlertStatus(entry.rawKey); setCurrentPage(1); }}
                   >
                     {statusChartData.map((entry, index) => (
                       <Cell key={`bar-${index}`} fill={entry.fill} />
@@ -454,7 +454,7 @@ export default function AlertsPage() {
           className="select"
           style={{ width: 150, fontSize: '0.82rem' }}
           value={severity}
-          onChange={e => { setSeverity(e.target.value); setSkip(0); }}
+          onChange={e => { setSeverity(e.target.value); setCurrentPage(1); }}
         >
           {SEVERITIES.map(s => <option key={s} value={s}>{s || 'All Severities'}</option>)}
         </select>
@@ -464,13 +464,13 @@ export default function AlertsPage() {
           className="select"
           style={{ width: 160, fontSize: '0.82rem' }}
           value={alertStatus}
-          onChange={e => { setAlertStatus(e.target.value); setSkip(0); }}
+          onChange={e => { setAlertStatus(e.target.value); setCurrentPage(1); }}
         >
           {STATUSES.map(s => <option key={s} value={s}>{s ? s.replace(/_/g, ' ') : 'All Statuses'}</option>)}
         </select>
 
         {(severity || alertStatus || searchFilter) && (
-          <button className="btn btn-ghost btn-sm" onClick={() => { setSeverity(''); setAlertStatus(''); setSearchFilter(''); setSkip(0); }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => { setSeverity(''); setAlertStatus(''); setSearchFilter(''); setCurrentPage(1); }}>
             Clear Filters
           </button>
         )}
