@@ -10,6 +10,11 @@ Covers malicious IPs, Command & Control domains, and malware file hashes:
 import os
 import sys
 import logging
+
+# Ensure root backend and current package dirs are on sys.path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import psycopg
 from psycopg.types.json import Jsonb
 
@@ -313,9 +318,15 @@ def seed_threat_intel_iocs(conn=None):
                 conn = get_sync_connection()
                 should_close = True
             except Exception:
-                db_url = os.getenv("DATABASE_URL", "postgresql://idsips:change-me-in-development@localhost:5432/idsips")
-                conn = psycopg.connect(db_url, row_factory=psycopg.rows.dict_row)
-                should_close = True
+                try:
+                    from core.database import get_sync_connection
+                    conn = get_sync_connection()
+                    should_close = True
+                except Exception:
+                    db_url = os.getenv("DATABASE_URL", "postgresql://idsips:change-me-in-development@localhost:5432/idsips")
+                    db_url = db_url.replace("postgresql+psycopg://", "postgresql://").replace("postgresql+asyncpg://", "postgresql://")
+                    conn = psycopg.connect(db_url, row_factory=psycopg.rows.dict_row)
+                    should_close = True
 
     try:
         with conn.cursor() as cur:
