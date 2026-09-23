@@ -307,6 +307,9 @@ ATTACK_SIGNATURES = [
     (re.compile(r"(shadow_admin|admin_group_inject|domain_admin_add)", re.IGNORECASE), "Post-Compromise: Shadow Administrator Account Creation", "post_compromise", 96),
     (re.compile(r"(c2_beaconing|malleable_http_ping|dns_c2_channel)", re.IGNORECASE), "Post-Compromise: Command & Control Beaconing Channel", "post_compromise", 94),
     (re.compile(r"(ransom_demand|ransom_note\.txt|extortion_contact)", re.IGNORECASE), "Post-Compromise: Ransomware Extortion Demand Note", "post_compromise", 98),
+
+    # ── 16. BUSINESS LOGIC & PROTOTYPE POLLUTION ────────────────────────────
+    (re.compile(r"(__proto__|constructor[\"']?\s*:\s*\{[\s\S]*?[\"']?prototype|constructor\.prototype|Object\.prototype)", re.IGNORECASE), "Web/API: JavaScript Prototype Pollution Attempt", "web_api", 94),
 ]
 
 
@@ -480,7 +483,30 @@ class IPSGatewayMiddleware(BaseHTTPMiddleware):
                     },
                 )
 
-        # ── 3. Non-Destructive HTTP Body Stream Extraction ─────────────
+        # ── 3. Application Boundary & Content-Type Shield ──────────────
+        content_length = request.headers.get("content-length")
+        if content_length:
+            try:
+                if int(content_length) > 10 * 1024 * 1024:
+                    return JSONResponse(
+                        status_code=413,
+                        content={"status": "REJECTED", "detail": "Payload Too Large: Request body exceeds 10MB limit."},
+                    )
+            except ValueError:
+                pass
+
+        content_type = request.headers.get("content-type", "").lower()
+        if any(danger in content_type for danger in (
+            "application/x-java-serialized-object",
+            "text/xml-external-parsed-entity",
+            "application/x-shockwave-flash",
+        )):
+            return JSONResponse(
+                status_code=415,
+                content={"status": "REJECTED", "detail": f"Unsupported Media Type: Malicious Content-Type [{content_type}] is blocked."},
+            )
+
+        # ── 4. Non-Destructive HTTP Body Stream Extraction ─────────────
         body_str = ""
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
             try:
@@ -494,7 +520,7 @@ class IPSGatewayMiddleware(BaseHTTPMiddleware):
             except Exception as exc:
                 logger.debug("Body extraction notice: %s", exc)
 
-        # ── 4. Statistical Zero-Day & Buffer Overflow Detection ────────
+        # ── 5. Statistical Zero-Day & Buffer Overflow Detection ────────
         if body_str:
             is_anomaly, anomaly_reason = is_statistical_anomaly(body_str)
             if is_anomaly:
@@ -521,7 +547,7 @@ class IPSGatewayMiddleware(BaseHTTPMiddleware):
                     },
                 )
 
-        # ── 5. In-Line Multi-Pass De-Obfuscation & Signature Scanning ──
+        # ── 6. In-Line Multi-Pass De-Obfuscation & Signature Scanning ──
         full_query = urllib.parse.unquote(str(request.url.query))
         header_dump = " ".join(
             f"{k}:{v}" for k, v in request.headers.items()
@@ -558,7 +584,7 @@ class IPSGatewayMiddleware(BaseHTTPMiddleware):
                         },
                     )
 
-        # ── 6. Volumetric Rate Limiting (DDoS Surge Detection) ────────
+        # ── 7. Volumetric Rate Limiting (DDoS Surge Detection) ────────
         # Whitelisted operator addresses skip volumetric rate limiting
         if _is_whitelisted(client_ip) or _is_management_allowlisted(client_ip):
             return await call_next(request)
