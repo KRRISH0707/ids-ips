@@ -199,9 +199,12 @@ def main():
     print("Open http://localhost:3000 to watch all live metrics, Radar,")
     print("Kill Chain, and charts update in real time after every event!\n")
 
+    max_events = int(os.getenv("MAX_EVENTS", "5"))
+    print(f"Executing batch of exactly {max_events} telemetry events...\n")
+
     count = 0
     try:
-        while True:
+        while count < max_events:
             count += 1
             # 70% benign telemetry, 30% realistic attack vector
             is_attack = (random.random() < 0.4) or (count % 3 == 0)
@@ -217,16 +220,19 @@ def main():
                 alert = res.get("alert", {})
                 mit = res.get("autonomous_mitigation", {})
                 blocked = " [IPS QUARANTINED]" if mit.get("prevented") else ""
-                print(f"#{count} {icon} {event['severity']} | {event['signature'][:42]}... | {event['src_ip']} -> {event['dst_ip']}{blocked}")
+                print(f"#{count}/{max_events} {icon} {event['severity']} | {event['signature'][:42]}... | {event['src_ip']} -> {event['dst_ip']}{blocked}")
             except urllib.error.HTTPError as he:
                 if he.code == 401:
                     token = login()
-                print(f"#{count} [WARN] HTTP {he.code}: {he}")
+                print(f"#{count}/{max_events} [WARN] HTTP {he.code}: {he}")
             except Exception as ex:
-                print(f"#{count} [ERR] Ingestion error: {ex}")
+                print(f"#{count}/{max_events} [ERR] Ingestion error: {ex}")
 
-            # Sleep between 2 to 4 seconds
-            time.sleep(random.uniform(2.0, 4.0))
+            if count < max_events:
+                # Sleep between 1.5 to 2.5 seconds
+                time.sleep(random.uniform(1.5, 2.5))
+
+        print(f"\n[COMPLETE] Successfully executed exactly {max_events} events. Simulation stopped.")
 
     except KeyboardInterrupt:
         print("\n[STOP] Live traffic probe stopped by user.")

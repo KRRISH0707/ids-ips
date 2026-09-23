@@ -126,6 +126,7 @@ export default function DashboardPage() {
   const [alertSearchTerm, setAlertSearchTerm] = useState('');
   const [copiedIp, setCopiedIp] = useState(null);
   const [quickSimulating, setQuickSimulating] = useState(false);
+  const [simulationStatus, setSimulationStatus] = useState('');
   const [alertPage, setAlertPage] = useState(1);
   const [alertPageSize, setAlertPageSize] = useState(10);
 
@@ -232,9 +233,37 @@ export default function DashboardPage() {
   const handleQuickSimulate = async () => {
     if (quickSimulating) return;
     setQuickSimulating(true);
-    const sample = ATTACK_SCENARIOS.find(a => a.badge === 'CRITICAL') || ATTACK_SCENARIOS[0];
-    await handleAttackTriggered(sample);
-    setQuickSimulating(false);
+    setSimulationStatus('Initializing 5-Attack Sequence...');
+
+    const FIVE_ATTACKS = [
+      ATTACK_SCENARIOS.find(a => a.key === 'SQLI') || ATTACK_SCENARIOS[0],
+      ATTACK_SCENARIOS.find(a => a.key === 'LOG4J') || ATTACK_SCENARIOS[1],
+      ATTACK_SCENARIOS.find(a => a.key === 'KERBEROAST') || ATTACK_SCENARIOS[2],
+      ATTACK_SCENARIOS.find(a => a.key === 'SYN_FLOOD') || ATTACK_SCENARIOS[3],
+      ATTACK_SCENARIOS.find(a => a.key === 'LOCKBIT') || ATTACK_SCENARIOS[4],
+    ];
+
+    try {
+      for (let i = 0; i < FIVE_ATTACKS.length; i++) {
+        const atk = FIVE_ATTACKS[i];
+        const label = atk.name.split(' ')[0] || atk.key;
+        setSimulationStatus(`Attack ${i + 1}/5: ${label}...`);
+        await handleAttackTriggered(atk);
+        if (i < FIVE_ATTACKS.length - 1) {
+          await new Promise((res) => setTimeout(res, 1000));
+        }
+      }
+      setSimulationStatus('✓ 5 Attacks Simulated & Quarantined');
+      await refreshTelemetry(false);
+    } catch (err) {
+      console.warn('Simulation sequence error:', err);
+      setSimulationStatus('Simulation complete');
+    } finally {
+      setTimeout(() => {
+        setSimulationStatus('');
+        setQuickSimulating(false);
+      }, 3000);
+    }
   };
 
   const handleExportSnapshot = () => {
@@ -406,10 +435,10 @@ export default function DashboardPage() {
             onClick={handleQuickSimulate}
             disabled={quickSimulating}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-            title="Launch an immediate live attack scenario into the ingestion pipeline"
+            title="Launch an immediate batch of exactly 5 simulated attacks into the ingestion pipeline"
           >
             <span>⚡</span>
-            <span>{quickSimulating ? 'Injecting Attack...' : 'Quick Attack Simulation'}</span>
+            <span>{quickSimulating ? (simulationStatus || 'Simulating...') : 'Simulate 5 Attack Vectors'}</span>
           </button>
 
           <button
