@@ -116,7 +116,7 @@ export default function DashboardPage() {
   const [simulatedMttc, setSimulatedMttc] = useState(null);
 
   // 100-Attack Taxonomy tracking state
-  const [triggeredAttackKeys, setTriggeredAttackKeys] = useState(new Set(['LOCKBIT', 'SYN_FLOOD']));
+  const [triggeredAttackKeys, setTriggeredAttackKeys] = useState(new Set());
   const [lastTriggeredAttack, setLastTriggeredAttack] = useState(null);
   const [selectedDossierAttack, setSelectedDossierAttack] = useState(null);
 
@@ -296,7 +296,7 @@ export default function DashboardPage() {
   // Real Threat Posture Index calculated from actual database severities and open threats
   const displayScore = useMemo(() => {
     if (simulatedThreatScore !== null) return simulatedThreatScore;
-    if (!alertStats || alertStats.total_alerts === 0) return 28;
+    if (!alertStats || alertStats.total_alerts === 0) return 0;
     const crit = alertStats.critical_total || 0;
     const high = alertStats.high_total || 0;
     const open = alertStats.open_total || 0;
@@ -309,15 +309,16 @@ export default function DashboardPage() {
     displayScore >= 80 ? 'CRITICAL POSTURE' :
     displayScore >= 60 ? 'ELEVATED RISK' :
     displayScore >= 40 ? 'HEIGHTENED WATCH' :
-    'GUARDED DEFENSE'
+    displayScore > 0 ? 'GUARDED DEFENSE' :
+    'CLEAN / SECURE'
   );
 
   const displayMttc = simulatedMttc ?? (
-    (ipsStats?.active_blocks || 0) > 0 ? '0.42s' : '0.85s'
+    (ipsStats?.active_blocks || 0) > 0 ? '0.42s' : '0.00s'
   );
 
   const displayAccuracy = useMemo(() => {
-    if (!alertStats || !alertStats.total_alerts) return '99.94%';
+    if (!alertStats || !alertStats.total_alerts) return '100%';
     const total = alertStats.total_alerts;
     const falsePos = Math.max(0, (alertStats.low_total || 0) * 0.05);
     const acc = Math.max(98.5, Math.min(99.98, ((total - falsePos) / total) * 100));
@@ -550,14 +551,14 @@ export default function DashboardPage() {
                       OPEN THREATS
                     </span>
                     <span style={{ fontSize: '0.7rem', color: '#f87171', fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', padding: '2px 6px', borderRadius: 4 }}>
-                      +2.4% vs 24h
+                      Active Queue
                     </span>
                   </div>
                   <div style={{ fontSize: '1.85rem', fontWeight: 900, fontFamily: 'JetBrains Mono, monospace', color: '#ef4444', lineHeight: 1.1 }}>
-                    {alertStats?.open_total ?? 14}
+                    {alertStats?.open_total ?? 0}
                   </div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: 6 }}>
-                    {alertStats?.last_24h ?? 28} ingress events logged today
+                    {alertStats?.last_24h ?? 0} ingress events logged in window
                   </div>
                 </div>
 
@@ -572,10 +573,10 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <div style={{ fontSize: '1.85rem', fontWeight: 900, fontFamily: 'JetBrains Mono, monospace', color: '#f97316', lineHeight: 1.1 }}>
-                    {incidentStats?.investigating_count ?? 3}
+                    {incidentStats?.investigating_count ?? 0}
                   </div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: 6 }}>
-                    {incidentStats?.critical_count ?? 1} high-severity investigations
+                    {incidentStats?.critical_count ?? 0} high-severity investigations
                   </div>
                 </div>
 
@@ -590,10 +591,10 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <div style={{ fontSize: '1.85rem', fontWeight: 900, fontFamily: 'JetBrains Mono, monospace', color: '#ef4444', lineHeight: 1.1 }}>
-                    {alertStats?.critical_total ?? 42}
+                    {alertStats?.critical_total ?? 0}
                   </div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: 6 }}>
-                    {alertStats?.last_hour ?? 6} detected in past hour
+                    {alertStats?.last_hour ?? 0} detected in past hour
                   </div>
                 </div>
 

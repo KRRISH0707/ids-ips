@@ -92,7 +92,7 @@ export default function IPSActionsPage() {
   const isViewer = currentUser?.role === 'VIEWER';
 
   const [blockedIPs, setBlockedIPs] = useState([]);
-  const [velocityData, setVelocityData] = useState(TIMELINE_DATA);
+  const [velocityData, setVelocityData] = useState([]);
   const [loading, setLoading] = useState(!isViewer);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
