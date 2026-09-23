@@ -427,6 +427,17 @@ def _execute_autonomous_block(
                 "mttc": "0.04s",
             },
         })
+
+        # Dispatch to SOC Webhooks (Slack/Discord/Teams/SIEM)
+        try:
+            from ..services.alert_dispatcher import dispatch_soc_alert
+            dispatch_soc_alert({
+                **alert_record,
+                "timestamp": alert_record["timestamp"].isoformat(),
+            })
+        except Exception:
+            pass
+
         logger.warning("🚨 [IPS GATEWAY] Intercepted attacker %s: %s (Quarantined: %s)", src_ip, reason, not is_exempt)
     except Exception as exc:
         logger.error("Failed to execute autonomous block for %s: %s", src_ip, exc)
@@ -455,7 +466,38 @@ class IPSGatewayMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-        # ── 2. Sensitive Reconnaissance Probe & Honeypot Trapping ───────
+        # ── 2. Geographic Threat Suppression (Country-Level Geo-Fencing) ─
+        try:
+            from .geoip import check_country_geofence
+            is_geo_blocked, geo_country = check_country_geofence(client_ip)
+            if is_geo_blocked:
+                _execute_autonomous_block(
+                    src_ip=client_ip,
+                    signature=f"Geographic Threat Suppression: Ingress Country Blocked [{geo_country}]",
+                    category="network",
+                    severity="HIGH",
+                    risk_score=90,
+                    raw_event={
+                        "path": request.url.path,
+                        "blocked_country": geo_country,
+                        "client_ip": client_ip,
+                        "user_agent": request.headers.get("user-agent", ""),
+                    },
+                    reason=f"Autonomous IPS: Ingress Country Blocked [{geo_country}]",
+                )
+                return JSONResponse(
+                    status_code=403,
+                    content={
+                        "status": "BLOCKED",
+                        "detail": f"Apex Sentinel Autonomous IPS: Ingress from country [{geo_country}] is suppressed by policy.",
+                        "signature": f"Geo-Fencing [{geo_country}]",
+                        "action": "AUTO_BLOCKED",
+                    },
+                )
+        except Exception:
+            pass
+
+        # ── 3. Sensitive Reconnaissance Probe & Honeypot Trapping ───────
         clean_path = request.url.path.lower()
         for probe in SENSITIVE_PROBE_PATHS:
             if clean_path.startswith(probe) or probe in clean_path:
