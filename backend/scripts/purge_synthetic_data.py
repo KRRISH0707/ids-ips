@@ -41,7 +41,7 @@ def purge():
             sensors_count = cur.fetchone()[0]
             cur.execute("SELECT COUNT(*) FROM rules;")
             rules_count = cur.fetchone()[0]
-            cur.execute("SELECT COUNT(*) FROM threat_intel_iocs;")
+            cur.execute("SELECT COUNT(*) FROM threat_intel;")
             iocs_count = cur.fetchone()[0]
 
             print("\n[+] Verification of Preserved Production Assets:")

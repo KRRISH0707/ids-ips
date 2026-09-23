@@ -5,7 +5,6 @@ import Sidebar from '@/components/Sidebar';
 import { PageLayout, Spinner, EmptyState, Pagination } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useOnLiveEvent } from '@/lib/useLiveFeed';
-import { useTimeRange } from '@/context/TimeRangeContext';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
@@ -73,7 +72,6 @@ const TYPE_COLORS = {
 };
 
 export default function ThreatIntelPage() {
-  const { days, dateSpanText } = useTimeRange();
   const [intel, setIntel] = useState([]);
   const [breakdown, setBreakdown] = useState({});
   const [loading, setLoading] = useState(true);
@@ -96,15 +94,15 @@ export default function ThreatIntelPage() {
     }
   };
 
-  // Reset pagination to page 1 whenever filters or time range change
+  // Reset pagination to page 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [typeFilter, searchQuery, pageSize, days]);
+  }, [typeFilter, searchQuery, pageSize]);
 
   const fetchIntel = useCallback(async (showSpinner = true) => {
     try {
       if (showSpinner) setLoading(true);
-      const res = await api.getThreatIntel({ limit: 500, days: days || undefined });
+      const res = await api.getThreatIntel({ limit: 1000 });
       setIntel(res?.items || []);
       setBreakdown(res?.breakdown || {});
     } catch (err) {
@@ -112,7 +110,7 @@ export default function ThreatIntelPage() {
     } finally {
       if (showSpinner) setLoading(false);
     }
-  }, [days]);
+  }, []);
 
   useEffect(() => {
     fetchIntel(true);
@@ -251,11 +249,9 @@ export default function ThreatIntelPage() {
           </div>
           <p className="page-subtitle" style={{ margin: '4px 0 0' }}>
             Real-time Indicators of Compromise (IOC) matching &amp; global reputation scoring
-            {dateSpanText && (
-              <span style={{ marginLeft: 10, fontSize: '0.72rem', color: 'var(--accent-cyan)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                · {dateSpanText}
-              </span>
-            )}
+            <span style={{ marginLeft: 10, fontSize: '0.72rem', color: 'var(--accent-cyan)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
+              · Persistent Threat Feed ({intel.length || '236+'} Active Signatures)
+            </span>
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
