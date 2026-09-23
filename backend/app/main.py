@@ -156,22 +156,26 @@ async def generic_exception_handler(request, exc):
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 
-PREFIX = "/api"
+ALL_ROUTERS = [
+    health.router,
+    auth.router,
+    users.router,
+    alerts.router,
+    incidents.router,
+    sensors.router,
+    rules.router,
+    ips_actions.router,
+    audit_logs.router,
+    metrics.router,
+    ai_insights.router,
+    playbooks.router,
+    mitre.router,
+    network_topology.router,
+    threat_intel.router,
+    settings_route.router,
+    ws.router,
+]
 
-app.include_router(health.router,       prefix=PREFIX)
-app.include_router(auth.router,         prefix=PREFIX)
-app.include_router(users.router,        prefix=PREFIX)
-app.include_router(alerts.router,       prefix=PREFIX)
-app.include_router(incidents.router,    prefix=PREFIX)
-app.include_router(sensors.router,      prefix=PREFIX)
-app.include_router(rules.router,        prefix=PREFIX)
-app.include_router(ips_actions.router,  prefix=PREFIX)
-app.include_router(audit_logs.router,   prefix=PREFIX)
-app.include_router(metrics.router,      prefix=PREFIX)
-app.include_router(ai_insights.router,  prefix=PREFIX)
-app.include_router(playbooks.router,         prefix=PREFIX)
-app.include_router(mitre.router,             prefix=PREFIX)
-app.include_router(network_topology.router,  prefix=PREFIX)
-app.include_router(threat_intel.router,      prefix=PREFIX)
-app.include_router(settings_route.router,    prefix=PREFIX)
-app.include_router(ws.router,                prefix=PREFIX)
+for prefix in ("/api", "/api/v1"):
+    for r in ALL_ROUTERS:
+        app.include_router(r, prefix=prefix)

