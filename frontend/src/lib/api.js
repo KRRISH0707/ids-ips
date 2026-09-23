@@ -250,6 +250,8 @@ export const api = {
   // ── AI Threat Intelligence ────────────────────────────────────────────────
   getAIForecast: () => request('/ai/forecast'),
   predictThreat: (data) => request('/ai/predict', { method: 'POST', body: JSON.stringify(data) }),
+  runBasAudit: () => request('/run-bas-audit', { method: 'POST' }),
+  investigateIncident: (data = {}) => request('/investigate-incident', { method: 'POST', body: JSON.stringify(data) }),
 
   // ── Rules ─────────────────────────────────────────────────────────────────
   getRules: (params = {}) => request('/rules?' + new URLSearchParams(params)),

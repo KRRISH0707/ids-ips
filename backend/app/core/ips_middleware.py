@@ -446,8 +446,16 @@ def _execute_autonomous_block(
 
 class IPSGatewayMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Preflight, health, metrics, and API documentation are allowed without rate limiting
-        if request.method == "OPTIONS" or request.url.path in ("/health", "/metrics", "/docs", "/openapi.json"):
+        # Preflight, health, metrics, documentation, and safe authenticated simulation endpoints bypass gateway payload interception
+        clean_path = request.url.path.lower().rstrip("/")
+        if request.method == "OPTIONS" or clean_path in (
+            "/health", "/metrics", "/docs", "/openapi.json",
+            "/api/health", "/api/metrics", "/api/docs", "/api/openapi.json",
+            "/api/v1/health", "/api/v1/metrics", "/api/v1/docs", "/api/v1/openapi.json",
+            "/api/alerts/simulate", "/api/v1/alerts/simulate",
+            "/api/run-bas-audit", "/api/v1/run-bas-audit",
+            "/api/investigate-incident", "/api/v1/investigate-incident",
+        ):
             return await call_next(request)
 
         # Extract client IP

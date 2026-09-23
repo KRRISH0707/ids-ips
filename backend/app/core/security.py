@@ -31,15 +31,13 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 
-# ── Session Fingerprinting (Anti-Token-Theft / Replay Defense) ────────────────
-def compute_client_fingerprint(user_agent: str, client_ip: str) -> str:
+def compute_client_fingerprint(user_agent: str, client_ip: str = "") -> str:
     """Computes a cryptographically salted fingerprint of the client session.
-    Tolerates minor dynamic IP shifts (matches /24 subnet) while binding to the User-Agent.
+    Binds the session token to the client User-Agent to prevent token theft and replay,
+    while tolerating reverse-proxy and Cloudflare IP header variations.
     """
     ua_clean = (user_agent or "unknown").strip().lower()
-    ip_parts = client_ip.split(".") if "." in client_ip else client_ip.split(":")
-    ip_prefix = ".".join(ip_parts[:3]) if len(ip_parts) >= 3 and "." in client_ip else client_ip
-    raw = f"{settings.jwt_secret}:{ua_clean}:{ip_prefix}"
+    raw = f"{settings.jwt_secret}:{ua_clean}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
