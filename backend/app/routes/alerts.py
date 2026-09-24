@@ -128,12 +128,12 @@ def alerts_summary(
                     COUNT(*) FILTER (WHERE timestamp > now() - interval '1 hour') AS last_hour,
                     COUNT(*) FILTER (WHERE timestamp > now() - interval '24 hours') AS last_24h,
                     COUNT(*)                                          AS total_alerts,
-                    COUNT(*) FILTER (WHERE category ILIKE '%web%' OR signature ILIKE '%web%' OR signature ILIKE '%sql%' OR signature ILIKE '%.env%' OR signature ILIKE '%phpunit%') AS cat_web,
-                    COUNT(*) FILTER (WHERE category ILIKE '%network%' OR category ILIKE '%recon%' OR signature ILIKE '%scan%' OR signature ILIKE '%syn%' OR signature ILIKE '%dshield%') AS cat_network,
-                    COUNT(*) FILTER (WHERE category ILIKE '%exploit%' OR category ILIKE '%misc%' OR signature ILIKE '%exploit%' OR signature ILIKE '%rce%') AS cat_exploit,
-                    COUNT(*) FILTER (WHERE category ILIKE '%malware%' OR category ILIKE '%trojan%' OR signature ILIKE '%cins%' OR signature ILIKE '%drop%') AS cat_malware,
-                    COUNT(*) FILTER (WHERE category ILIKE '%cred%' OR signature ILIKE '%auth%' OR signature ILIKE '%wp-login%') AS cat_credential,
-                    COUNT(*) FILTER (WHERE category ILIKE '%post%' OR category ILIKE '%lateral%' OR signature ILIKE '%.git%') AS cat_post_comp
+                    COUNT(*) FILTER (WHERE POSITION('web' IN LOWER(COALESCE(category,''))) > 0 OR POSITION('web' IN LOWER(signature)) > 0 OR POSITION('sql' IN LOWER(signature)) > 0 OR POSITION('.env' IN LOWER(signature)) > 0 OR POSITION('phpunit' IN LOWER(signature)) > 0) AS cat_web,
+                    COUNT(*) FILTER (WHERE POSITION('network' IN LOWER(COALESCE(category,''))) > 0 OR POSITION('recon' IN LOWER(COALESCE(category,''))) > 0 OR POSITION('scan' IN LOWER(signature)) > 0 OR POSITION('syn' IN LOWER(signature)) > 0 OR POSITION('dshield' IN LOWER(signature)) > 0) AS cat_network,
+                    COUNT(*) FILTER (WHERE POSITION('exploit' IN LOWER(COALESCE(category,''))) > 0 OR POSITION('misc' IN LOWER(COALESCE(category,''))) > 0 OR POSITION('rce' IN LOWER(signature)) > 0) AS cat_exploit,
+                    COUNT(*) FILTER (WHERE POSITION('malware' IN LOWER(COALESCE(category,''))) > 0 OR POSITION('trojan' IN LOWER(COALESCE(category,''))) > 0 OR POSITION('cins' IN LOWER(signature)) > 0 OR POSITION('drop' IN LOWER(signature)) > 0) AS cat_malware,
+                    COUNT(*) FILTER (WHERE POSITION('cred' IN LOWER(COALESCE(category,''))) > 0 OR POSITION('auth' IN LOWER(signature)) > 0 OR POSITION('wp-login' IN LOWER(signature)) > 0) AS cat_credential,
+                    COUNT(*) FILTER (WHERE POSITION('post' IN LOWER(COALESCE(category,''))) > 0 OR POSITION('lateral' IN LOWER(COALESCE(category,''))) > 0 OR POSITION('.git' IN LOWER(signature)) > 0) AS cat_post_comp
                 FROM alerts
                 {time_filter}
                 """,
