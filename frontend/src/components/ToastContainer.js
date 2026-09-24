@@ -101,6 +101,18 @@ export function ToastContainer() {
       if (saved !== null) {
         setSoundEnabled(saved !== 'false');
       }
+
+      const handleSync = (e) => {
+        if (e?.detail?.enabled !== undefined) {
+          setSoundEnabled(e.detail.enabled);
+        } else {
+          const s = localStorage.getItem('ids_sound_enabled');
+          setSoundEnabled(s !== 'false');
+        }
+      };
+      window.addEventListener('ids_sound_toggle', handleSync);
+      window.addEventListener('storage', handleSync);
+
       // Request desktop notification permission if not yet decided
       if ('Notification' in window && Notification.permission === 'default') {
         const handleFirstInteraction = () => {
@@ -109,6 +121,11 @@ export function ToastContainer() {
         };
         window.addEventListener('click', handleFirstInteraction, { once: true });
       }
+
+      return () => {
+        window.removeEventListener('ids_sound_toggle', handleSync);
+        window.removeEventListener('storage', handleSync);
+      };
     }
   }, []);
 

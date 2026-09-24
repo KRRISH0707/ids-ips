@@ -83,8 +83,9 @@ export function EmptyState({ message = 'No data found', icon }) {
 import { useRouter } from 'next/navigation';
 import { getToken, getUser } from '@/lib/api';
 import { TimeRangeProvider, useTimeRange, TimeRangeSelector } from '@/context/TimeRangeContext';
+import AlertSoundToggle from '@/components/AlertSoundToggle';
 
-export { TimeRangeProvider, useTimeRange, TimeRangeSelector };
+export { TimeRangeProvider, useTimeRange, TimeRangeSelector, AlertSoundToggle };
 
 function PageLayoutContent({ children, sidebar }) {
   const router = useRouter();
@@ -139,14 +140,20 @@ function PageLayoutContent({ children, sidebar }) {
 
       {/* Main Content Area */}
       <main className="main-content fade-in">
-        {/* Global Telemetry Time-Window Bar */}
+        {/* Global Action Bar: Permanent Alert Sound Controller & Telemetry Window */}
         <div style={{
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: 16,
-          padding: '2px 0'
+          padding: '2px 0',
+          gap: 12,
+          flexWrap: 'wrap'
         }}>
+          {/* Permanent Alert Audio Controller */}
+          <AlertSoundToggle />
+
+          {/* Global Telemetry Time-Window Bar */}
           <TimeRangeSelector />
         </div>
 

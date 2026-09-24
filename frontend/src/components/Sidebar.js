@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { clearToken, getUser } from '@/lib/api';
 import { useOnLiveEvent } from '@/lib/useLiveFeed';
 import BrandLogo from './BrandLogo';
+import AlertSoundToggle from './AlertSoundToggle';
 
 // Module-level persistent scroll memory across page unmounts/remounts
 let savedSidebarScroll = 0;
@@ -130,23 +131,26 @@ export default function Sidebar() {
             </div>
           </div>
 
-          <span
-            style={{
-              fontSize: '0.62rem',
-              fontWeight: 700,
-              padding: '2px 6px',
-              borderRadius: 4,
-              background: threatFlash ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.12)',
-              border: `1px solid ${threatFlash ? 'rgba(239, 68, 68, 0.5)' : 'rgba(16, 185, 129, 0.3)'}`,
-              color: threatFlash ? '#f87171' : '#34d399',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4
-            }}
-          >
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: threatFlash ? '#ef4444' : '#10b981' }} />
-            {threatFlash ? 'ALERT' : 'LIVE'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <AlertSoundToggle compact />
+            <span
+              style={{
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                padding: '2px 6px',
+                borderRadius: 4,
+                background: threatFlash ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.12)',
+                border: `1px solid ${threatFlash ? 'rgba(239, 68, 68, 0.5)' : 'rgba(16, 185, 129, 0.3)'}`,
+                color: threatFlash ? '#f87171' : '#34d399',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4
+              }}
+            >
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: threatFlash ? '#ef4444' : '#10b981' }} />
+              {threatFlash ? 'ALERT' : 'LIVE'}
+            </span>
+          </div>
         </div>
 
         {/* Global Search Trigger (Ctrl+K) */}
