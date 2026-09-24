@@ -87,8 +87,15 @@ function CustomIncidentAreaTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
     const data = payload[0]?.payload || {};
     const displayDate = data.fullDate || `${label}, 2026`;
-    const displayTime = data.timeRange || '00:00 – 23:59 UTC';
-    const latestTime = data.latestTime;
+    let displayTime = data.timeRange || '00:00 – 23:59 IST';
+    let latestTime = data.latestTime;
+
+    if (displayTime && displayTime.includes('UTC')) {
+      displayTime = displayTime.replace(/UTC/g, 'IST');
+    }
+    if (latestTime && latestTime.includes('UTC')) {
+      latestTime = latestTime.replace(/UTC/g, 'IST');
+    }
 
     return (
       <div style={{
@@ -500,17 +507,17 @@ export default function IncidentsPage() {
         const now = Date.now();
         for (let d = 29; d >= 0; d--) {
           const day = new Date(now - d * 86400000);
-          const key = day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          const fullDate = day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-          buckets[key] = { day: key, fullDate, timeRange: '00:00 – 23:59 UTC', count: 0, critical: 0, latestTime: null };
+          const key = day.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric' });
+          const fullDate = day.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+          buckets[key] = { day: key, fullDate, timeRange: '00:00 – 23:59 IST', count: 0, critical: 0, latestTime: null };
         }
         incidents.forEach(inc => {
           const d = new Date(inc.created_at || inc.timestamp);
-          const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const key = d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric' });
           if (buckets[key]) {
             buckets[key].count++;
             if (inc.severity === 'CRITICAL') buckets[key].critical++;
-            buckets[key].latestTime = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) + ' UTC';
+            buckets[key].latestTime = d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) + ' IST';
           }
         });
         const trendData = Object.values(buckets);

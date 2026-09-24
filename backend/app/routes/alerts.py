@@ -172,11 +172,11 @@ def alerts_timeline(
                         GROUP BY 1
                     )
                     SELECT
-                        to_char(ts.bucket, 'HH24:MI') AS time,
+                        to_char(timezone('Asia/Kolkata', ts.bucket), 'HH24:MI') AS time,
                         ts.bucket::text AS full_date,
-                        to_char(ts.bucket, 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
-                        to_char(ts.bucket, 'HH24:MI') || ' – ' || to_char(ts.bucket + interval '1 hour', 'HH24:MI') || ' UTC' AS formatted_time,
-                        COALESCE(to_char(bc.latest_event_time, 'HH24:MI:SS') || ' UTC', NULL) AS latest_event_time,
+                        to_char(timezone('Asia/Kolkata', ts.bucket), 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
+                        to_char(timezone('Asia/Kolkata', ts.bucket), 'HH24:MI') || ' – ' || to_char(timezone('Asia/Kolkata', ts.bucket + interval '1 hour'), 'HH24:MI') || ' IST' AS formatted_time,
+                        COALESCE(to_char(timezone('Asia/Kolkata', bc.latest_event_time), 'HH24:MI:SS') || ' IST', NULL) AS latest_event_time,
                         COALESCE(bc.total_threats, 0)::int AS "totalThreats",
                         COALESCE(bc.auto_mitigated, 0)::int AS "autoMitigated",
                         COALESCE(bc.zero_day_anomalies, 0)::int AS "zeroDayAnomalies"
@@ -207,11 +207,11 @@ def alerts_timeline(
                         GROUP BY 1
                     )
                     SELECT
-                        to_char(ds.day, 'Mon DD') AS time,
+                        to_char(timezone('Asia/Kolkata', ds.day), 'Mon DD') AS time,
                         ds.day::text AS full_date,
-                        to_char(ds.day, 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
-                        '00:00 – 23:59 UTC' AS formatted_time,
-                        COALESCE(to_char(dc.latest_event_time, 'HH24:MI:SS') || ' UTC', NULL) AS latest_event_time,
+                        to_char(timezone('Asia/Kolkata', ds.day), 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
+                        '00:00 – 23:59 IST' AS formatted_time,
+                        COALESCE(to_char(timezone('Asia/Kolkata', dc.latest_event_time), 'HH24:MI:SS') || ' IST', NULL) AS latest_event_time,
                         COALESCE(dc.total_threats, 0)::int AS "totalThreats",
                         COALESCE(dc.auto_mitigated, 0)::int AS "autoMitigated",
                         COALESCE(dc.zero_day_anomalies, 0)::int AS "zeroDayAnomalies"

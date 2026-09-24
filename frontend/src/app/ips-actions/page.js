@@ -64,7 +64,14 @@ function CustomAreaTooltip({ active, payload, label }) {
     const data = payload[0]?.payload || {};
     let displayDate = data.formatted_date;
     let displayTime = data.formatted_time;
-    const latestEventTime = data.latest_event_time;
+    let latestEventTime = data.latest_event_time;
+
+    if (displayTime && displayTime.includes('UTC')) {
+      displayTime = displayTime.replace(/UTC/g, 'IST');
+    }
+    if (latestEventTime && latestEventTime.includes('UTC')) {
+      latestEventTime = latestEventTime.replace(/UTC/g, 'IST');
+    }
 
     if (!displayDate || !displayTime) {
       if (data.full_date) {
@@ -72,10 +79,11 @@ function CustomAreaTooltip({ active, payload, label }) {
           const parts = String(data.full_date).split(' ');
           const datePart = parts[0];
           const timePart = parts[1] || (data.time && data.time.includes(':') ? data.time : null);
-          const d = new Date(data.full_date.includes('T') ? data.full_date : `${datePart}T${timePart ? timePart.slice(0, 8) : '00:00:00'}Z`);
+          const d = new Date(data.full_date.includes('T') || data.full_date.includes('Z') ? data.full_date : `${datePart}T${timePart ? timePart.slice(0, 8) : '00:00:00'}Z`);
           if (!isNaN(d.getTime())) {
             if (!displayDate) {
-              displayDate = d.toLocaleDateString('en-US', {
+              displayDate = d.toLocaleDateString('en-IN', {
+                timeZone: 'Asia/Kolkata',
                 weekday: 'short',
                 month: 'short',
                 day: 'numeric',
@@ -83,7 +91,12 @@ function CustomAreaTooltip({ active, payload, label }) {
               });
             }
             if (!displayTime) {
-              displayTime = timePart ? `${timePart.slice(0, 5)} UTC` : '24h Window';
+              displayTime = d.toLocaleTimeString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+              }) + ' IST';
             }
           }
         } catch {}
@@ -94,7 +107,7 @@ function CustomAreaTooltip({ active, payload, label }) {
       displayDate = label && !label.includes(':') ? `${label}, 2026` : 'Mitigation Snapshot';
     }
     if (!displayTime) {
-      displayTime = label && label.includes(':') ? `${label} UTC` : '00:00 – 23:59 UTC';
+      displayTime = label && label.includes(':') ? `${label} IST` : '00:00 – 23:59 IST';
     }
 
     return (

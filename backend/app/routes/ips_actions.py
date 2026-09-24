@@ -144,11 +144,11 @@ def ips_timeline(
                         GROUP BY 1
                     )
                     SELECT
-                        to_char(ts.bucket, 'HH24:MI') AS time,
+                        to_char(timezone('Asia/Kolkata', ts.bucket), 'HH24:MI') AS time,
                         ts.bucket::text AS full_date,
-                        to_char(ts.bucket, 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
-                        to_char(ts.bucket, 'HH24:MI') || ' – ' || to_char(ts.bucket + interval '1 hour', 'HH24:MI') || ' UTC' AS formatted_time,
-                        COALESCE(to_char(hd.latest_event_time, 'HH24:MI:SS') || ' UTC', NULL) AS latest_event_time,
+                        to_char(timezone('Asia/Kolkata', ts.bucket), 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
+                        to_char(timezone('Asia/Kolkata', ts.bucket), 'HH24:MI') || ' – ' || to_char(timezone('Asia/Kolkata', ts.bucket + interval '1 hour'), 'HH24:MI') || ' IST' AS formatted_time,
+                        COALESCE(to_char(timezone('Asia/Kolkata', hd.latest_event_time), 'HH24:MI:SS') || ' IST', NULL) AS latest_event_time,
                         COALESCE(hd.total_quarantines, 0)::int AS "totalQuarantines",
                         COALESCE(hd.active_drops, 0)::int AS "activeDrops"
                     FROM time_series ts
@@ -177,11 +177,11 @@ def ips_timeline(
                         GROUP BY 1
                     )
                     SELECT
-                        to_char(ds.day, 'Mon DD') AS time,
+                        to_char(timezone('Asia/Kolkata', ds.day), 'Mon DD') AS time,
                         ds.day::text AS full_date,
-                        to_char(ds.day, 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
-                        '00:00 – 23:59 UTC' AS formatted_time,
-                        COALESCE(to_char(dd.latest_event_time, 'HH24:MI:SS') || ' UTC', NULL) AS latest_event_time,
+                        to_char(timezone('Asia/Kolkata', ds.day), 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
+                        '00:00 – 23:59 IST' AS formatted_time,
+                        COALESCE(to_char(timezone('Asia/Kolkata', dd.latest_event_time), 'HH24:MI:SS') || ' IST', NULL) AS latest_event_time,
                         COALESCE(dd.total_quarantines, 0)::int AS "totalQuarantines",
                         COALESCE(dd.active_drops, 0)::int AS "activeDrops"
                     FROM date_series ds
