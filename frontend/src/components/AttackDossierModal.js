@@ -598,6 +598,7 @@ export default function AttackDossierModal({ attack, onClose, onTrigger }) {
               Close Dossier
             </button>
           </div>
+        </div>
       </div>
     </div>,
     document.body
