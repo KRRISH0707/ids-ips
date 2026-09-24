@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * AttackDossierModal Component
@@ -10,10 +11,20 @@ import { useState, useMemo } from 'react';
  * IOC ledgers, and live simulation triggers.
  */
 export default function AttackDossierModal({ attack, onClose, onTrigger }) {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [copied, setCopied] = useState(false);
   const [pcapDownloaded, setPcapDownloaded] = useState(false);
   const [simulatedTriggered, setSimulatedTriggered] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   // Compute safe enriched properties with fallbacks for all 101 vectors
   const safeData = useMemo(() => {
@@ -69,7 +80,7 @@ export default function AttackDossierModal({ attack, onClose, onTrigger }) {
     };
   }, [attack]);
 
-  if (!safeData) return null;
+  if (!safeData || !mounted || typeof document === 'undefined') return null;
 
   const handleCopyPayload = () => {
     if (navigator.clipboard) {
@@ -92,17 +103,23 @@ export default function AttackDossierModal({ attack, onClose, onTrigger }) {
     }
   };
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
         background: 'rgba(2, 4, 8, 0.88)',
-        backdropFilter: 'blur(10px)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999,
+        zIndex: 999999,
         padding: 20,
       }}
       onClick={onClose}
@@ -113,14 +130,15 @@ export default function AttackDossierModal({ attack, onClose, onTrigger }) {
         style={{
           width: '100%',
           maxWidth: 900,
-          maxHeight: '92vh',
+          maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          background: 'rgba(6, 13, 24, 0.96)',
-          border: '1px solid rgba(0, 212, 255, 0.35)',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 212, 255, 0.2)',
+          background: 'rgba(6, 13, 24, 0.98)',
+          border: '1px solid rgba(0, 212, 255, 0.45)',
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(0, 212, 255, 0.25)',
           padding: 0,
           overflow: 'hidden',
+          borderRadius: 12,
         }}
       >
         {/* Top Header Bar */}
@@ -580,8 +598,8 @@ export default function AttackDossierModal({ attack, onClose, onTrigger }) {
               Close Dossier
             </button>
           </div>
-        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
