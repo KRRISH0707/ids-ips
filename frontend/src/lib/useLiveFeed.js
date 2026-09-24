@@ -57,10 +57,19 @@ async function connectGlobalWebSocket() {
     return;
   }
 
-  let wsBase = process.env.NEXT_PUBLIC_WS_URL;
-  if (!wsBase) {
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    wsBase = `${proto}//${window.location.host}`;
+  let wsBase = '';
+  if (typeof window !== 'undefined') {
+    const isHttps = window.location.protocol === 'https:';
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (!isLocalhost) {
+      // Remote production host: ALWAYS match the active browser host with wss: or ws:
+      wsBase = `${isHttps ? 'wss:' : 'ws:'}//${window.location.host}`;
+    } else {
+      wsBase = (process.env.NEXT_PUBLIC_WS_URL && !process.env.NEXT_PUBLIC_WS_URL.includes('localhost'))
+        ? process.env.NEXT_PUBLIC_WS_URL
+        : 'ws://localhost:8000';
+    }
   }
   const url = `${wsBase}/api/ws/live?token=${encodeURIComponent(token)}`;
 

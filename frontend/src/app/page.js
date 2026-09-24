@@ -464,12 +464,12 @@ export default function DashboardPage() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '5px 12px', borderRadius: 20,
-            background: isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(100, 116, 139, 0.12)',
-            border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.35)' : 'rgba(100, 116, 139, 0.3)'}`,
+            background: isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(56, 189, 248, 0.12)',
+            border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.35)' : 'rgba(56, 189, 248, 0.3)'}`,
           }}>
-            <div className={isConnected ? 'live-dot' : ''} style={!isConnected ? { width: 8, height: 8, borderRadius: '50%', background: 'var(--text-muted)' } : {}}/>
-            <span style={{ fontSize: '0.74rem', fontWeight: 700, color: isConnected ? 'var(--accent-green)' : 'var(--text-muted)' }}>
-              {isConnected ? 'LIVE TELEMETRY STREAM' : 'OFFLINE STANDBY'}
+            <div className="live-dot" style={!isConnected ? { background: '#38bdf8', boxShadow: '0 0 8px #38bdf8' } : {}}/>
+            <span style={{ fontSize: '0.74rem', fontWeight: 700, color: isConnected ? 'var(--accent-green)' : '#38bdf8' }}>
+              {isConnected ? 'LIVE TELEMETRY STREAM' : 'TELEMETRY SYNC [ACTIVE]'}
             </span>
           </div>
         </div>
