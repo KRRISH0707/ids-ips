@@ -121,6 +121,8 @@ export default function IncidentsPage() {
 
   useEffect(() => {
     fetchIncidents();
+    const timer = setInterval(() => fetchIncidents(), 8000);
+    return () => clearInterval(timer);
   }, [fetchIncidents]);
 
   // Real-time WebSocket Auto-Update Handler
@@ -339,16 +341,31 @@ export default function IncidentsPage() {
                       cx="50%"
                       cy="48%"
                       innerRadius={48}
-                      outerRadius={75}
-                      paddingAngle={4}
-                      isAnimationActive={false}
+                      outerRadius={76}
+                      paddingAngle={5}
+                      cornerRadius={5}
+                      isAnimationActive={true}
+                      animationDuration={800}
+                      animationEasing="ease-out"
                       onClick={(entry) => setStatusFilter(entry.rawKey)}
                       cursor="pointer"
                     >
                       {statusChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} stroke="transparent" />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          stroke="rgba(6, 13, 24, 0.6)"
+                          strokeWidth={2}
+                          style={{ filter: `drop-shadow(0 0 6px ${entry.color}55)` }}
+                        />
                       ))}
                     </Pie>
+                    <text x="50%" y="45%" textAnchor="middle" dominantBaseline="middle" fill="#f8fafc" fontSize="16" fontWeight="800" fontFamily="JetBrains Mono, monospace">
+                      {incidents.length}
+                    </text>
+                    <text x="50%" y="54%" textAnchor="middle" dominantBaseline="middle" fill="var(--text-muted)" fontSize="8" fontWeight="700" letterSpacing="0.06em">
+                      CASES
+                    </text>
                     <Tooltip
                       content={<CustomPieTooltip />}
                       wrapperStyle={{ zIndex: 9999, pointerEvents: 'none' }}
@@ -385,7 +402,7 @@ export default function IncidentsPage() {
             <div style={{ width: '100%', height: 210 }}>
               <ResponsiveContainer width="100%" height={210}>
                 <BarChart data={severityChartData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} tickLine={false} />
                   <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} />
                   <Tooltip
@@ -394,12 +411,19 @@ export default function IncidentsPage() {
                   />
                   <Bar
                     dataKey="count"
-                    radius={[4, 4, 0, 0]}
+                    radius={[6, 6, 0, 0]}
+                    isAnimationActive={true}
+                    animationDuration={700}
+                    animationEasing="ease-out"
                     cursor="pointer"
                     onClick={(data) => setSeverityFilter(data.name)}
                   >
                     {severityChartData.map((entry, index) => (
-                      <Cell key={`bar-${index}`} fill={entry.fill} />
+                      <Cell
+                        key={`bar-${index}`}
+                        fill={entry.fill}
+                        style={{ filter: `drop-shadow(0 0 6px ${entry.fill}44)` }}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -441,24 +465,51 @@ export default function IncidentsPage() {
               <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                 <defs>
                   <linearGradient id="incGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.3}/>
+                    <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.45}/>
                     <stop offset="95%" stopColor="#00d4ff" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="critGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.45}/>
                     <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
                 <XAxis dataKey="day" stroke="var(--text-muted)" fontSize={9} tickLine={false} interval={4} />
                 <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ background: 'rgba(6,13,24,0.96)', border: '1px solid #00d4ff', borderRadius: 8, fontSize: '0.8rem' }}
+                  contentStyle={{
+                    background: 'rgba(6,13,24,0.96)',
+                    border: '1px solid rgba(0,212,255,0.35)',
+                    borderRadius: 8,
+                    fontSize: '0.8rem',
+                    color: '#fff',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+                  }}
                   labelStyle={{ color: '#f8fafc', fontWeight: 700 }}
                   itemStyle={{ color: '#94a3b8' }}
                 />
-                <Area type="monotone" dataKey="count" stroke="#00d4ff" fill="url(#incGrad)" strokeWidth={2} name="All Incidents" isAnimationActive={false} />
-                <Area type="monotone" dataKey="critical" stroke="#ef4444" fill="url(#critGrad)" strokeWidth={1.5} name="Critical" isAnimationActive={false} />
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#00d4ff"
+                  fill="url(#incGrad)"
+                  strokeWidth={2}
+                  name="All Incidents"
+                  isAnimationActive={true}
+                  animationDuration={800}
+                  animationEasing="ease-out"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="critical"
+                  stroke="#ef4444"
+                  fill="url(#critGrad)"
+                  strokeWidth={1.5}
+                  name="Critical"
+                  isAnimationActive={true}
+                  animationDuration={800}
+                  animationEasing="ease-out"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>

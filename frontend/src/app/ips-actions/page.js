@@ -376,16 +376,42 @@ export default function IPSActionsPage() {
                 <AreaChart data={velocityData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
                   <defs>
                     <linearGradient id="dropsGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.45} />
                       <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                     </linearGradient>
+                    <linearGradient id="enforceGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="time" stroke="var(--text-muted)" fontSize={10} tickLine={false} />
                   <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} />
                   <Tooltip content={<CustomAreaTooltip />} />
-                  <Area type="monotone" dataKey="activeDrops" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#dropsGradient)" name="Active Drop Rules" />
-                  <Area type="monotone" dataKey="autoEnforced" stroke="#10b981" strokeWidth={2} fillOpacity={0} name="Auto Enforced" />
+                  <Area
+                    type="monotone"
+                    dataKey="activeDrops"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#dropsGradient)"
+                    name="Active Drop Rules"
+                    isAnimationActive={true}
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="autoEnforced"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#enforceGradient)"
+                    name="Auto Enforced"
+                    isAnimationActive={true}
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -417,17 +443,32 @@ export default function IPSActionsPage() {
                       dataKey="value"
                       cx="50%"
                       cy="48%"
-                      innerRadius={46}
-                      outerRadius={72}
-                      paddingAngle={4}
-                      isAnimationActive={false}
+                      innerRadius={48}
+                      outerRadius={76}
+                      paddingAngle={5}
+                      cornerRadius={5}
+                      isAnimationActive={true}
+                      animationDuration={800}
+                      animationEasing="ease-out"
                       onClick={(entry) => setSearchQuery(entry.name.split(' ')[0])}
                       cursor="pointer"
                     >
                       {triggerChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} stroke="transparent" />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          stroke="rgba(6, 13, 24, 0.6)"
+                          strokeWidth={2}
+                          style={{ filter: `drop-shadow(0 0 6px ${entry.color}55)` }}
+                        />
                       ))}
                     </Pie>
+                    <text x="50%" y="45%" textAnchor="middle" dominantBaseline="middle" fill="#f8fafc" fontSize="16" fontWeight="800" fontFamily="JetBrains Mono, monospace">
+                      {activeBlocks}
+                    </text>
+                    <text x="50%" y="54%" textAnchor="middle" dominantBaseline="middle" fill="var(--text-muted)" fontSize="8" fontWeight="700" letterSpacing="0.06em">
+                      ACTIVE
+                    </text>
                     <Tooltip
                       content={<CustomPieTooltip />}
                       wrapperStyle={{ zIndex: 9999, pointerEvents: 'none' }}

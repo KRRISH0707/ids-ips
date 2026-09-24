@@ -209,6 +209,18 @@ export default function DashboardPage() {
         if (latest.id && prev.some((a) => a.id === latest.id)) return prev;
         return [latest, ...prev.slice(0, 15)];
       });
+      // Bump live velocity timeline point so the graph visibly reacts in real time
+      setVelocityTimeline((prev) => {
+        if (!prev || prev.length === 0) return prev;
+        const updated = [...prev];
+        const lastIdx = updated.length - 1;
+        updated[lastIdx] = {
+          ...updated[lastIdx],
+          totalThreats: (updated[lastIdx].totalThreats || 0) + 1,
+          autoMitigated: (updated[lastIdx].autoMitigated || 0) + 1,
+        };
+        return updated;
+      });
     }
 
     // Instantly refresh all real database metrics when an attack or IPS action is performed
@@ -219,6 +231,19 @@ export default function DashboardPage() {
     setActiveKillChainStage(attack.killChainStage);
     setLastTriggeredAttack(attack);
     setTriggeredAttackKeys((prev) => new Set([...prev, attack.key]));
+
+    // Optimistically bump the velocity timeline so the graph jumps immediately
+    setVelocityTimeline((prev) => {
+      if (!prev || prev.length === 0) return prev;
+      const updated = [...prev];
+      const lastIdx = updated.length - 1;
+      updated[lastIdx] = {
+        ...updated[lastIdx],
+        totalThreats: (updated[lastIdx].totalThreats || 0) + 1,
+        autoMitigated: (updated[lastIdx].autoMitigated || 0) + 1,
+      };
+      return updated;
+    });
 
     try {
       // Ingest the real attack into the detection engine and database
@@ -756,32 +781,57 @@ export default function DashboardPage() {
 
                   <div style={{ width: '100%', height: 260 }}>
                     <ResponsiveContainer width="100%" height={260}>
-                      <AreaChart data={velocityTimeline} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+                      <AreaChart data={velocityTimeline} margin={{ top: 12, right: 24, left: -20, bottom: 0 }}>
                         <defs>
                           <linearGradient id="colorThreats" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.45}/>
+                            <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.55}/>
+                            <stop offset="50%" stopColor="#00d4ff" stopOpacity={0.15}/>
                             <stop offset="95%" stopColor="#00d4ff" stopOpacity={0}/>
                           </linearGradient>
                           <linearGradient id="colorMitigation" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.45}/>
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.55}/>
+                            <stop offset="50%" stopColor="#10b981" stopOpacity={0.15}/>
                             <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                        <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
                         <XAxis dataKey="time" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
                         <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} />
                         <Tooltip
                           contentStyle={{
-                            background: 'rgba(10, 22, 40, 0.95)',
-                            border: '1px solid rgba(0,212,255,0.35)',
-                            borderRadius: 8,
+                            background: 'rgba(6, 13, 24, 0.96)',
+                            border: '1px solid rgba(0, 212, 255, 0.35)',
+                            borderRadius: 10,
                             fontSize: '0.8rem',
                             color: '#fff',
-                            boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+                            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 212, 255, 0.2)',
+                            backdropFilter: 'blur(12px)',
                           }}
                         />
-                        <Area type="monotone" dataKey="totalThreats" stroke="#00d4ff" strokeWidth={2} fillOpacity={1} fill="url(#colorThreats)" name="Total Ingress Threats" />
-                        <Area type="monotone" dataKey="autoMitigated" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorMitigation)" name="Auto-Mitigated" />
+                        <Area
+                          type="monotone"
+                          dataKey="totalThreats"
+                          stroke="#00d4ff"
+                          strokeWidth={2.5}
+                          fillOpacity={1}
+                          fill="url(#colorThreats)"
+                          name="Total Ingress Threats"
+                          isAnimationActive={true}
+                          animationDuration={800}
+                          animationEasing="ease-out"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="autoMitigated"
+                          stroke="#10b981"
+                          strokeWidth={2}
+                          fillOpacity={1}
+                          fill="url(#colorMitigation)"
+                          name="Auto-Mitigated"
+                          isAnimationActive={true}
+                          animationDuration={800}
+                          animationEasing="ease-out"
+                        />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
@@ -797,16 +847,26 @@ export default function DashboardPage() {
                     <div style={{ width: '100%', height: 230 }}>
                       <ResponsiveContainer width="100%" height={230}>
                         <BarChart data={categoryDistribution} margin={{ top: 10, right: 10, left: -25, bottom: 20 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                          <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
                           <XAxis dataKey="category" stroke="var(--text-muted)" fontSize={9} interval={0} angle={-15} textAnchor="end" />
-                          <YAxis stroke="var(--text-muted)" fontSize={10} />
+                          <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} />
                           <Tooltip
                             content={<CustomBarTooltip />}
                             wrapperStyle={{ zIndex: 9999, pointerEvents: 'none' }}
                           />
-                          <Bar dataKey="count" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+                          <Bar
+                            dataKey="count"
+                            radius={[6, 6, 0, 0]}
+                            isAnimationActive={true}
+                            animationDuration={700}
+                            animationEasing="ease-out"
+                          >
                             {categoryDistribution.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={entry.color}
+                                style={{ filter: `drop-shadow(0 0 6px ${entry.color}44)` }}
+                              />
                             ))}
                           </Bar>
                         </BarChart>
@@ -829,13 +889,30 @@ export default function DashboardPage() {
                               dataKey="value"
                               cx="50%"
                               cy="45%"
-                              innerRadius={52}
-                              outerRadius={80}
-                              paddingAngle={4}
-                              isAnimationActive={false}
+                              innerRadius={54}
+                              outerRadius={82}
+                              paddingAngle={5}
+                              cornerRadius={5}
+                              isAnimationActive={true}
+                              animationDuration={800}
+                              animationEasing="ease-out"
                             >
-                              {piData.map((entry, i) => <Cell key={i} fill={entry.color} stroke="transparent" />)}
+                              {piData.map((entry, i) => (
+                                <Cell
+                                  key={i}
+                                  fill={entry.color}
+                                  stroke="rgba(6, 13, 24, 0.6)"
+                                  strokeWidth={2}
+                                  style={{ filter: `drop-shadow(0 0 6px ${entry.color}55)` }}
+                                />
+                              ))}
                             </Pie>
+                            <text x="50%" y="42%" textAnchor="middle" dominantBaseline="middle" fill="#f8fafc" fontSize="18" fontWeight="800" fontFamily="JetBrains Mono, monospace">
+                              {alertStats?.total_alerts || 0}
+                            </text>
+                            <text x="50%" y="51%" textAnchor="middle" dominantBaseline="middle" fill="var(--text-muted)" fontSize="9" fontWeight="700" letterSpacing="0.06em">
+                              EVENTS
+                            </text>
                             <Tooltip
                               content={<CustomPieTooltip />}
                               wrapperStyle={{ zIndex: 9999, pointerEvents: 'none' }}

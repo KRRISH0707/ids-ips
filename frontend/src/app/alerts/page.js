@@ -366,17 +366,32 @@ export default function AlertsPage() {
                       dataKey="value"
                       cx="50%"
                       cy="48%"
-                      innerRadius={44}
-                      outerRadius={74}
-                      paddingAngle={4}
-                      isAnimationActive={false}
+                      innerRadius={46}
+                      outerRadius={76}
+                      paddingAngle={5}
+                      cornerRadius={5}
+                      isAnimationActive={true}
+                      animationDuration={800}
+                      animationEasing="ease-out"
                       onClick={(entry) => { setSeverity(entry.name); setCurrentPage(1); }}
                       cursor="pointer"
                     >
                       {severityChartData.map((entry, index) => (
-                        <Cell key={`sev-${index}`} fill={entry.color} stroke="transparent" />
+                        <Cell
+                          key={`sev-${index}`}
+                          fill={entry.color}
+                          stroke="rgba(6, 13, 24, 0.6)"
+                          strokeWidth={2}
+                          style={{ filter: `drop-shadow(0 0 6px ${entry.color}55)` }}
+                        />
                       ))}
                     </Pie>
+                    <text x="50%" y="45%" textAnchor="middle" dominantBaseline="middle" fill="#f8fafc" fontSize="16" fontWeight="800" fontFamily="JetBrains Mono, monospace">
+                      {total}
+                    </text>
+                    <text x="50%" y="54%" textAnchor="middle" dominantBaseline="middle" fill="var(--text-muted)" fontSize="8" fontWeight="700" letterSpacing="0.06em">
+                      TOTAL
+                    </text>
                     <Tooltip
                       content={<CustomPieTooltip />}
                       wrapperStyle={{ zIndex: 9999, pointerEvents: 'none' }}
@@ -413,7 +428,7 @@ export default function AlertsPage() {
             <div style={{ width: '100%', height: 210 }}>
               <ResponsiveContainer width="100%" height={210}>
                 <BarChart data={statusChartData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} tickLine={false} />
                   <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} />
                   <Tooltip
@@ -422,13 +437,19 @@ export default function AlertsPage() {
                   />
                   <Bar
                     dataKey="count"
-                    radius={[4, 4, 0, 0]}
-                    isAnimationActive={false}
+                    radius={[6, 6, 0, 0]}
+                    isAnimationActive={true}
+                    animationDuration={700}
+                    animationEasing="ease-out"
                     cursor="pointer"
                     onClick={(entry) => { setAlertStatus(entry.rawKey); setCurrentPage(1); }}
                   >
                     {statusChartData.map((entry, index) => (
-                      <Cell key={`bar-${index}`} fill={entry.fill} />
+                      <Cell
+                        key={`bar-${index}`}
+                        fill={entry.fill}
+                        style={{ filter: `drop-shadow(0 0 6px ${entry.fill}44)` }}
+                      />
                     ))}
                   </Bar>
                 </BarChart>

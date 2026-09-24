@@ -155,14 +155,14 @@ def alerts_timeline(
                     """
                     WITH time_series AS (
                         SELECT generate_series(
-                            date_trunc('hour', now() - interval '22 hours'),
+                            date_trunc('hour', now() - interval '23 hours'),
                             date_trunc('hour', now()),
-                            interval '2 hours'
+                            interval '1 hour'
                         ) AS bucket
                     ),
                     bucket_counts AS (
                         SELECT
-                            date_trunc('hour', to_timestamp(floor(extract(epoch from timestamp) / 7200) * 7200)) AS bucket,
+                            date_trunc('hour', timestamp) AS bucket,
                             COUNT(*) AS total_threats,
                             COUNT(*) FILTER (WHERE status IN ('AUTO_BLOCKED', 'RESOLVED', 'CONTAINED')) AS auto_mitigated,
                             COUNT(*) FILTER (WHERE severity = 'CRITICAL' OR risk_score >= 90) AS zero_day_anomalies
