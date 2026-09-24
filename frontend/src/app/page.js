@@ -86,6 +86,129 @@ function CustomBarTooltip({ active, payload, label }) {
   return null;
 }
 
+function CustomVelocityTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  const data = payload[0]?.payload || {};
+  const threats = data.totalThreats ?? 0;
+  const mitigated = data.autoMitigated ?? 0;
+  const zeroDay = data.zeroDayAnomalies ?? 0;
+  const mitigationRate = threats > 0 ? ((mitigated / threats) * 100).toFixed(1) : '100';
+
+  // Format date & time nicely and clearly
+  let dateTitle = label || 'Telemetry Window';
+  let subTime = null;
+
+  if (data.full_date) {
+    try {
+      const parts = String(data.full_date).split(' ');
+      const datePart = parts[0];
+      const timePart = parts[1] || (data.time && data.time.includes(':') ? data.time : null);
+      
+      const d = new Date(data.full_date.includes('T') ? data.full_date : `${datePart}T${timePart ? timePart.slice(0, 8) : '00:00:00'}Z`);
+      if (!isNaN(d.getTime())) {
+        dateTitle = d.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        if (timePart) {
+          subTime = `${timePart.slice(0, 5)} UTC`;
+        }
+      }
+    } catch {}
+  } else if (label) {
+    dateTitle = label.includes(':') ? `Time: ${label} UTC` : `${label}, 2026`;
+  }
+
+  return (
+    <div style={{
+      background: 'rgba(6, 13, 24, 0.98)',
+      border: '1px solid rgba(0, 212, 255, 0.45)',
+      borderRadius: 10,
+      padding: '12px 16px',
+      boxShadow: '0 16px 40px rgba(0, 0, 0, 0.9), 0 0 24px rgba(0, 212, 255, 0.25)',
+      backdropFilter: 'blur(16px)',
+      minWidth: 240,
+      pointerEvents: 'none',
+      zIndex: 9999,
+    }}>
+      {/* Header with Calendar Icon & Formatted Date / Time */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: '0.9rem' }}>🗓️</span>
+          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.02em' }}>
+            {dateTitle}
+          </span>
+        </div>
+        {subTime ? (
+          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#38bdf8', fontFamily: 'JetBrains Mono, monospace', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '2px 8px', borderRadius: 4 }}>
+            {subTime}
+          </span>
+        ) : (
+          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', background: 'rgba(255, 255, 255, 0.06)', padding: '2px 6px', borderRadius: 4 }}>
+            24h Window
+          </span>
+        )}
+      </div>
+
+      {/* Metric 1: Ingress Threats */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }} />
+          Total Ingress Threats:
+        </span>
+        <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#00d4ff', fontFamily: 'JetBrains Mono, monospace' }}>
+          {threats} <span style={{ fontSize: '0.7rem', fontWeight: 500, color: 'var(--text-muted)' }}>events</span>
+        </span>
+      </div>
+
+      {/* Metric 2: Auto-Mitigated */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+          Auto-Mitigated by IPS:
+        </span>
+        <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#10b981', fontFamily: 'JetBrains Mono, monospace' }}>
+          {mitigated} <span style={{ fontSize: '0.7rem', fontWeight: 500, color: 'var(--text-muted)' }}>quarantined</span>
+        </span>
+      </div>
+
+      {/* Zero-day anomaly row if any */}
+      {zeroDay > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.76rem', color: '#f87171' }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: '#ef4444', boxShadow: '0 0 8px #ef4444' }} />
+            Zero-Day Anomalies:
+          </span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#ef4444', fontFamily: 'JetBrains Mono, monospace' }}>
+            {zeroDay}
+          </span>
+        </div>
+      )}
+
+      {/* Metric 3: Mitigation Rate Badge */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 7, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Autonomous Intercept:
+        </span>
+        <span style={{
+          fontSize: '0.74rem',
+          fontWeight: 800,
+          color: '#34d399',
+          background: 'rgba(16, 185, 129, 0.15)',
+          padding: '2px 8px',
+          borderRadius: 6,
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+          fontFamily: 'JetBrains Mono, monospace'
+        }}>
+          {mitigationRate}% Enforced
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
@@ -385,6 +508,29 @@ export default function DashboardPage() {
       { name: 'Low',      value: alertStats.low_total || 0,     color: '#10b981' },
     ].filter(d => d.value > 0);
   }, [alertStats]);
+
+  // Aggregate summary metrics for the Velocity chart banner
+  const velocitySummary = useMemo(() => {
+    if (!velocityTimeline || velocityTimeline.length === 0) {
+      const tot = alertStats?.total_alerts || 0;
+      const blk = ipsStats?.total_blocks || alertStats?.blocked_total || 0;
+      return { total: tot, mitigated: blk, peak: tot, rate: '100%' };
+    }
+    let total = 0;
+    let mitigated = 0;
+    let peak = 0;
+    velocityTimeline.forEach((pt) => {
+      const t = pt.totalThreats || 0;
+      const m = pt.autoMitigated || 0;
+      total += t;
+      mitigated += m;
+      if (t > peak) peak = t;
+    });
+    const finalTotal = Math.max(total, alertStats?.total_alerts || 0);
+    const finalMitigated = Math.max(mitigated, ipsStats?.total_blocks || alertStats?.blocked_total || 0);
+    const rate = finalTotal > 0 ? ((finalMitigated / finalTotal) * 100).toFixed(1) + '%' : '100%';
+    return { total: finalTotal, mitigated: finalMitigated, peak: Math.max(peak, 1), rate };
+  }, [velocityTimeline, alertStats, ipsStats]);
 
   // Live feed messages (seeded with recent alerts if no live events received yet)
   const displayFeed = liveMessages.length > 0
@@ -758,30 +904,94 @@ export default function DashboardPage() {
                 {/* Cyber Kill Chain Trajectory */}
                 <CyberKillChain stages={killChainStages} activeStageIndex={activeKillChainStage} />
 
-                {/* 24-Hour Velocity AreaChart */}
+                {/* Ingress Attack & Autonomous IPS Mitigation Velocity Card */}
                 <div className="glass-card" style={{ padding: 24 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 14 }}>
                     <div>
-                      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span>📈</span> {days ? `${days}-Day` : 'Historical'} Ingress Attack & Autonomous IPS Mitigation Velocity
-                      </h3>
-                      <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        Telemetry tracking raw packet ingress attempts against sub-second automated iptables enforcement ({dateSpanText})
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>📈</span> {days ? `${days}-Day` : 'Historical'} Ingress Attack & Autonomous IPS Mitigation Velocity
+                        </h3>
+                        <span style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          color: '#00d4ff',
+                          background: 'rgba(0, 212, 255, 0.12)',
+                          border: '1px solid rgba(0, 212, 255, 0.3)',
+                          padding: '2px 8px',
+                          borderRadius: 12,
+                          letterSpacing: '0.04em'
+                        }}>
+                          REAL-TIME TELEMETRY
+                        </span>
+                      </div>
+                      <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        Continuous event tracking of ingress attack vectors against sub-second automated iptables containment ({dateSpanText})
                       </p>
                     </div>
-                    <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: '0.75rem' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#00d4ff', fontWeight: 600 }}>
-                        <span style={{ width: 10, height: 10, borderRadius: 2, background: '#00d4ff' }} /> Total Ingress Threats
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#10b981', fontWeight: 600 }}>
-                        <span style={{ width: 10, height: 10, borderRadius: 2, background: '#10b981' }} /> Auto-Mitigated by IPS
-                      </span>
+
+                    {/* Quick Metric Pills */}
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{
+                        padding: '6px 12px',
+                        borderRadius: 8,
+                        background: 'rgba(0, 212, 255, 0.08)',
+                        border: '1px solid rgba(0, 212, 255, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 7,
+                      }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 2, background: '#00d4ff', boxShadow: '0 0 6px #00d4ff' }} />
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Ingress:</span>
+                        <strong style={{ fontSize: '0.85rem', color: '#00d4ff', fontFamily: 'JetBrains Mono, monospace' }}>{velocitySummary.total}</strong>
+                      </div>
+
+                      <div style={{
+                        padding: '6px 12px',
+                        borderRadius: 8,
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 7,
+                      }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 2, background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Mitigated:</span>
+                        <strong style={{ fontSize: '0.85rem', color: '#10b981', fontFamily: 'JetBrains Mono, monospace' }}>{velocitySummary.mitigated}</strong>
+                      </div>
+
+                      <div style={{
+                        padding: '6px 12px',
+                        borderRadius: 8,
+                        background: 'rgba(168, 85, 247, 0.08)',
+                        border: '1px solid rgba(168, 85, 247, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 7,
+                      }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 2, background: '#a855f7', boxShadow: '0 0 6px #a855f7' }} />
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Peak Surge:</span>
+                        <strong style={{ fontSize: '0.85rem', color: '#c084fc', fontFamily: 'JetBrains Mono, monospace' }}>{velocitySummary.peak} / bucket</strong>
+                      </div>
+
+                      <div style={{
+                        padding: '6px 12px',
+                        borderRadius: 8,
+                        background: 'rgba(56, 189, 248, 0.08)',
+                        border: '1px solid rgba(56, 189, 248, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 7,
+                      }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Efficiency:</span>
+                        <strong style={{ fontSize: '0.85rem', color: '#38bdf8', fontFamily: 'JetBrains Mono, monospace' }}>{velocitySummary.rate}</strong>
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ width: '100%', height: 260 }}>
-                    <ResponsiveContainer width="100%" height={260}>
-                      <AreaChart data={velocityTimeline} margin={{ top: 12, right: 24, left: -20, bottom: 0 }}>
+                  <div style={{ width: '100%', height: 290 }}>
+                    <ResponsiveContainer width="100%" height={290}>
+                      <AreaChart data={velocityTimeline} margin={{ top: 14, right: 24, left: -15, bottom: 6 }}>
                         <defs>
                           <linearGradient id="colorThreats" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.55}/>
@@ -794,19 +1004,33 @@ export default function DashboardPage() {
                             <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
-                        <XAxis dataKey="time" stroke="var(--text-muted)" fontSize={11} tickLine={false} />
-                        <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} />
+                        <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                        <XAxis
+                          dataKey="time"
+                          stroke="var(--text-muted)"
+                          fontSize={11}
+                          fontWeight={600}
+                          tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                          axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                          dy={6}
+                        />
+                        <YAxis
+                          stroke="var(--text-muted)"
+                          fontSize={11}
+                          fontWeight={600}
+                          tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                          axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                          dx={-4}
+                          allowDecimals={false}
+                        />
                         <Tooltip
-                          contentStyle={{
-                            background: 'rgba(6, 13, 24, 0.96)',
-                            border: '1px solid rgba(0, 212, 255, 0.35)',
-                            borderRadius: 10,
-                            fontSize: '0.8rem',
-                            color: '#fff',
-                            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 212, 255, 0.2)',
-                            backdropFilter: 'blur(12px)',
+                          content={<CustomVelocityTooltip />}
+                          cursor={{
+                            stroke: 'rgba(0, 212, 255, 0.35)',
+                            strokeWidth: 1.5,
+                            strokeDasharray: '4 4',
                           }}
+                          wrapperStyle={{ zIndex: 9999, pointerEvents: 'none' }}
                         />
                         <Area
                           type="monotone"
@@ -819,6 +1043,13 @@ export default function DashboardPage() {
                           isAnimationActive={true}
                           animationDuration={800}
                           animationEasing="ease-out"
+                          activeDot={{
+                            r: 6,
+                            fill: '#00d4ff',
+                            stroke: '#fff',
+                            strokeWidth: 2,
+                            filter: 'drop-shadow(0 0 8px #00d4ff)',
+                          }}
                         />
                         <Area
                           type="monotone"
@@ -831,6 +1062,13 @@ export default function DashboardPage() {
                           isAnimationActive={true}
                           animationDuration={800}
                           animationEasing="ease-out"
+                          activeDot={{
+                            r: 5,
+                            fill: '#10b981',
+                            stroke: '#fff',
+                            strokeWidth: 2,
+                            filter: 'drop-shadow(0 0 8px #10b981)',
+                          }}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
