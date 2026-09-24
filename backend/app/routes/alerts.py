@@ -165,7 +165,8 @@ def alerts_timeline(
                             date_trunc('hour', timestamp) AS bucket,
                             COUNT(*) AS total_threats,
                             COUNT(*) FILTER (WHERE status IN ('AUTO_BLOCKED', 'RESOLVED', 'CONTAINED')) AS auto_mitigated,
-                            COUNT(*) FILTER (WHERE severity = 'CRITICAL' OR risk_score >= 90) AS zero_day_anomalies
+                            COUNT(*) FILTER (WHERE severity = 'CRITICAL' OR risk_score >= 90) AS zero_day_anomalies,
+                            MAX(timestamp) AS latest_event_time
                         FROM alerts
                         WHERE timestamp >= now() - interval '24 hours'
                         GROUP BY 1
@@ -173,6 +174,9 @@ def alerts_timeline(
                     SELECT
                         to_char(ts.bucket, 'HH24:MI') AS time,
                         ts.bucket::text AS full_date,
+                        to_char(ts.bucket, 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
+                        to_char(ts.bucket, 'HH24:MI') || ' – ' || to_char(ts.bucket + interval '1 hour', 'HH24:MI') || ' UTC' AS formatted_time,
+                        COALESCE(to_char(bc.latest_event_time, 'HH24:MI:SS') || ' UTC', NULL) AS latest_event_time,
                         COALESCE(bc.total_threats, 0)::int AS "totalThreats",
                         COALESCE(bc.auto_mitigated, 0)::int AS "autoMitigated",
                         COALESCE(bc.zero_day_anomalies, 0)::int AS "zeroDayAnomalies"
@@ -196,7 +200,8 @@ def alerts_timeline(
                             date_trunc('day', timestamp)::date AS day,
                             COUNT(*) AS total_threats,
                             COUNT(*) FILTER (WHERE status IN ('AUTO_BLOCKED', 'RESOLVED', 'CONTAINED')) AS auto_mitigated,
-                            COUNT(*) FILTER (WHERE severity = 'CRITICAL' OR risk_score >= 90) AS zero_day_anomalies
+                            COUNT(*) FILTER (WHERE severity = 'CRITICAL' OR risk_score >= 90) AS zero_day_anomalies,
+                            MAX(timestamp) AS latest_event_time
                         FROM alerts
                         WHERE timestamp >= date_trunc('day', now() - (interval '1 day' * (%s - 1)))
                         GROUP BY 1
@@ -204,6 +209,9 @@ def alerts_timeline(
                     SELECT
                         to_char(ds.day, 'Mon DD') AS time,
                         ds.day::text AS full_date,
+                        to_char(ds.day, 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
+                        '00:00 – 23:59 UTC' AS formatted_time,
+                        COALESCE(to_char(dc.latest_event_time, 'HH24:MI:SS') || ' UTC', NULL) AS latest_event_time,
                         COALESCE(dc.total_threats, 0)::int AS "totalThreats",
                         COALESCE(dc.auto_mitigated, 0)::int AS "autoMitigated",
                         COALESCE(dc.zero_day_anomalies, 0)::int AS "zeroDayAnomalies"

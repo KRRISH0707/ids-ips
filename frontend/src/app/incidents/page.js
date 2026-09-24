@@ -83,6 +83,66 @@ function CustomBarTooltip({ active, payload, label }) {
   return null;
 }
 
+function CustomIncidentAreaTooltip({ active, payload, label }) {
+  if (active && payload && payload.length) {
+    const data = payload[0]?.payload || {};
+    const displayDate = data.fullDate || `${label}, 2026`;
+    const displayTime = data.timeRange || '00:00 – 23:59 UTC';
+    const latestTime = data.latestTime;
+
+    return (
+      <div style={{
+        background: 'rgba(6, 13, 24, 0.98)',
+        border: '1px solid rgba(0, 212, 255, 0.5)',
+        borderRadius: 10,
+        padding: '12px 16px',
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 212, 255, 0.25)',
+        backdropFilter: 'blur(16px)',
+        minWidth: 260,
+        pointerEvents: 'none',
+        zIndex: 9999
+      }}>
+        {/* Date & Time Detail Box */}
+        <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.07)', borderRadius: 6, padding: '8px 10px', marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span>📅</span> Date:
+            </span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.01em' }}>
+              {displayDate}
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span>⏰</span> Time:
+            </span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#38bdf8', fontFamily: 'JetBrains Mono, monospace' }}>
+              {latestTime ? `${latestTime}` : displayTime}
+            </span>
+          </div>
+          {latestTime && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 5, paddingTop: 5, borderTop: '1px dashed rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Window:</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace' }}>{displayTime}</span>
+            </div>
+          )}
+        </div>
+
+        {payload.map((item, idx) => (
+          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, fontSize: '0.8rem', color: item.color || '#fff', marginTop: 4 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: item.color, boxShadow: `0 0 6px ${item.color}` }} />
+              {item.name}:
+            </span>
+            <strong style={{ color: item.color || '#fff', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.9rem' }}>{item.value}</strong>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function IncidentsPage() {
   const { days, dateSpanText } = useTimeRange();
   const currentUser = getUser();
@@ -441,7 +501,8 @@ export default function IncidentsPage() {
         for (let d = 29; d >= 0; d--) {
           const day = new Date(now - d * 86400000);
           const key = day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          buckets[key] = { day: key, count: 0, critical: 0 };
+          const fullDate = day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+          buckets[key] = { day: key, fullDate, timeRange: '00:00 – 23:59 UTC', count: 0, critical: 0, latestTime: null };
         }
         incidents.forEach(inc => {
           const d = new Date(inc.created_at || inc.timestamp);
@@ -449,6 +510,7 @@ export default function IncidentsPage() {
           if (buckets[key]) {
             buckets[key].count++;
             if (inc.severity === 'CRITICAL') buckets[key].critical++;
+            buckets[key].latestTime = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) + ' UTC';
           }
         });
         const trendData = Object.values(buckets);
@@ -477,16 +539,9 @@ export default function IncidentsPage() {
                 <XAxis dataKey="day" stroke="var(--text-muted)" fontSize={9} tickLine={false} interval={4} />
                 <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} />
                 <Tooltip
-                  contentStyle={{
-                    background: 'rgba(6,13,24,0.96)',
-                    border: '1px solid rgba(0,212,255,0.35)',
-                    borderRadius: 8,
-                    fontSize: '0.8rem',
-                    color: '#fff',
-                    boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-                  }}
-                  labelStyle={{ color: '#f8fafc', fontWeight: 700 }}
-                  itemStyle={{ color: '#94a3b8' }}
+                  content={<CustomIncidentAreaTooltip />}
+                  cursor={{ stroke: 'rgba(0, 212, 255, 0.35)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+                  wrapperStyle={{ zIndex: 9999, pointerEvents: 'none' }}
                 />
                 <Area
                   type="monotone"

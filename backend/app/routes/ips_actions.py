@@ -120,38 +120,76 @@ def ips_timeline(
     days: int = Query(45, ge=1, le=365),
     current_user: dict = Depends(get_current_user),
 ):
-    """Return daily aggregated mitigation velocity for the given number of days."""
+    """Return aggregated mitigation velocity for the given number of days."""
     with get_sync_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
-                WITH date_series AS (
-                    SELECT generate_series(
-                        date_trunc('day', now() - (interval '1 day' * (%s - 1))),
-                        date_trunc('day', now()),
-                        interval '1 day'
-                    )::date AS day
-                ),
-                daily_drops AS (
+            if days == 1:
+                cur.execute(
+                    """
+                    WITH time_series AS (
+                        SELECT generate_series(
+                            date_trunc('hour', now() - interval '23 hours'),
+                            date_trunc('hour', now()),
+                            interval '1 hour'
+                        ) AS bucket
+                    ),
+                    hourly_drops AS (
+                        SELECT
+                            date_trunc('hour', blocked_at) AS bucket,
+                            COUNT(*) AS total_quarantines,
+                            COUNT(*) FILTER (WHERE is_active) AS active_drops,
+                            MAX(blocked_at) AS latest_event_time
+                        FROM blocked_ips
+                        WHERE blocked_at >= now() - interval '24 hours'
+                        GROUP BY 1
+                    )
                     SELECT
-                        date_trunc('day', blocked_at)::date AS day,
-                        COUNT(*) AS total_quarantines,
-                        COUNT(*) FILTER (WHERE is_active) AS active_drops
-                    FROM blocked_ips
-                    WHERE blocked_at >= date_trunc('day', now() - (interval '1 day' * (%s - 1)))
-                    GROUP BY 1
+                        to_char(ts.bucket, 'HH24:MI') AS time,
+                        ts.bucket::text AS full_date,
+                        to_char(ts.bucket, 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
+                        to_char(ts.bucket, 'HH24:MI') || ' – ' || to_char(ts.bucket + interval '1 hour', 'HH24:MI') || ' UTC' AS formatted_time,
+                        COALESCE(to_char(hd.latest_event_time, 'HH24:MI:SS') || ' UTC', NULL) AS latest_event_time,
+                        COALESCE(hd.total_quarantines, 0)::int AS "totalQuarantines",
+                        COALESCE(hd.active_drops, 0)::int AS "activeDrops"
+                    FROM time_series ts
+                    LEFT JOIN hourly_drops hd ON ts.bucket = hd.bucket
+                    ORDER BY ts.bucket ASC
+                    """
                 )
-                SELECT
-                    to_char(ds.day, 'Mon DD') AS time,
-                    ds.day::text AS full_date,
-                    COALESCE(dd.total_quarantines, 0)::int AS "totalQuarantines",
-                    COALESCE(dd.active_drops, 0)::int AS "activeDrops"
-                FROM date_series ds
-                LEFT JOIN daily_drops dd ON ds.day = dd.day
-                ORDER BY ds.day ASC
-                """,
-                (days, days),
-            )
+            else:
+                cur.execute(
+                    """
+                    WITH date_series AS (
+                        SELECT generate_series(
+                            date_trunc('day', now() - (interval '1 day' * (%s - 1))),
+                            date_trunc('day', now()),
+                            interval '1 day'
+                        )::date AS day
+                    ),
+                    daily_drops AS (
+                        SELECT
+                            date_trunc('day', blocked_at)::date AS day,
+                            COUNT(*) AS total_quarantines,
+                            COUNT(*) FILTER (WHERE is_active) AS active_drops,
+                            MAX(blocked_at) AS latest_event_time
+                        FROM blocked_ips
+                        WHERE blocked_at >= date_trunc('day', now() - (interval '1 day' * (%s - 1)))
+                        GROUP BY 1
+                    )
+                    SELECT
+                        to_char(ds.day, 'Mon DD') AS time,
+                        ds.day::text AS full_date,
+                        to_char(ds.day, 'FMDay, FMMonth FMDD, YYYY') AS formatted_date,
+                        '00:00 – 23:59 UTC' AS formatted_time,
+                        COALESCE(to_char(dd.latest_event_time, 'HH24:MI:SS') || ' UTC', NULL) AS latest_event_time,
+                        COALESCE(dd.total_quarantines, 0)::int AS "totalQuarantines",
+                        COALESCE(dd.active_drops, 0)::int AS "activeDrops"
+                    FROM date_series ds
+                    LEFT JOIN daily_drops dd ON ds.day = dd.day
+                    ORDER BY ds.day ASC
+                    """,
+                    (days, days),
+                )
             items = cur.fetchall()
     return {"items": items, "days": days}
 

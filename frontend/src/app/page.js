@@ -95,65 +95,100 @@ function CustomVelocityTooltip({ active, payload, label }) {
   const mitigationRate = threats > 0 ? ((mitigated / threats) * 100).toFixed(1) : '100';
 
   // Format date & time nicely and clearly
-  let dateTitle = label || 'Telemetry Window';
-  let subTime = null;
+  let displayDate = data.formatted_date;
+  let displayTime = data.formatted_time;
+  const latestEventTime = data.latest_event_time;
 
-  if (data.full_date) {
-    try {
-      const parts = String(data.full_date).split(' ');
-      const datePart = parts[0];
-      const timePart = parts[1] || (data.time && data.time.includes(':') ? data.time : null);
-      
-      const d = new Date(data.full_date.includes('T') ? data.full_date : `${datePart}T${timePart ? timePart.slice(0, 8) : '00:00:00'}Z`);
-      if (!isNaN(d.getTime())) {
-        dateTitle = d.toLocaleDateString('en-US', {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        });
-        if (timePart) {
-          subTime = `${timePart.slice(0, 5)} UTC`;
+  if (!displayDate || !displayTime) {
+    if (data.full_date) {
+      try {
+        const parts = String(data.full_date).split(' ');
+        const datePart = parts[0];
+        const timePart = parts[1] || (data.time && data.time.includes(':') ? data.time : null);
+        
+        const d = new Date(data.full_date.includes('T') ? data.full_date : `${datePart}T${timePart ? timePart.slice(0, 8) : '00:00:00'}Z`);
+        if (!isNaN(d.getTime())) {
+          if (!displayDate) {
+            displayDate = d.toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            });
+          }
+          if (!displayTime) {
+            displayTime = timePart ? `${timePart.slice(0, 5)} UTC` : '24h Window';
+          }
         }
-      }
-    } catch {}
-  } else if (label) {
-    dateTitle = label.includes(':') ? `Time: ${label} UTC` : `${label}, 2026`;
+      } catch {}
+    }
+  }
+
+  if (!displayDate) {
+    displayDate = label && !label.includes(':') ? `${label}, 2026` : 'Current Telemetry Window';
+  }
+  if (!displayTime) {
+    displayTime = label && label.includes(':') ? `${label} UTC` : '00:00 – 23:59 UTC';
   }
 
   return (
     <div style={{
       background: 'rgba(6, 13, 24, 0.98)',
-      border: '1px solid rgba(0, 212, 255, 0.45)',
+      border: '1px solid rgba(0, 212, 255, 0.5)',
       borderRadius: 10,
       padding: '12px 16px',
       boxShadow: '0 16px 40px rgba(0, 0, 0, 0.9), 0 0 24px rgba(0, 212, 255, 0.25)',
       backdropFilter: 'blur(16px)',
-      minWidth: 240,
+      minWidth: 260,
       pointerEvents: 'none',
       zIndex: 9999,
     }}>
-      {/* Header with Calendar Icon & Formatted Date / Time */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      {/* Title Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: '0.9rem' }}>🗓️</span>
-          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.02em' }}>
-            {dateTitle}
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }} />
+          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            TELEMETRY SNAPSHOT
           </span>
         </div>
-        {subTime ? (
-          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#38bdf8', fontFamily: 'JetBrains Mono, monospace', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '2px 8px', borderRadius: 4 }}>
-            {subTime}
+        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#10b981', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '2px 7px', borderRadius: 4 }}>
+          LIVE EVENT
+        </span>
+      </div>
+
+      {/* Date & Time Detail Rows */}
+      <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.07)', borderRadius: 6, padding: '8px 10px', marginBottom: 10 }}>
+        {/* Date Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+          <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span>📅</span> Date:
           </span>
-        ) : (
-          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', background: 'rgba(255, 255, 255, 0.06)', padding: '2px 6px', borderRadius: 4 }}>
-            24h Window
+          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.01em' }}>
+            {displayDate}
           </span>
+        </div>
+
+        {/* Time Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span>⏰</span> Time:
+          </span>
+          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#38bdf8', fontFamily: 'JetBrains Mono, monospace' }}>
+            {latestEventTime ? latestEventTime : displayTime}
+          </span>
+        </div>
+
+        {/* If there is both a window and a latest attack time, show the window detail as well */}
+        {latestEventTime && displayTime && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 5, paddingTop: 5, borderTop: '1px dashed rgba(255,255,255,0.06)' }}>
+            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Window:</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace' }}>{displayTime}</span>
+          </div>
         )}
       </div>
 
       {/* Metric 1: Ingress Threats */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
           <span style={{ width: 8, height: 8, borderRadius: 2, background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }} />
           Total Ingress Threats:
@@ -164,7 +199,7 @@ function CustomVelocityTooltip({ active, payload, label }) {
       </div>
 
       {/* Metric 2: Auto-Mitigated */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
           <span style={{ width: 8, height: 8, borderRadius: 2, background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
           Auto-Mitigated by IPS:
@@ -176,7 +211,7 @@ function CustomVelocityTooltip({ active, payload, label }) {
 
       {/* Zero-day anomaly row if any */}
       {zeroDay > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.76rem', color: '#f87171' }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, background: '#ef4444', boxShadow: '0 0 8px #ef4444' }} />
             Zero-Day Anomalies:
@@ -188,7 +223,7 @@ function CustomVelocityTooltip({ active, payload, label }) {
       )}
 
       {/* Metric 3: Mitigation Rate Badge */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 7, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Autonomous Intercept:
         </span>

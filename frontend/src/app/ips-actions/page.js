@@ -61,23 +61,87 @@ function CustomPieTooltip({ active, payload }) {
 
 function CustomAreaTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
+    const data = payload[0]?.payload || {};
+    let displayDate = data.formatted_date;
+    let displayTime = data.formatted_time;
+    const latestEventTime = data.latest_event_time;
+
+    if (!displayDate || !displayTime) {
+      if (data.full_date) {
+        try {
+          const parts = String(data.full_date).split(' ');
+          const datePart = parts[0];
+          const timePart = parts[1] || (data.time && data.time.includes(':') ? data.time : null);
+          const d = new Date(data.full_date.includes('T') ? data.full_date : `${datePart}T${timePart ? timePart.slice(0, 8) : '00:00:00'}Z`);
+          if (!isNaN(d.getTime())) {
+            if (!displayDate) {
+              displayDate = d.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              });
+            }
+            if (!displayTime) {
+              displayTime = timePart ? `${timePart.slice(0, 5)} UTC` : '24h Window';
+            }
+          }
+        } catch {}
+      }
+    }
+
+    if (!displayDate) {
+      displayDate = label && !label.includes(':') ? `${label}, 2026` : 'Mitigation Snapshot';
+    }
+    if (!displayTime) {
+      displayTime = label && label.includes(':') ? `${label} UTC` : '00:00 – 23:59 UTC';
+    }
+
     return (
       <div style={{
-        background: 'rgba(6, 13, 24, 0.96)',
-        border: '1px solid rgba(239, 68, 68, 0.4)',
-        borderRadius: 8,
-        padding: '8px 12px',
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.8)',
+        background: 'rgba(6, 13, 24, 0.98)',
+        border: '1px solid rgba(239, 68, 68, 0.5)',
+        borderRadius: 10,
+        padding: '12px 16px',
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(239, 68, 68, 0.25)',
+        backdropFilter: 'blur(16px)',
+        minWidth: 260,
         pointerEvents: 'none',
         zIndex: 9999
       }}>
-        <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#94a3b8', marginBottom: 4 }}>
-          {label}
+        {/* Date & Time Detail Box */}
+        <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.07)', borderRadius: 6, padding: '8px 10px', marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span>📅</span> Date:
+            </span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.01em' }}>
+              {displayDate}
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span>⏰</span> Time:
+            </span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f87171', fontFamily: 'JetBrains Mono, monospace' }}>
+              {latestEventTime ? latestEventTime : displayTime}
+            </span>
+          </div>
+          {latestEventTime && displayTime && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 5, paddingTop: 5, borderTop: '1px dashed rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Window:</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace' }}>{displayTime}</span>
+            </div>
+          )}
         </div>
+
         {payload.map((item, idx) => (
-          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: item.color || '#fff', marginTop: 2 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: item.color }} />
-            <span>{item.name}: <strong style={{ color: '#fff' }}>{item.value}</strong></span>
+          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, fontSize: '0.8rem', color: item.color || '#fff', marginTop: 4 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: item.color, boxShadow: `0 0 6px ${item.color}` }} />
+              {item.name}:
+            </span>
+            <strong style={{ color: item.color || '#fff', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.9rem' }}>{item.value}</strong>
           </div>
         ))}
       </div>
