@@ -159,7 +159,16 @@ export default function DashboardPage() {
         setIPSStats(results[2].value);
       }
       if (results[3].status === 'fulfilled' && results[3].value) {
-        setRecentAlerts(results[3].value?.items || []);
+        const items = results[3].value?.items || [];
+        setRecentAlerts(items);
+        const keys = new Set();
+        items.forEach((a) => {
+          const k = a?.raw_event?.scenario_key || (a?.signature ? a.signature.split(' ')[0] : null);
+          if (k) keys.add(k.toUpperCase());
+        });
+        if (keys.size > 0) {
+          setTriggeredAttackKeys((prev) => new Set([...prev, ...keys]));
+        }
       }
       if (results[4].status === 'fulfilled' && results[4].value?.items) {
         setVelocityTimeline(results[4].value.items);
@@ -902,7 +911,7 @@ export default function DashboardPage() {
             )}
 
             {/* WORKSPACE VIEW: Live Alerts & Quarantine Table */}
-            {(activeWorkspace === 'alerts' || activeWorkspace === 'all') && (
+            {(activeWorkspace === 'overview' || activeWorkspace === 'alerts' || activeWorkspace === 'all') && (
               <div className="glass-card" style={{ padding: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 14 }}>
                   <div>

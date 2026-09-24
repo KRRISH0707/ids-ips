@@ -128,12 +128,12 @@ def alerts_summary(
                     COUNT(*) FILTER (WHERE timestamp > now() - interval '1 hour') AS last_hour,
                     COUNT(*) FILTER (WHERE timestamp > now() - interval '24 hours') AS last_24h,
                     COUNT(*)                                          AS total_alerts,
-                    COUNT(*) FILTER (WHERE category = 'web_api')      AS cat_web,
-                    COUNT(*) FILTER (WHERE category = 'network')      AS cat_network,
-                    COUNT(*) FILTER (WHERE category = 'exploitation') AS cat_exploit,
-                    COUNT(*) FILTER (WHERE category = 'malware')      AS cat_malware,
-                    COUNT(*) FILTER (WHERE category = 'credential')   AS cat_credential,
-                    COUNT(*) FILTER (WHERE category = 'post_compromise') AS cat_post_comp
+                    COUNT(*) FILTER (WHERE category ILIKE '%web%' OR signature ILIKE '%web%' OR signature ILIKE '%sql%' OR signature ILIKE '%.env%' OR signature ILIKE '%phpunit%') AS cat_web,
+                    COUNT(*) FILTER (WHERE category ILIKE '%network%' OR category ILIKE '%recon%' OR signature ILIKE '%scan%' OR signature ILIKE '%syn%' OR signature ILIKE '%dshield%') AS cat_network,
+                    COUNT(*) FILTER (WHERE category ILIKE '%exploit%' OR category ILIKE '%misc%' OR signature ILIKE '%exploit%' OR signature ILIKE '%rce%') AS cat_exploit,
+                    COUNT(*) FILTER (WHERE category ILIKE '%malware%' OR category ILIKE '%trojan%' OR signature ILIKE '%cins%' OR signature ILIKE '%drop%') AS cat_malware,
+                    COUNT(*) FILTER (WHERE category ILIKE '%cred%' OR signature ILIKE '%auth%' OR signature ILIKE '%wp-login%') AS cat_credential,
+                    COUNT(*) FILTER (WHERE category ILIKE '%post%' OR category ILIKE '%lateral%' OR signature ILIKE '%.git%') AS cat_post_comp
                 FROM alerts
                 {time_filter}
                 """,
