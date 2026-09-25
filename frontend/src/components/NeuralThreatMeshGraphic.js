@@ -1,12 +1,61 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+
+/**
+ * Web Audio Synthesizer for Tactical SOC Audio Feedback
+ * Synthesizes clean, high-tech interface sounds without external audio assets.
+ */
+function playTactileSound(type = 'click') {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+    if (type === 'click') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.start(now);
+      osc.stop(now + 0.05);
+    } else if (type === 'mode') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.12);
+    } else if (type === 'scan') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.linearRampToValueAtTime(1600, now + 0.03);
+      gain.gain.setValueAtTime(0.04, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.03);
+      osc.start(now);
+      osc.stop(now + 0.03);
+    }
+  } catch (e) {
+    // Ignore audio context block if user hasn't interacted yet
+  }
+}
 
 /**
  * NeuralThreatMeshGraphic Component
- * A original, interactive Cyber Neural Mesh & Threat Topology visualizer.
- * Inspired by modern SOC aesthetics, featuring an interactive 3D-styled core,
- * live vector nodes, clickable threat inspection rays, defense mode toggles, and velocity sliders.
+ * Next-Gen realistic Cyber Neural Mesh & Threat Topology visualizer.
+ * Features Web Audio feedback, live HTML5 oscilloscope waveform canvas,
+ * CRT scanline HUD toggle, realistic metric jitter, and vector dissection.
  */
 export default function NeuralThreatMeshGraphic({
   alertStats = {},
@@ -17,6 +66,23 @@ export default function NeuralThreatMeshGraphic({
   const [defenseMode, setDefenseMode] = useState('zero-trust'); // 'zero-trust', 'adaptive-ai', 'honeypot'
   const [streamVelocity, setStreamVelocity] = useState(50); // 10 to 100
   const [activePulse, setActivePulse] = useState(0);
+  const [soundMuted, setSoundMuted] = useState(false);
+  const [hudFilterActive, setHudFilterActive] = useState(true);
+
+  // Live Jitter Metrics for Ultra-Realism
+  const [liveMetrics, setLiveMetrics] = useState({
+    throughput: 48520,
+    latency: 0.42,
+    packetLoss: 0.00,
+    entropyAvg: 4.82,
+  });
+
+  const canvasRef = useRef(null);
+
+  // Trigger sound effect helper
+  const triggerSound = (type) => {
+    if (!soundMuted) playTactileSound(type);
+  };
 
   // Animate pulse frequency based on streamVelocity
   useEffect(() => {
@@ -24,6 +90,19 @@ export default function NeuralThreatMeshGraphic({
     const interval = setInterval(() => {
       setActivePulse((prev) => (prev + 1) % 360);
     }, intervalTime);
+    return () => clearInterval(interval);
+  }, [streamVelocity]);
+
+  // Live Metric Jitter Effect (Simulates real high-throughput packet arrivals)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveMetrics((prev) => ({
+        throughput: Math.floor(48000 + Math.random() * 1200 + streamVelocity * 20),
+        latency: +(0.38 + Math.random() * 0.08).toFixed(2),
+        packetLoss: +(Math.random() * 0.002).toFixed(4),
+        entropyAvg: +(4.75 + Math.random() * 0.25).toFixed(2),
+      }));
+    }, 1500);
     return () => clearInterval(interval);
   }, [streamVelocity]);
 
@@ -102,6 +181,65 @@ export default function NeuralThreatMeshGraphic({
     'honeypot': { color: '#f59e0b', label: 'DECEPTION & HONEYPOT', desc: 'Isolated Sandbox Trapping & Forensic Telemetry Capture' },
   }[defenseMode];
 
+  // Render HTML5 Oscilloscope Waveform Canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+    let step = 0;
+
+    const renderWaveform = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const width = canvas.width;
+      const height = canvas.height;
+      const centerY = height / 2;
+
+      // Grid background
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < width; x += 20) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += 15) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Draw Main Sine/Noise Waveform
+      ctx.beginPath();
+      ctx.strokeStyle = activeVectorData.color;
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = activeVectorData.color;
+
+      for (let x = 0; x < width; x += 2) {
+        const freq = (x + step * 4) * 0.04;
+        const noise = (Math.random() - 0.5) * 8;
+        const amplitude = 18 * Math.sin(freq) + noise;
+        const y = centerY + amplitude;
+        if (x === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      step++;
+      animationFrameId = requestAnimationFrame(renderWaveform);
+    };
+
+    renderWaveform();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [activeVectorData]);
+
   return (
     <div
       className="glass-card"
@@ -110,24 +248,32 @@ export default function NeuralThreatMeshGraphic({
         padding: '24px',
         borderRadius: 16,
         background: 'radial-gradient(circle at 50% 50%, rgba(8, 15, 30, 0.98), rgba(3, 6, 14, 0.99))',
-        border: `1px solid ${modeTheme.color}44`,
-        boxShadow: `0 20px 60px rgba(0, 0, 0, 0.9), 0 0 35px ${modeTheme.color}15`,
+        border: `1px solid ${modeTheme.color}55`,
+        boxShadow: `0 20px 60px rgba(0, 0, 0, 0.9), 0 0 40px ${modeTheme.color}20`,
         overflow: 'hidden',
         color: '#f8fafc',
         fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
-      {/* Background Cyber Mesh Pattern */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `radial-gradient(${modeTheme.color}15 1px, transparent 1px)`,
-          backgroundSize: '24px 24px',
-          pointerEvents: 'none',
-          opacity: 0.6,
-        }}
-      />
+      {/* CRT Scanline Filter Overlay for Authentic SOC Monitor Realism */}
+      {hudFilterActive && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage:
+              'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03))',
+            backgroundSize: '100% 3px, 6px 100%',
+            pointerEvents: 'none',
+            zIndex: 30,
+            opacity: 0.75,
+          }}
+        />
+      )}
+
+      {/* Cyber Corner HUD Reticles */}
+      <div style={{ position: 'absolute', top: 12, left: 12, fontSize: '0.65rem', color: modeTheme.color, opacity: 0.6, fontFamily: 'monospace' }}>┌ SYS.ID // APEX-SOC-CORE ┐</div>
+      <div style={{ position: 'absolute', top: 12, right: 12, fontSize: '0.65rem', color: modeTheme.color, opacity: 0.6, fontFamily: 'monospace' }}>└ SEC.LEVEL // MAX-RESTRICTED ┘</div>
 
       {/* Header & Controls Toolbar */}
       <div
@@ -148,35 +294,86 @@ export default function NeuralThreatMeshGraphic({
             NEURAL THREAT MESH & DEFENSE TOPOLOGY
           </div>
           <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: 2 }}>
-            Interactive Multivector Telemetry Matrix · Click any node to dissect vector telemetry
+            Interactive Multivector Telemetry Matrix · Tactile Sound & Waveform Dissection Enabled
           </div>
         </div>
 
-        {/* Interactive Defense Mode Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(6, 13, 24, 0.9)', padding: '4px', borderRadius: 10, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-          {[
-            { id: 'zero-trust', label: '🛡️ Zero-Trust', color: '#00d4ff' },
-            { id: 'adaptive-ai', label: '🧠 Neural AI', color: '#a855f7' },
-            { id: 'honeypot', label: '🍯 Deception', color: '#f59e0b' },
-          ].map((m) => (
-            <button
-              key={m.id}
-              onClick={() => setDefenseMode(m.id)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 7,
-                border: 'none',
-                background: defenseMode === m.id ? m.color : 'transparent',
-                color: defenseMode === m.id ? '#000000' : '#94a3b8',
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {m.label}
-            </button>
-          ))}
+        {/* Top Control Buttons: Audio Toggle & CRT HUD Filter Toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Sound Toggle */}
+          <button
+            onClick={() => {
+              setSoundMuted(!soundMuted);
+              triggerSound('click');
+            }}
+            style={{
+              padding: '6px 10px',
+              borderRadius: 8,
+              background: soundMuted ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+              border: `1px solid ${soundMuted ? '#ef4444' : '#10b981'}`,
+              color: soundMuted ? '#f87171' : '#10b981',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title="Toggle Tactile SOC Interface Sound Effects"
+          >
+            <span>{soundMuted ? '🔇 Muted' : '🔊 Cyber Audio'}</span>
+          </button>
+
+          {/* HUD Filter Toggle */}
+          <button
+            onClick={() => {
+              setHudFilterActive(!hudFilterActive);
+              triggerSound('scan');
+            }}
+            style={{
+              padding: '6px 10px',
+              borderRadius: 8,
+              background: hudFilterActive ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+              border: `1px solid ${hudFilterActive ? '#00d4ff' : 'rgba(255,255,255,0.2)'}`,
+              color: hudFilterActive ? '#00d4ff' : '#94a3b8',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+            }}
+            title="Toggle Futuristic CRT Scanline Overlay"
+          >
+            <span>{hudFilterActive ? '📺 HUD CRT ON' : '📺 HUD CRT OFF'}</span>
+          </button>
+
+          {/* Interactive Defense Mode Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(6, 13, 24, 0.9)', padding: '4px', borderRadius: 10, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            {[
+              { id: 'zero-trust', label: '🛡️ Zero-Trust', color: '#00d4ff' },
+              { id: 'adaptive-ai', label: '🧠 Neural AI', color: '#a855f7' },
+              { id: 'honeypot', label: '🍯 Deception', color: '#f59e0b' },
+            ].map((m) => (
+              <button
+                key={m.id}
+                onClick={() => {
+                  setDefenseMode(m.id);
+                  triggerSound('mode');
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 7,
+                  border: 'none',
+                  background: defenseMode === m.id ? m.color : 'transparent',
+                  color: defenseMode === m.id ? '#000000' : '#94a3b8',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -239,6 +436,7 @@ export default function NeuralThreatMeshGraphic({
 
           {/* Central Holographic Apex Core Node */}
           <div
+            onClick={() => triggerSound('click')}
             style={{
               position: 'relative',
               width: 110,
@@ -281,14 +479,16 @@ export default function NeuralThreatMeshGraphic({
             const radiusPercent = 38; // Distance from center
             const isSelected = v.id === selectedVector;
 
-            // Compute positions in percentage
             const top = 50 + radiusPercent * Math.sin(rad);
             const left = 50 + radiusPercent * Math.cos(rad);
 
             return (
               <div
                 key={v.id}
-                onClick={() => setSelectedVector(v.id)}
+                onClick={() => {
+                  setSelectedVector(v.id);
+                  triggerSound('click');
+                }}
                 style={{
                   position: 'absolute',
                   top: `${top}%`,
@@ -321,7 +521,7 @@ export default function NeuralThreatMeshGraphic({
           })}
         </div>
 
-        {/* Right Side: Interactive Live Inspection & Telemetry Panel */}
+        {/* Right Side: Interactive Live Waveform & Telemetry Panel */}
         <div
           style={{
             background: 'rgba(6, 13, 24, 0.85)',
@@ -339,7 +539,7 @@ export default function NeuralThreatMeshGraphic({
                 <div style={{ fontSize: '0.88rem', fontWeight: 900, color: activeVectorData.color }}>
                   {activeVectorData.name}
                 </div>
-                <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Vector Dissection & Signature Matrix</div>
+                <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Real-Time Payload Oscilloscope</div>
               </div>
             </div>
             <span
@@ -357,15 +557,34 @@ export default function NeuralThreatMeshGraphic({
             </span>
           </div>
 
-          {/* Mode Sub-description */}
-          <div style={{ fontSize: '0.72rem', color: '#cbd5e1', marginBottom: 14, background: 'rgba(255,255,255,0.03)', padding: '8px 10px', borderRadius: 6, borderLeft: `3px solid ${modeTheme.color}` }}>
-            <strong style={{ color: modeTheme.color }}>Active Defense:</strong> {modeTheme.desc}
+          {/* HTML5 Canvas Waveform Visualizer */}
+          <div style={{ position: 'relative', marginBottom: 12, borderRadius: 8, overflow: 'hidden', border: `1px solid ${activeVectorData.color}33`, background: '#020610' }}>
+            <canvas ref={canvasRef} width={300} height={60} style={{ display: 'block', width: '100%', height: 60 }} />
+            <div style={{ position: 'absolute', bottom: 4, right: 8, fontSize: '0.58rem', color: activeVectorData.color, fontFamily: 'monospace', opacity: 0.8 }}>
+              ENTROPY: H(X)={liveMetrics.entropyAvg}
+            </div>
+          </div>
+
+          {/* Live Realistic Jitter Metrics Bar */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14, background: 'rgba(255,255,255,0.02)', padding: '8px 10px', borderRadius: 8 }}>
+            <div>
+              <div style={{ fontSize: '0.6rem', color: '#94a3b8' }}>THROUGHPUT</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#00d4ff', fontFamily: 'monospace' }}>
+                {liveMetrics.throughput.toLocaleString()} pps
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.6rem', color: '#94a3b8' }}>KERNEL LATENCY</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#10b981', fontFamily: 'monospace' }}>
+                {liveMetrics.latency} ms
+              </div>
+            </div>
           </div>
 
           {/* Sample Signatures List */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 6 }}>
-              Monitored Attack Patterns ({activeVectorData.threats.length})
+              Monitored Attack Signatures ({activeVectorData.threats.length})
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {activeVectorData.threats.map((t, idx) => (
@@ -388,8 +607,8 @@ export default function NeuralThreatMeshGraphic({
           </div>
 
           {/* Interactive Velocity Speed Controller Slider */}
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div style={{ paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8' }}>PACKET SAMPLING VELOCITY</span>
               <span style={{ fontSize: '0.75rem', fontWeight: 900, color: modeTheme.color, fontFamily: 'monospace' }}>
                 {streamVelocity * 1000} req/sec
@@ -400,7 +619,10 @@ export default function NeuralThreatMeshGraphic({
               min="10"
               max="100"
               value={streamVelocity}
-              onChange={(e) => setStreamVelocity(Number(e.target.value))}
+              onChange={(e) => {
+                setStreamVelocity(Number(e.target.value));
+                triggerSound('scan');
+              }}
               style={{
                 width: '100%',
                 accentColor: modeTheme.color,
