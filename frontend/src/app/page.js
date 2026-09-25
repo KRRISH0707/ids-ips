@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getToken, getUser } from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import BrandLogo from '@/components/BrandLogo';
+import NeuralThreatMeshGraphic from '@/components/NeuralThreatMeshGraphic';
 import AIPredictorCard from '@/components/AIPredictorCard';
 import ThreatPostureGauge from '@/components/ThreatPostureGauge';
 import CyberKillChain from '@/components/CyberKillChain';
@@ -727,6 +728,15 @@ export default function DashboardPage() {
             <span>•</span>
             <span>Autonomous MTTC: <strong style={{ color: '#a855f7' }}>{displayMttc}</strong></span>
           </div>
+        </div>
+
+        {/* Original Interactive Cyber Neural Mesh Graphic */}
+        <div style={{ marginBottom: 20 }}>
+          <NeuralThreatMeshGraphic
+            alertStats={alertStats}
+            ipsStats={ipsStats}
+            recentAlerts={recentAlerts}
+          />
         </div>
 
         {/* Modern Enterprise Workspace Navigation Bar */}
