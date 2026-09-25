@@ -16,7 +16,7 @@ const NAV_SECTIONS = [
     title: 'Command & Operations',
     items: [
       { href: '/',             label: 'Command Center', icon: IconGrid },
-      { href: '/topology',     label: 'Network Mesh',   icon: IconTopology },
+      { href: '/topology',     label: '🌌 Neural Threat Mesh', icon: IconTopology },
       { href: '/playbooks',    label: 'SOAR Playbooks', icon: IconPlaybook },
     ],
   },
