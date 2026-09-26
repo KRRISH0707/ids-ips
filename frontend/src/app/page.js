@@ -6,6 +6,8 @@ import { getToken, getUser } from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import BrandLogo from '@/components/BrandLogo';
 import NeuralThreatMeshGraphic from '@/components/NeuralThreatMeshGraphic';
+import RealtimeThreatRadarWidget from '@/components/RealtimeThreatRadarWidget';
+import AttackVelocitySparklineStream from '@/components/AttackVelocitySparklineStream';
 import AIPredictorCard from '@/components/AIPredictorCard';
 import ThreatPostureGauge from '@/components/ThreatPostureGauge';
 import CyberKillChain from '@/components/CyberKillChain';
@@ -730,6 +732,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Real-time Multi-Metric Holographic Sparklines Banner */}
+        <AttackVelocitySparklineStream
+          alertStats={alertStats}
+          ipsStats={ipsStats}
+          velocityTimeline={velocityTimeline}
+        />
+
         {/* Original Interactive Cyber Neural Mesh Graphic */}
         <div style={{ marginBottom: 20 }}>
           <NeuralThreatMeshGraphic
@@ -946,8 +955,8 @@ export default function DashboardPage() {
             {/* WORKSPACE VIEW: Overview & Threat Posture */}
             {(activeWorkspace === 'overview' || activeWorkspace === 'all') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {/* Threat Posture Gauge & Geo Radar Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: 20 }}>
+                {/* Threat Posture Gauge, Realtime Threat Radar, & Geo Radar Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 20 }}>
                   <ThreatPostureGauge
                     score={displayScore}
                     threatLevel={displayThreatLevel}
@@ -955,6 +964,10 @@ export default function DashboardPage() {
                     blockedCount={displayBlockedCount}
                     accuracy={displayAccuracy}
                     killChainBreakRate={displayKillChainBreak}
+                  />
+                  <RealtimeThreatRadarWidget
+                    recentAlerts={recentAlerts}
+                    geoRadarData={geoRadarData}
                   />
                   <GeoThreatRadar origins={geoRadarData.origins} targets={geoRadarData.targets} />
                 </div>
